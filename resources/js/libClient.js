@@ -1,0 +1,167 @@
+
+//
+// Storage
+//
+
+app.getItemN=async function(name){
+  var [err,val]=await Neutralino.storage.getData(name).toNBP();   
+  if(err && err.code=="NE_ST_NOSTKEX") val=null
+  if(val!==null) val=JSON.parse(val);  return val;
+}
+app.setItemN=async function(name,value){
+  if(typeof value=='undefined') value=null;
+  await Neutralino.storage.setData(name, JSON.stringify(value));
+}
+
+
+/*******************************************************************************************************************
+ * DOM handling
+ *******************************************************************************************************************/
+
+app.findPos=function(el) {
+    var rect = el.getBoundingClientRect();
+    //return {top:rect.top+document.body.scrollTop, left:rect.left + document.body.scrollLeft};
+    return {top:rect.top+window.scrollY, left:rect.left + window.scrollX};
+  }
+  //var findPosMy=function(el) {
+    //var curleft = 0, curtop = 0;
+    //while(1){
+      //curleft += el.offsetLeft; curtop += el.offsetTop;
+      //if(el.offsetParent) el = el.offsetParent; else break;
+    //}
+    //return { left: curleft, top: curtop };
+  //}
+  
+  
+  app.removeChildren=function(myNode){
+    while (myNode.firstChild) {
+        myNode.removeChild(myNode.firstChild);
+    }
+  }
+  
+  app.scrollTop=function(){ return window.pageYOffset || (document.documentElement || document.body.parentNode || document.body).scrollTop; }
+  app.scrollLeft=function(){ return window.pageXOffset || (document.documentElement || document.body.parentNode || document.body).scrollLeft; }
+  
+  EventTarget.prototype.on=function(){ this.addEventListener.apply(this, [...arguments]); return this; }
+  EventTarget.prototype.off=function(){ this.removeEventListener.apply(this, [...arguments]); return this; }
+  //if(!Node.prototype.append) Node.prototype.append=Node.prototype.appendChild;
+  if(!Node.prototype.prepend) Node.prototype.prepend=function(el){ this.insertBefore(el, this.firstChild);  }
+  Node.prototype.myAppend=function(){ this.append.apply(this, [...arguments]); return this; }
+  Node.prototype.myAppendHtml=function(){
+    var arg=[...arguments], elTmp=null, argB=[];
+    arg.forEach(ele=>{
+      if(typeof ele=='string') {
+        if(!elTmp) elTmp=createElement('div');
+        elTmp.innerHTML=ele;  // Convert html to nodes (found in elTmp.childNodes)
+        argB.push(...elTmp.childNodes);
+      } else argB.push(ele);
+    }); 
+    this.append.call(this, ...argB); return this;
+  }
+  Node.prototype.myBefore=function(elN){
+    this.parentNode.insertBefore(elN,this); return this;
+  }
+  Node.prototype.empty = function() {
+    while (this.lastChild) {
+      this.lastChild.remove();
+    }
+    return this;
+  }
+  Element.prototype.insertChildAtIndex=function(child, index){
+    if(!index) index=0;
+    if(index >= this.children.length){
+      this.appendChild(child);
+    }else{
+      this.insertBefore(child, this.children[index]);
+    }
+  }
+  Element.prototype.attr=function(attr, value) {
+    if(!attr) return;
+    if(typeof attr=='string') {
+      if(arguments.length<2) return this.getAttribute(attr);
+      this.setAttribute(attr, value); return this;
+    }
+    for(var key in attr) { this.setAttribute(key, attr[key]);}
+    return this;
+  }
+  Element.prototype.prop=function(prop, value) {
+    if(!prop) return;
+    if(typeof prop=='string') {
+      if(arguments.length<2) return this[prop];
+      this[prop]=value; return this;
+    }
+    for(var key in prop) { this[key]=prop[key];}
+    return this;
+  }
+  Element.prototype.css=function(style, value) {
+    if(!style) return;
+    if(typeof style=='string') {
+      if(arguments.length<2) return this.style[style];
+      this.style[style]=value; return this;
+    }
+    for(var key in style) { this.style[key]=style[key];}
+    return this;
+  }
+  Element.prototype.addClass=function() {this.classList.add(...arguments);return this;}
+  Element.prototype.removeClass=function() {this.classList.remove(...arguments);return this;}
+  Element.prototype.toggleClass=function() {this.classList.toggle(...arguments);return this;}
+  Element.prototype.hasClass=function() {return this.classList.contains(...arguments);}
+  Node.prototype.cssChildren=function(styles){  this.childNodes.forEach(function(elA){ Object.assign(elA.style, styles);  }); return this;  }
+  Node.prototype.myText=function(str){
+    if(arguments.length==0) { return this.textContent; }
+    if(typeof str!='string') { if(str==null) str=' '; str=str.toString(); }
+    if(this.childNodes.length==1 && this.firstChild.nodeName=="#text" ) { this.firstChild.nodeValue=str||' ';  return this;} // Being a bit GC-friendly
+    this.textContent=str||' '; return this;
+  }
+  Node.prototype.myHtml=function(str=' '){
+    if(typeof str!='string') { if(str==null) str=' '; str=str.toString(); }
+    this.innerHTML=str||' '; return this;
+  }
+  Node.prototype.hide=function(){
+    if(this.style.display=='none') return this;
+    this.displayLast=this.style.display;
+    this.style.display='none';
+    return this;
+  }
+  Node.prototype.show=function(){
+    if(this.style.display!='none') return this;
+    if(typeof this.displayLast!='undefined') var tmp=this.displayLast; else var tmp='';
+    this.style.display=tmp;
+    return this;
+  }
+  Node.prototype.toggle=function(b){
+    if(typeof b=='undefined') b=this.style.display=='none'?1:0;
+    if(b==0) this.hide(); else this.show();
+    return this;
+  }
+  NodeList.prototype.toggle=function(b){
+    if(typeof b=='undefined') {if(this.length) b=this[0].style.display=='none'?1:0; else return this;}
+    this.forEach(function(ele){ ele.toggle(b); });
+    return this;
+  }
+  app.createTextNode=function(str){ return document.createTextNode(str); }
+  app.createElement=function(str){ return document.createElement(str); }
+  app.createFragment=function(){ var fr=document.createDocumentFragment(); if(arguments.length) fr.append(...arguments); return fr; }
+  
+  app.getNodeIndex=function( elm ){ return [...elm.parentNode.childNodes].indexOf(elm); }
+  Element.prototype.myIndex=function() {return [...this.parentNode.children].indexOf(this);}
+  
+  Element.prototype.offset=function() {
+    var rect = this.getBoundingClientRect();
+    return { top: rect.top + document.body.scrollTop,  left: rect.left + document.body.scrollLeft  };
+  }
+  
+  Element.prototype.visible = function() {    this.style.visibility='';  return this;};
+  Element.prototype.invisible = function() {    this.style.visibility='hidden'; return this; };
+  Element.prototype.visibilityToggle=function(b){
+    if(typeof b=='undefined') b=this.style.visibility=='hidden'?1:0;
+    this.style.visibility= b?'':'hidden';
+    return this;
+  };
+  
+  Node.prototype.detach=function(){ this.remove(); return this; }
+  
+  app.isVisible=function(el) {  // Could be replaced with el.isVisible ?!?
+    return !!( el.offsetWidth || el.offsetHeight || el.getClientRects().length );
+  }
+  
