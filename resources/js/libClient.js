@@ -1,16 +1,27 @@
 
-//
-// Storage
-//
+"use strict"
 
-app.getItemN=async function(name){
-  var [err,val]=await Neutralino.storage.getData(name).toNBP();   
-  if(err && err.code=="NE_ST_NOSTKEX") val=null
-  if(val!==null) val=JSON.parse(val);  return val;
+app.msort=function(compare){
+  var length = this.length,  middle = Math.floor(length / 2);
+  //if(length < 2) return this;
+  if(length==0) return [];
+  if(length==1) return [this[0]];
+  //return merge(    this.slice(0, middle).msort(compare),    this.slice(middle, length).msort(compare),    compare    );
+  var a=this.slice(0, middle),  b=this.slice(middle, length);
+  return merge(    msort.call(a,compare),    msort.call(b,compare),    compare    );
 }
-app.setItemN=async function(name,value){
-  if(typeof value=='undefined') value=null;
-  await Neutralino.storage.setData(name, JSON.stringify(value));
+
+app.merge=function(left, right, compare){
+  var result = [];
+  while (left.length > 0 || right.length > 0){
+    if(left.length > 0 && right.length > 0){
+      if(compare(left[0], right[0]) <= 0){ result.push(left[0]);  left = left.slice(1);  }
+      else{ result.push(right[0]); right = right.slice(1);  }
+    }
+    else if(left.length > 0){  result.push(left[0]);  left = left.slice(1);  }
+    else if(right.length > 0){  result.push(right[0]);  right = right.slice(1);  }
+  }
+  return result;
 }
 
 
@@ -100,6 +111,25 @@ app.findPos=function(el) {
       this.style[style]=value; return this;
     }
     for(var key in style) { this.style[key]=style[key];}
+    for(var key in style) { this.style.setProperty[key]=style[key];}
+    return this;
+  }
+  Element.prototype.cssExc=function(style, value) {  // (Exc=Exclamation mark) To handle !important
+    if(!style) return;
+    if(typeof style=='string') {
+      if(arguments.length<2) return this.style[style];
+      this.style[style]=value; return this;
+    }
+    //for(var key in style) { this.style[key]=style[key];}
+    for(var key in style) {
+      var val=style[key];
+      var iExc=val.lastIndexOf('!')
+      if(iExc==-1) {this.style[key]=style[key];}
+      else{
+        var valNormal=val.slice(0,iExc), valExc=val.slice(iExc+1); this.style.setProperty(key, valNormal, valExc);
+      }  
+        
+    }
     return this;
   }
   Element.prototype.addClass=function() {this.classList.add(...arguments);return this;}
@@ -107,6 +137,7 @@ app.findPos=function(el) {
   Element.prototype.toggleClass=function() {this.classList.toggle(...arguments);return this;}
   Element.prototype.hasClass=function() {return this.classList.contains(...arguments);}
   Node.prototype.cssChildren=function(styles){  this.childNodes.forEach(function(elA){ Object.assign(elA.style, styles);  }); return this;  }
+  var cssChildren=function(El, styles){  El.forEach(function(elA){ Object.assign(elA.style, styles);  }); return this;  }
   Node.prototype.myText=function(str){
     if(arguments.length==0) { return this.textContent; }
     if(typeof str!='string') { if(str==null) str=' '; str=str.toString(); }
@@ -165,3 +196,81 @@ app.findPos=function(el) {
     return !!( el.offsetWidth || el.offsetHeight || el.getClientRects().length );
   }
   
+
+
+/*******************************************************************************************************************
+ * popupHover: popup a elBubble when you hover over elArea
+ *******************************************************************************************************************/
+app.popupHover=function(elArea, elBubble, tClose=4){
+  elBubble.css({position:'absolute', 'box-sizing':'border-box', margin:'0px', 'text-align':'left'}); //
+  function setBubblePos(e){
+    var xClear=6, yClear=6;
+    var x = e.pageX, y = e.pageY;
+
+    var borderMarg=10;
+    var winW=window.innerWidth,winH=window.innerHeight,   bubW=elBubble.clientWidth,bubH=elBubble.clientHeight,   scrollX=scrollLeft(),scrollY=scrollTop();
+
+
+    var boRight=true, boBottom=true;
+
+    var boMounted=Boolean(elBubble.parentNode);
+    if(boMounted){
+      var xFar=x+xClear+bubW, xBorder=scrollX+winW-borderMarg;
+      if(xFar<xBorder){ 
+        x=x+xClear;
+      } else {
+        x=x-bubW-xClear;  // if the bubble doesn't fit on the right side then flip to the left side
+        //x=x-xClear; boRight=false;
+      }
+        
+      var yFar=y+yClear+bubH, yBorder=scrollY+winH-borderMarg;
+      if(yFar<yBorder) {
+        y=y+yClear;
+      }else{ 
+        y=y-bubH-yClear;   // if the bubble doesn't fit below then flip to above
+        //y=y-yClear; boBottom=false;
+      }
+    } else {
+      x=x+xClear;
+      y=y+yClear;
+    }
+    if(x<scrollX) x=scrollX;
+    if(y<scrollY) y=scrollY;
+    //elBubble.style.top=y+'px'; elBubble.style.left=x+'px';
+    elBubble.css({top:y+'px', left:x+'px'});
+    //if(boRight) {elBubble.style.left=x+'px'; elBubble.style.right='';} else {elBubble.style.left=''; elBubble.style.right=x+'px'; }
+    //if(boBottom) {elBubble.style.top=y+'px'; elBubble.style.bottom='';} else {elBubble.style.top=''; elBubble.style.bottom=y+'px'; } 
+  };
+  var closeFunc=function(){ 
+    if(boTouch){ 
+      elBubble.remove(); 
+      if(boIOSTmp) elBlanket.remove();
+      clearTimeout(timer);
+    } 
+    else { elBubble.remove();  }
+  }
+  var elBlanket, timer, boIOSTmp=boTouch;
+  if(boIOSTmp){
+    elBlanket=createElement('div').css({'background':'#555',opacity:0,'z-index': 9001,top:'0px',left:'0px',width:'100%',position:'fixed',height:'100%'});
+    elBlanket.on('click', closeFunc);
+  }
+  if(boTouch){
+    elArea.on('click', function(e){
+      e.stopPropagation();
+      if(elBubble.parentNode) closeFunc();
+      else {
+        elBody.append(elBubble); setBubblePos(e);
+        clearTimeout(timer);  if(tClose) timer=setTimeout(closeFunc, tClose*1000);
+        if(boIOSTmp) elBody.append(elBlanket);
+      }
+    });
+    elBubble.on('click', closeFunc);
+    elHtml.on('click', closeFunc);
+    
+  }else{
+    elArea.on('mousemove', setBubblePos);  
+    elArea.on('mouseenter', function(e){elBody.append(elBubble);});
+    elArea.on('mouseleave', closeFunc);
+  }
+  //elBubble.classList.add('popupHover'); 
+}

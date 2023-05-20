@@ -1,4 +1,6 @@
 
+"use strict"
+
 // import bisect
 // import copy
 // from lib import *
@@ -9,24 +11,24 @@ var funStrShortest=function(rowA,rowB){
   if(strA<strB) return 1
   else if(strA>strB) return -1
   else if(strA==strB) return 0
-  else console.log("Error not lt, not gt and not equal???")
+  else {debugger; throw Error("Error not lt, not gt and not equal???")}
 }
 function funInt(a,b){
   if(a<b) return 1
   else if(a>b) return -1
   else if(a==b) return 0
-  else console.log("Error not lt, not gt and not equal???")
+  else {debugger; throw Error("Error not lt, not gt and not equal???")}
 }
 
 /***************************************************************************************
- * extractMatchingF: Comparing two arrays
+ * [arrAMatching, arrBMatching, arrARem, arrBRem]=extractMatchingF(arrA, arrB, funM101): Comparing two arrays
  *   Inputs:
- *     funM101: (function-Minus1-0-1) A function that compares two array elements (from the below mentioned arrays). The output of funM101(element0, element1) ∈ [-1,0,1] where
+ *     arrA and arrB: Arrays. 
+ *       arrA and arrB are strictly increasing (ascending) (That is: funM101(arrA[n],arrA[n+1]) is always 1).
+ *     funM101: (function-Minus1-0-1) A function that compares two array elements (from arrA and arrB (see below)). The output of funM101(element0, element1) ∈ [-1,0,1] where
  *       -1: descending slope (element0 > element1)
  *        0: equal (element0 == element1)
  *        1: ascending slope (element0 < element1)
- *     arrA and arrB: Arrays. 
- *       Each element must be unique and sorted ascendingly within its array (Ex: funM101(arrA[n],arrA[n+1]) is always 1).
  *   The extractMatchingF-function compares the elements in arrA with elements in arrB and puts matching pairs in arrAMatching and arrBMatching (which will be of equal length). The remaining elements are equally put in containers arrARem and arrBRem
  ***************************************************************************************/
 
@@ -35,16 +37,16 @@ function funInt(a,b){
 /***************************************************************************************
  * extractMatching: (Wrapper for extractMatchingF)
  *   Works as extractMatchingF although each element is an object and the comparission is made using the object-properties given in KeyA and KeyB (which should be of equal length):
- *   In the below text, this notation is used: X ∈ [A, B]
- *   Uniqueness constraint: An object within arrX can not have all (KeyX-) properties be equal.
- *   Sorted strictly ascendingly constraint: The first property (within KeyX) that is different must be larger in the preceding object.
+ *   In the below text: X ∈ [A, B]
+ *   Uniqueness: Object within arrX must be unique (with respect to they proprties in KeyX) (See example below).
+ *   Sorted strictly ascendingly: The first key (within KeyX) that is different must be larger in the preceding element.
  *     So in other words, the elements of KeyX have falling priority.
- *   Ex: Assume KeyA=['m','n'] then
- *     arrA=[{m:0,n:0}, {m:0,n:0}] is NOT OK (not unique (nor strictly ascending))
- *     arrA=[{m:0,n:0}, {m:0,n:1}] is OK
- *     arrA=[{m:1,n:0}, {m:0,n:1}] is NOT OK (not ascending, because m has higher priority)
- *     arrA=[{m:0,n:1}, {m:1,n:0}] is OK
  *   If KeyB is omitted, KeyA will be used in its place. 
+ *   Ex: Assume KeyA=['m','n'] then
+ *     arrA=[{m:0,n:0}, {m:0,n:0}] is NOT OK (Elements are not unique (nor strictly ascending))
+ *     arrA=[{m:0,n:0}, {m:0,n:1}] is OK
+ *     arrA=[{m:1,n:0}, {m:0,n:1}] is NOT OK (Elements are not ascending, because m has higher priority)
+ *     arrA=[{m:0,n:1}, {m:1,n:0}] is OK
  *       
  ***************************************************************************************/
 
@@ -60,10 +62,10 @@ app.extractMatchingF=function(arrA, arrB, funM101){
     else if(boEndA && boEndB) break
     var rowA=arrA[iA], rowB=arrB[iB]
     var intVal=funM101(rowA,rowB)
-    if(intVal>0) {arrARem.push(rowA); iA+=1}     // The row exist in arrA but not in arrB
+    if(intVal>0) {arrARem.push(rowA); iA+=1}        // The row exist in arrA but not in arrB
     else if(intVal<0) {arrBRem.push(rowB); iB+=1}   // The row exist in arrB but not in arrA
     else if(intVal==0) {arrAMatching.push(rowA); arrBMatching.push(rowB); iB+=1; iA+=1}
-    else console.log("error when comparing strings")
+    else {throw Error("Error when comparing strings");}
   }
   return [arrAMatching, arrBMatching, arrARem, arrBRem]
 }
@@ -71,8 +73,8 @@ app.extractMatchingF=function(arrA, arrB, funM101){
 app.extractMatching=function(arrA, arrB, KeyA, KeyB=null){
   if(KeyB==null) KeyB=KeyA
   var lenKeyA=KeyA.length,  lenKeyB=KeyB.length;  
-  if(lenKeyA!=lenKeyB) {debugger; return [new Error("lenKeyA!=lenKeyB")]} 
-  if(lenKeyA==0 || lenKeyB==0)  {debugger; return [new Error("lenKeyA==0 || lenKeyB==0")]}
+  if(lenKeyA!=lenKeyB) {debugger; return [Error("lenKeyA!=lenKeyB")]} 
+  if(lenKeyA==0 || lenKeyB==0)  {debugger; return [Error("lenKeyA==0 || lenKeyB==0")]}
 
   var funM101=function(rowA,rowB){
     for(var j=0;j<KeyA.length;j++){
@@ -101,13 +103,11 @@ var extractMatchingOneToManyUnsortedF=function(arrA, arrB, funVal, funB, funExtr
     //l=len(rowA['strOld']); x['strName'][:l]
     var valA=funVal?funVal(rowA):rowA
     var argExtra=funExtra(rowA)
-    // iBStart = bisect.bisect_left(arrBWork, rowA['strOld'], 0, lenB, key=lambda x: x['strName'][:l])
-    // iBEnd = bisect.bisect_right(arrBWork, rowA['strOld'], iBStart, lenB, key=lambda x: x['strName'][:l])
     var iBStart = my_bisect_left(arrBWork, valA, 0, lenBWork, key=funB, argExtra=argExtra)
     var iBEnd = my_bisect_right(arrBWork, valA, iBStart, lenBWork, key=funB, argExtra=argExtra)
     if(iBStart!=iBEnd){
       arrAMatching.push(rowA);
-      debugger; alert() // Note to self, shouldn't the next line be  arrBMatching.push(...arrBWork.slice(iBStart,iBEnd));
+      debugger; alert() // Hmm, shouldn't the next line be  arrBMatching.push(...arrBWork.slice(iBStart,iBEnd));
       arrBMatching.push(arrBWork.slice(iBStart,iBEnd)); 
       arrBWork=[].concat(...arrBWork.slice(0,iBStart), ...arrBWork.slice(iBEnd))
     }
@@ -136,7 +136,7 @@ var extractMatchingOneToManyUnsortedFW=function(arrA, arrB, funVal, funB, funExt
 
 
 // Note 1!! The below test fails (in python): funB is called with three arguments in my_bisect_left/my_bisect_right
-// Note 2!! extractMatchingOneToManyUnsortedF is only used in renameFinishToMetaByFolder (which is not used in any launch.json-commands)
+// Note 2!! extractMatchingOneToManyUnsortedF is only used in renameFinishToDbByFolder (which is not used in any launch.json-commands)
 
 // var funB=function(strB, l) {return strB.slice(0,l)}
 // var funExtra=function(strA) {return strA.length}
@@ -163,7 +163,7 @@ var extractMatchingOneToManyF=function(arrA, arrB, fun){
     if(intVal>0) {arrARem.push(rowA); iA+=1}     // B is ahead of A
     else if(intVal<0) {arrBRem.push(rowB); iB+=1}   // A is ahead of B
     else if(intVal==0) {arrAMatching.push(rowA); arrBMatching.push(rowB); iB+=1;} //iA+=1
-    else {return [new Error("error when comparing strings")]; }
+    else {return [Error("Error when comparing strings")]; }
   }
     
   return [null, arrAMatching, arrBMatching, arrARem, arrBRem]
@@ -175,17 +175,20 @@ var extractMatchingOneToManyF=function(arrA, arrB, fun){
 
 
 /***********************************************************
- * extractMatchingManyToManyF
+ * unTangleManyToManyF
  ***********************************************************/
-  // arrA and arrB are arrays of dicts. Ex: arrA=[{a:1,b:1}, {a:1,b:1}] 
-  // arrA and arrB must both be sorted, in a way so that calling "funVal" on each element gives an increasing (although not necessarily strictly increasing) order.
-  // The returned values (objAMatching, objBMatching) consists of all the rows (of arrA and arrB) although arranged by their output when called through "funVal".
-  // That is each property key (of objAMatching and objBMatching) are the output of funVal. The corresponding value is an array of the rows that outputted that key. 
+  // arrA and arrB are arrays of objects (dicts). Ex: arrA=[{a:1,b:1}, {a:1,b:1}] 
+  // arrA and arrB must both be sorted, in a way so that calling "funVal" on each element gives an increasing (although not necessarily strictly increasing (the result can be equal)) order.
+  // Elements that gives the same funVal-result are collected in arrays and stored in objAMatching resp objBMatching using the funVal-result as key.
+  // That is each property key (of objAMatching and objBMatching) are the output of funVal. The corresponding value is an array of the elements that outputted that key. 
   // That array may be empty, then that property key (funVal-value) only exist in the opposite arrA/arrB.
-  // Output Examples:
-  //   objAMatching={blahblah:[{a:1,b:1}, {a:1,b:1}], blahblahblah:[]}
-  //   objAMatching={"0000000001_123487081324":[{inode:..., name:...}, {inode:..., name:...}], "0000000002_123487081324":[]}
-var extractMatchingManyToManyF=function(arrA, arrB, funVal){
+
+  // Ex:
+  // arrA=[{"a":1,"b":1}, {"a":1,"b":2}, {"a":2}];  arrB=[{"a":1,"b":1}, {"a":1,"b":3}, {"a":3}]; funVal=row=>row["a"]
+  // objAMatching, objBMatching=unTangleManyToManyF(arrA, arrB, funVal)
+  // objAMatching={"1":[{"a":1,"b":1}, {"a":1,"b":2}], "2":[{"a":2}], "3":[]}
+  // objBMatching={"1":[{"a":1,"b":1}, {"a":1,"b":3}], "2":[], "3":[{"a":3}]}
+var unTangleManyToManyF=function(arrA, arrB, funVal){
   var iA=0, iB=0
   var lenA=arrA.length, lenB=arrB.length
   var objAMatching={}, objBMatching={}
@@ -245,29 +248,35 @@ var extractMatchingManyToManyF=function(arrA, arrB, funVal){
         else {iB=iBTmp; break}
       }
     }
-    //else return [new Error("error when comparing strings")]
+    //else return [Error("Error when comparing strings")]
   }
     
   return [objAMatching, objBMatching]
 }
 
-
-//extractMatchingManyToManyF([3,6,9], [2,3,8], x=>x)
-//extractMatchingManyToManyF([3,6,9], [2,3,3,8], x=>x)
-//extractMatchingManyToManyF([1,3,3,6,9], [2,3,3], x=>x)
-//extractMatchingManyToManyF(["aa","progC","qrs"], ["abc", "progC/abc", "progC/def", "progC/ghi", "ss"], funStrShortest)
+//unTangleManyToManyF([3,6,9], [2,3,8], x=>x)
+//unTangleManyToManyF([3,6,9], [2,3,3,8], x=>x)
+//unTangleManyToManyF([1,3,3,6,9], [2,3,3], x=>x)
+//unTangleManyToManyF(["aa","progC","qrs"], ["abc", "progC/abc", "progC/def", "progC/ghi", "ss"], funStrShortest)
 
 
 
 /***************************************************************************************
- * extractUniques
- *   extract uniques within a single array arr
+ * [arrUniq, objDup, arrUniqified]=extractUniques(arr, arrKey)
+ *   extract uniques (as measured by the properties named in arrKey) within a single array arr.
+ *   Inputs:
+ *     arr: array of elements
+ *     arrKey: the keys of each element that is evaluted
+ *   Output:
+ *     arrUniq: all unique entries
+ *     objDup: Object where each property contains an array of duplicates (multiples).
+ *     arrUniqified: Like arrUniq plus one entry for each of the duplicates.
  ***************************************************************************************/
-var extractUniques=function(arr,arrKey){
+var extractUniques=function(arr, arrKey){
   if(!(arrKey instanceof Array)) arrKey=[arrKey]
-  var objDup={},  arrUniq=[];  //,  arrUniqified=[];
+  var objDup={},  arrUniq=[],  arrUniqified=[];
   var lenArr=arr.length
-  if(lenArr==0) return [arrUniqified, arrUniq, objDup]
+  if(lenArr==0) return [arrUniq, objDup, arrUniqified]
   for(var i=0;i<lenArr;i++){
     var row=arr[i], iNext=i+1
     var boMatch=true
@@ -291,37 +300,48 @@ var extractUniques=function(arr,arrKey){
     }
     else{
       //arrUniqified.push(extend({},row))
+      arrUniqified.push(row)
       if(strAttr in objDup) objDup[strAttr].push(row)
       else arrUniq.push(row)
     }
-
-    // Adding the last row.
-    //   If it had a duplicate, then it hasn't been added yet.
-    //   If it's unique, then it should be added.
   }
-
-  // rowNext=arr[lenArr-1]
-  // arrUniqified.push(rowNext)  
-  //return [arrUniq, objDup, arrUniqified]
-  return [arrUniq, objDup]
+  return [arrUniq, objDup, arrUniqified]
 }
 
-// var [arrUniq, objDup]= extractUniques([{"a":1}, {"a":1}, {"a":2}], "a")
-// var [arrUniq, objDup]= extractUniques([{"a":1}, {"a":1}, {"a":2}, {"a":2}], "a")
+// var [arrUniq, objDup, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}], "a")
+// var [arrUniq, objDup, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}, {"a":2}], "a")
+// var [arrUniq, objDup, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}, {"a":3}], "a")
 
 
+var bucketifyByKey=function(arr, arrKey){
+  if(!(arrKey instanceof Array)) arrKey=[arrKey]
+  var objByKey={}
+  var lenArr=arr.length
+  //if(lenArr==0) return [arrUniq, objByKey, arrUniqified]
+  for(var i=0;i<lenArr;i++){
+    var row=arr[i];
+      // Create strAttr (key in objByKey)
+    var strAttr=""
+    for(var key of arrKey){
+      var attr=row[key];
+      strAttr+=attr.toString();
+    }
 
-// OTO=OneToOne, OTM=OneToMany, MTO=ManyToOne, MTM=ManyToMany
-// T\S    Null    One     Many
-// Null           Created Created
-// One    Deleted OTO     MTO
-// Many   Deleted OTM     MTM
+    if(strAttr in objByKey) objByKey[strAttr].push(row)
+    else objByKey[strAttr]=[row];
+  }
+  return objByKey
+}
+// var objByKey= bucketifyByKey([{"a":1}, {"a":1}, {"a":2}], "a")
+// var objByKey= bucketifyByKey([{"a":1}, {"a":1}, {"a":2}, {"a":2}], "a")
+// var objByKey= bucketifyByKey([{"a":1}, {"a":1}, {"a":2}, {"a":3}], "a")
+
 
 
 var objManyToManyRemoveEmpty=function(objA, objB){  // Modifies objA and objB
   var KeyDel=[]
   for(var key in objA){
-    var arrA=objA[key], arrB=objB[key], lenA=arrA.length; lenB=arrB.length;
+    var arrA=objA[key], arrB=objB[key], lenA=arrA.length, lenB=arrB.length;
     if(lenA==0 && lenB==0) KeyDel.push(key)
   }
   for(var key of KeyDel){
@@ -330,35 +350,228 @@ var objManyToManyRemoveEmpty=function(objA, objB){  // Modifies objA and objB
 }
 
 
-  // objA, objB is the output of extractMatchingManyToManyF.
+  // objA, objB comes from (is the output of) unTangleManyToManyF.
   // Thus objA, objB has the same property keys.
-var convertObjManyToManyToMat=function(objA, objB){
-  var ArrAOTO=[], ArrBOTO=[], ArrAOTM=[], ArrBOTM=[], ArrAMTO=[], ArrBMTO=[], ArrAMTM=[], ArrBMTM=[]
-  var ArrAOTNull=[], ArrAMTNull=[], ArrBNullTO=[], ArrBNullTM=[]
-  var arrAOTNull=[], arrAMTNull=[], arrBNullTO=[], arrBNullTM=[]
-  var arrAOTO=[], arrBOTO=[], arrAOTM=[], arrBOTM=[], arrAMTO=[], arrBMTO=[], arrAMTM=[], arrBMTM=[]
-  for(var key in objA){
-    var arrA=objA[key], arrB=objB[key];
-    var lenA=arrA.length, lenB=arrB.length
-    if(lenA==0){
-      if(lenB==0) {debugger; return [new Error("lenA==0 && lenB==0")]; } //del objA[key]; objB[key] 
-      else if(lenB==1) {ArrBNullTO.push(arrB);  arrBNullTO.push(...arrB)}
-      else {ArrBNullTM.push(arrB);  arrBNullTM.push(...arrB)}
-    } else if(lenA==1){
-      if(lenB==0) {ArrAOTNull.push(arrA);  arrAOTNull.push(...arrA)}
-      else if(lenB==1) {ArrAOTO.push(arrA); ArrBOTO.push(arrB);    arrAOTO.push(...arrA); arrBOTO.push(...arrB)}
-      else {ArrAOTM.push(arrA); ArrBOTM.push(arrB);    arrAOTM.push(...arrA); arrBOTM.push(...arrB)}
-    } else{
-      if(lenB==0) {ArrAMTNull.push(arrA);  arrAMTNull.push(...arrA)}
-      else if(lenB==1) {ArrAMTO.push(arrA); ArrBMTO.push(arrB);    arrAMTO.push(...arrA); arrBMTO.push(...arrB)}
-      else {ArrAMTM.push(arrA); ArrBMTM.push(arrB);    arrAMTM.push(...arrA); arrBMTM.push(...arrB)}
+
+  // Ex (only tested on python (not js (yet))):
+  // Generate the input (objA and objB) using unTangleManyToManyF
+  // arrA=[{"a":1,"b":1}, {"a":1,"b":2}, {"a":2}, {"a":2}, {"a":3}]
+  // arrB=[{"a":1,"b":1}, {"a":1,"b":3}, {"a":2}, {"a":2}, {"a":4}]
+  // objA, objB=unTangleManyToManyF(arrA, arrB, row=>row.a)
+  
+  // So the input is:
+  // objA={"1":[{'a': 1, 'b': 1}, {'a': 1, 'b': 2}],
+  // "2":[{'a': 2}, {'a': 2}],
+  // "3":[{'a': 3}],
+  // "4":[]}
+  // objB={"1":[{'a': 1, 'b': 1}, {'a': 1, 'b': 3}],
+  // "2":[{'a': 2}, {'a': 2}],
+  // "3":[],
+  // "4":[{'a': 4}]}
+  
+  // Output:
+  // ArrA22:[[{'a': 1, 'b': 1}, {'a': 1, 'b': 2}], [{'a': 2}, {'a': 2}]]
+  // ArrA20:[]
+  // ArrA21:[]
+  // ArrA12:[]
+  // ArrA10:[[{'a': 3}]]
+  // ArrA11:[]
+  // ArrB22:[[{'a': 1, 'b': 1}, {'a': 1, 'b': 3}],[{'a': 2}, {'a': 2}]]
+  // ArrB21:[]
+  // ArrB02:[]
+  // ArrB01:[[{'a': 4}]]
+  // ArrB12:[]
+  // ArrB11:[]
+  // arrA22:[{'a': 1, 'b': 1}, {'a': 1, 'b': 2}, {'a': 2}, {'a': 2}]
+  // arrA20:[]
+  // arrA21:[]
+  // arrA12:[]
+  // arrA10:[{'a': 3}]
+  // arrA11:[]
+  // arrARem:[{'a': 3}]
+  // arrB22:[{'a': 1, 'b': 1}, {'a': 1, 'b': 3}, {'a': 2}, {'a': 2}]
+  // arrB21:[]
+  // arrB02:[]
+  // arrB01:[{'a': 4}]
+  // arrB12:[]
+  // arrB11:[]
+  // arrBRem:[{'a': 4}]
+
+  // Dimensions:
+  //   Notations: X,Y={0,1,2} 
+  //   ArrA and ArrB are 4-dimensional array (into which objects are stored)
+  //     or ArrAxy, ArrBxy are 2-dimensional
+  //     (each element of ArrAxy, ArrBxy correspond to the key that was used in the comparission)
+  //   arrA and arrB are 3-dimensional array (into which objects are stored)
+  //     or arrAxy, arrBxy are 1-dimensional
+  //     (each element of arrAxy, arrBxy is an object)
+  // ArrAxy.length==ArrBxy.length ∀ x∈X, y∈Y
+  // ArrAxyz.length ∀ x∈X,y∈Y,z∈Z where Z=the elements in ArrAxy
+  //   ⎧ArrA00z.length ArrA01z.length ArrA02z.length⎫   ⎧0              0              0             ⎫
+  //   |ArrA10z.length ArrA11z.length ArrA12z.length| = |1              1              1             |
+  //   ⎩ArrA20z.length ArrA21z.length ArrA22z.length⎭   ⎩ArrA20z.length ArrA21z.length ArrA22z.length⎭
+  // ArrBxyz.length ∀ x∈X,y∈Y,z∈Z where Z=the elements in ArrBxy
+  //   ⎧ArrB00z.length ArrB01z.length ArrB02z.length⎫   ⎧0 1 ArrB02z.length⎫
+  //   |ArrB10z.length ArrB11z.length ArrB12z.length| = |0 1 ArrB12z.length|
+  //   ⎩ArrB20z.length ArrB21z.length ArrB12z.length⎭   ⎩0 1 ArrB12z.length⎭
+  // arrAxy.length ∀ x∈X,y∈Y,z∈Z where Z=the elements in ArrAxy
+  //   ⎧arrA00.length arrA01.length arrA02.length⎫   ⎧0                 0                 0                ⎫
+  //   |arrA10.length arrA11.length arrA12.length| = |ArrA10.length     ArrA11.length     ArrA12.length    |
+  //   ⎩arrA20.length arrA21.length arrA22.length⎭   ⎩∑(ArrA20z.length) ∑(ArrA21z.length) ∑(ArrA22z.length)⎭
+  //     (sums are over Z)
+  // arrBxy.length ∀ x∈X,y∈Y,z∈Z where Z=the elements in ArrBxy
+  //   ⎧arrB00.length arrB01.length arrB02.length⎫   ⎧0 ArrB01.length ∑(ArrB02z.length)⎫
+  //   |arrB10.length arrB11.length arrB12.length| = |0 ArrB11.length ∑(ArrB12z.length)|
+  //   ⎩arrB20.length arrB21.length arrB22.length⎭   ⎩0 ArrB21.length ∑(ArrB22z.length)⎭
+  //     (sums are over Z)
+
+class Mat{
+  constructor(){
+    var ArrA=[[[],[],[]],[[],[],[]],[[],[],[]]]
+    var ArrB=[[[],[],[]],[[],[],[]],[[],[],[]]]
+    var arrA=[[[],[],[]],[[],[],[]],[[],[],[]]]
+    var arrB=[[[],[],[]],[[],[],[]],[[],[],[]]]
+    extend(this, {ArrA, ArrB, arrA, arrB})
+  }
+  assignFromObjManyToMany(objA, objB){
+    this.nKTmp=Object.keys(objA).length
+    var {ArrA, ArrB, arrA, arrB}=this
+
+    var [       ,ArrA01,ArrA02]=ArrA[0]
+    var [ArrA10,ArrA11,ArrA12]=ArrA[1]
+    var [ArrA20,ArrA21,ArrA22]=ArrA[2]
+    var [       ,ArrB01,ArrB02]=ArrB[0]
+    var [ArrB10,ArrB11,ArrB12]=ArrB[1]
+    var [ArrB20,ArrB21,ArrB22]=ArrB[2]
+
+    var [       ,arrA01,arrA02]=arrA[0]
+    var [arrA10,arrA11,arrA12]=arrA[1]
+    var [arrA20,arrA21,arrA22]=arrA[2]
+    var [       ,arrB01,arrB02]=arrB[0]
+    var [arrB10,arrB11,arrB12]=arrB[1]
+    var [arrB20,arrB21,arrB22]=arrB[2]
+
+
+    for(var key in objA){
+      var arA=objA[key], arB=objB[key];
+      var nA=arA.length, nB=arB.length
+      if(nA==0){
+        if(nB==0) {debugger; throw Error("nA==0 && nB==0"); }
+        else if(nB==1) {ArrA01.push(arA); ArrB01.push(arB); arrA01.push(...arA); arrB01.push(...arB);} // ArrA01 and arrA01 will never have entries added
+        else {ArrA02.push(arA); ArrB02.push(arB); arrA02.push(...arA); arrB02.push(...arB);} // ArrA02 and arrA02 will never have entries added
+      } else if(nA==1){
+        if(nB==0) {ArrA10.push(arA); ArrB10.push(arB); arrA10.push(...arA); arrB10.push(...arB)} // ArrB10 and arrB10 will never have entries added
+        else if(nB==1) {ArrA11.push(arA); ArrB11.push(arB);    arrA11.push(...arA); arrB11.push(...arB)}
+        else {ArrA12.push(arA); ArrB12.push(arB);    arrA12.push(...arA); arrB12.push(...arB)}
+      } else{
+        if(nB==0) {ArrA20.push(arA); ArrB20.push(arB);  arrA20.push(...arA); arrB20.push(...arB);} // ArrB20 and arrB20 will never have entries added
+        else if(nB==1) {ArrA21.push(arA); ArrB21.push(arB);    arrA21.push(...arA); arrB21.push(...arB)}
+        else {ArrA22.push(arA); ArrB22.push(arB);    arrA22.push(...arA); arrB22.push(...arB)}
+      }
+    }
+
+    extend(this, {ArrA, ArrB, arrA, arrB})
+  }
+  getN(){
+    var NPat=[Array(3),Array(3),Array(3)]
+    var NAPat=[Array(3),Array(3),Array(3)] 
+    var NBPat=[Array(3),Array(3),Array(3)]
+    // var NXPatA=[Array(3),Array(3),Array(3)] 
+    // var NXPatB=[Array(3),Array(3),Array(3)] 
+    var NA=[Array(3),Array(3),Array(3)]
+    var NB=[Array(3),Array(3),Array(3)]
+    var {ArrA, ArrB, arrA, arrB}=this;
+    var nPat=0, nA=0, nB=0, nAPat=0, nBPat=0
+    for(var i=0;i<3;i++){
+      for(var j=0;j<3;j++){
+        NPat[i][j]=ArrA[i][j].length
+        NA[i][j]=arrA[i][j].length
+        NB[i][j]=arrB[i][j].length
+        if(i==0) NAPat[i][j]=0;
+        else if(i==1) NAPat[i][j]=NPat[i][j]; 
+        else { 
+          var arrTmp=ArrA[i][j], obj={}
+          for(var k=0;k<arrTmp.length;k++){ var kk=arrTmp[k].sm; obj[kk]=1; } // kk should really be from the same funVal as unTangleManyToManyF
+          Key=Object.keys(obj); NAPat[i][j]=Key.length;
+        }
+        if(j==0) NBPat[i][j]=0
+        else if(j==1) NBPat[i][j]=NPat[i][j]
+        else {
+          var arrTmp=ArrB[i][j], obj={}
+          for(var k=0;k<arrTmp.length;k++){ var kk=arrTmp[k].sm; obj[kk]=1; } // kk should really be from the same funVal as unTangleManyToManyF
+          var Key=Object.keys(obj); NBPat[i][j]=Key.length
+        } 
+        
+        nPat+=NPat[i][j]
+        nAPat+=NAPat[i][j]
+        nBPat+=NBPat[i][j]
+        nA+=NA[i][j]
+        nB+=NB[i][j]
+      }
+    }
+
+    var [nPatA10,nPatA11,nPatA12]=NPat[1]
+    var [nPatA20,nPatA21,nPatA22]=NPat[2]
+    var [,nPatB01,nPatB02]=NPat[0]
+    var [,nPatB11,nPatB12]=NPat[1]
+    var [,nPatB21,nPatB22]=NPat[2]
+
+    // var nPat01=nPatB01, nPat02=nPatB02
+    // var nPat10=nPatA10, nPat11=nPatA11, nPat12=nPatA12
+    // var nPat20=nPatA20, nPat21=nPatA21, nPat22=nPatA22
+
+    var [nA10,nA11,nA12]=NA[1]
+    var [nA20,nA21,nA22]=NA[2]
+    var [,nB01,nB02]=NB[0]
+    var [,nB11,nB12]=NB[1]
+    var [,nB21,nB22]=NB[2]
+
+    if(nA11!=nB11) {debugger; return [Error("nA11!=nB11")];  }
+
+    if(nPatB01!=nB01) {debugger; return [Error("nPatB01!=nB01")];}
+    if(nPatA10!=nA10) {debugger; return [Error("nPatA10!=nA10")];}
+    if(nPatA12!=nA12) {debugger; return [Error("nPatA12!=nA12")];}
+    if(nPatA21!=nB21) {debugger; return [Error("nPatA21!=nB21")];}
+    var objDetail={nPatA10,nPatA11,nPatA12,nPatA20,nPatA21,nPatA22, nPatB01,nPatB02,nPatB11,nPatB12,nPatB21,nPatB22,  nA10,nA11,nA12,nA20,nA21,nA22,  nB01,nB02,nB12,nB21,nB22}
+
+    return {NPat, NAPat, NBPat, NA, NB, nPat, nAPat, nBPat, nA, nB, objDetail} 
+
+  }
+  shallowCopy(){
+    var MatN=new Mat()
+    var {ArrAN, ArrBN, arrAN, arrBN}=MatN; 
+    var {ArrA, ArrB, arrA, arrB}=this;
+    for(var i=0;i<3;i++){
+      for(var j=0;j<3;j++){
+        var arrN=ArrAN[i][j], arrO=ArrA[i][j]
+        for(var k=0;k<arrO.length;k++){ arrN[k]=arrO[k]; }
+        var arrN=ArrBN[i][j], arrO=ArrB[i][j]
+        for(var k=0;k<arrO.length;k++){ arrN[k]=arrO[k]; }
+        var arrN=arrAN[i][j], arrO=arrA[i][j]
+        for(var k=0;k<arrO.length;k++){ arrN[k]=arrO[k]; }
+        var arrN=arrBN[i][j], arrO=arrB[i][j]
+        for(var k=0;k<arrO.length;k++){ arrN[k]=arrO[k]; }
+      }
+    }
+    return MatN
+  }
+  setMTMLabel(){ // Set many to many label
+    var {ArrA, ArrB}=this;
+    for(var i=0;i<3;i++){
+      for(var j=0;j<3;j++){
+        var ArrAij=ArrA[i][j]
+        for(var k=0;k<ArrAij.length;k++){
+          var arr=ArrAij[k]; 
+          for(var l=0;l<arr.length;l++){ var obj=arr[l]; obj.strMTMLab=`${i}${j}`; }
+        }
+        var ArrBij=ArrB[i][j]
+        for(var k=0;k<ArrBij.length;k++){
+          var arr=ArrBij[k]; 
+          for(var l=0;l<arr.length;l++){ var obj=arr[l]; obj.strMTMLab=`${i}${j}`; }
+        }
+      }
     }
   }
-  var arrARem=[].concat(arrAMTNull, arrAOTNull);
-  var arrBRem=[].concat(arrBNullTO,arrBNullTM)
-  var objOut={ArrAOTO, ArrBOTO, ArrAOTM, ArrBOTM, ArrAMTO, ArrBMTO, ArrAMTM, ArrBMTM, arrARem, arrBRem, arrAOTO, arrBOTO, arrAOTM, arrBOTM, arrAMTO, arrBMTO, arrAMTM, arrBMTM, ArrAOTNull, ArrAMTNull, ArrBNullTO, ArrBNullTM, arrAOTNull, arrAMTNull, arrBNullTO, arrBNullTM}
-  return [null, objOut]
-
 }
 
 
@@ -409,17 +622,15 @@ function similarity(s1, s2) {
 }
 
 
-var markRelBest=function(ArrA, ArrB){
+var setBestNameMatchFirst=function(ArrA, ArrB){
   for(var i in ArrA){
     var arrA=ArrA[i], arrB=ArrB[i], lenA=arrA.length, lenB=arrB.length
     var jBest=-1, kBest=-1, fitBest=0
     for(var j in arrA){
-      var elA=arrA[j];
-      var strNameA=elA.strName
+      var elA=arrA[j], strNameA=elA.strName
       //bestAByB=[None]*lenB
       for(var k in arrB){
-        var elB=arrB[k];
-        var strNameB=elB.strName
+        var elB=arrB[k], strNameB=elB.strName
         var rat=similarity(strNameA, strNameB)
         if(rat>fitBest) {fitBest=rat; jBest=j; kBest=k}
       }

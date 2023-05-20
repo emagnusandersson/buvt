@@ -3,7 +3,7 @@
 
 # Neutralinojs binaries and builds
 /bin
-/dist
+#/dist
 
 # Neutralinojs client (minified)
 neutralino.js
@@ -16,4 +16,6 @@ rename*
 result*
 frag*
 0*
+buvtDb*
+.tmp/
 

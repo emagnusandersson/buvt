@@ -18,31 +18,27 @@
     "os.*",
     "filesystem.*",
     "storage.*",
-    "debug.log"
+    "computer.*",
+    "debug.log",
+    "window.*"
   ],
   "globalVariables": {
     "TEST1": "Hello",
-    "TEST2": [
-      2,
-      4,
-      5
-    ],
-    "TEST3": {
-      "value1": 10,
-      "value2": {}
-    }
+    "TEST2": [ 2, 4, 5],
+    "TEST3": { "value1": 10,"value2": {} }
   },
   "modes": {
     "window": {
-      "title": "testApp",
+      "title": "buvt",
       "width": 800,
       "height": 500,
       "minWidth": 400,
       "minHeight": 200,
+      "center": true,
       "fullScreen": false,
       "alwaysOnTop": false,
-      "icon": "/resources/icons/appIcon.png",
-      "enableInspector": true,
+      "icon": "/resources/icons/iconWhite200Alpha.png",
+      "enableInspector": false,
       "borderless": false,
       "maximize": false,
       "hidden": false,
@@ -74,11 +70,11 @@
     }
   },
   "cli": {
-    "binaryName": "testApp",
+    "binaryName": "buvt",
     "resourcesPath": "/resources/",
     "extensionsPath": "/extensions/",
     "clientLibrary": "/resources/js/neutralino.js",
-    "binaryVersion": "4.9.0",
-    "clientVersion": "3.8.0"
+    "binaryVersion": "5.0.0",
+    "clientVersion": "5.0.1"
   }
 }

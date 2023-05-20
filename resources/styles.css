@@ -1,16 +1,166 @@
-#neutralinoapp {
-    text-align: center;
-    -webkit-user-select: none;
-    user-select: none;
-    cursor: default;
+
+html {height:100%}
+body  {height:100%; margin:0px;}
+* {box-sizing:border-box}
+
+
+a.external {
+	background:url(icons/external.png) center right no-repeat;
+	padding-right:13px;
 }
 
-#neutralinoapp h1{
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 20px;
+button {white-space:nowrap; width:intrinsic}
+[title] {text-decoration-line:underline; text-decoration-style:dotted} /*Add underline on any element with a title*/
+
+button.smallBut {padding: 0em 0.3em;
+  vertical-align: bottom;
+  font-size: 0.85em;
+  }
+
+table {border-collapse:collapse; border:solid 1px}
+tbody,thead,tr,td,th {border-width:inherit; border-style:inherit}
+
+th{background-color: lightgray;}
+td{background-color: white;}
+
+table td.crossed{
+   background-image: linear-gradient(to bottom right,  transparent calc(50% - 1px), black, transparent calc(50% + 1px)); 
 }
 
-#neutralinoapp > div {
-    font-size: 16px;
-    font-weight: normal;
+div.section {background:lightgray; margin-top:3px}
+.num {background:#a0a0a0}
+
+.argumentTab td { background-color: #ccc; word-wrap:anywhere}  /*word-break:break-all*/
+
+
+.tableSticky {border-width:0px;}
+.tableSticky td, .tableSticky th {background:lightgrey} /*box-shadow:0 0 0.3em 0.1em darkgrey inset*/
+.tableSticky th {position:sticky; position: -webkit-sticky; top:0px; background:white; z-index:1}
+
+
+.popupHover {
+  position:absolute;
+  z-index:9010; 
+  padding: 0.2em;
+  margin-left: .7em;
+  margin-top: .3em;
+  max-width: 16em;
+  border: 1px solid black;
+  background-color: #777;
+  color: white;
+  font-size: 0.95em;
+}
+
+
+.blanket{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  opacity:0.5;
+  position: fixed;
+  top:0px;
+  z-index: 9001;
+}
+.Center-Container {
+  position: relative;
+}
+.Center {
+  max-width:300px;
+  min-width:200px;
+  overflow: auto;  
+  margin: auto;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  background-color: #eeeeee;
+  border:1px solid;
+  z-index: 9002;
+  transform: translate(-50%,-50%);
+}
+/* .popupErrorConsole{
+  position:fixed;
+  bottom:0px;
+  background:yellow;
+  width:100%;
+  z-index:9002
+} */
+
+
+*.unselectable {
+  -webkit-user-select: none; /* Safari */
+  user-select: none;
+}
+
+
+.message{
+  border:black 1px solid;
+  position:absolute;
+  bottom:0%;
+  right:0%;
+  margin:0;
+  padding:1px;
+  background-color:#F7F700;
+  font-size: 0.8em;
+  z-index: 10000;
+}
+
+
+.btn-round {
+  text-align: center;
+  min-width: 1.6em;
+  height: 1.6em;
+  border-radius: 0.8em;
+  border: 1px solid;
+  display: inline-block;
+  text-decoration: none;
+  line-height: 1.7em;
+  cursor: default
+}
+.helpButtonGradient {
+  background-image: radial-gradient(#daeaff, #8cbdfd, #0064ea);;
+  color: #5780a8;
+  border: 0;
+  font-weight: bold;
+  font-size: 90%;
+}
+
+
+.viewDiv {
+  text-align:center;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center
+}
+.contDiv { /*Should be called contDivW, like: content-wrapper, or container or something*/
+  flex:1 1 0; 
+  overflow-y:scroll;
+  width:100%
+}
+.footDivW {
+  margin: 0em auto;
+  /* max-width: var(--maxWidth); */
+  width: 100%;
+  border-top: solid 1px;
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between
+}
+.footDiv {
+  min-width:min(100vw, var(--menuMaxWidth));
+  margin:.5em auto .5em;
+  display:flex;
+  align-items:center;
+  justify-content:space-between
+}
+span.labMatch{
+  background:#777;
+  display:inline-block;
+  font-weight:bold;
+}
+.labMatch>span{
+  width:2.5em;
+  display:inline-block;
 }

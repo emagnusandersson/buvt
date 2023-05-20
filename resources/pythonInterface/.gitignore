@@ -1,0 +1,6 @@
+
+.git/
+frag*
+0*/
+__pycache__/
+

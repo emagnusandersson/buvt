@@ -44,13 +44,6 @@ app.copyDeepB=function(o, isdeep=true){
   return n;
 }
 
-/*JSON.myParse=function(str){
-    try{
-        return [null, JSON.parse(str)];
-    }catch(err){
-        return [err, undefined];
-    }
-}*/
 app.isEmpty=function(v){ 
   if(typeof v=='undefined') return true;
   if(typeof v=='number') return v==0;
@@ -133,8 +126,8 @@ app.array_removeVal=function(a, ...Val){
   }
 }
 
-app.array_splice=function(arr,st,len,arrIns){
-  [].splice.apply(arr, [st,len].concat(arrIns));
+app.array_splice=function(arr, st, len, arrIns){
+  [].splice.apply(arr, [st, len].concat(arrIns));
 }
 app.array_merge=function(){  return Array.prototype.concat.apply([],arguments);  } // Does not modify origin
 //app.array_mergeM=function(a,b){  a.push.apply(a,b); return a; } // Modifies origin (first argument)
@@ -210,28 +203,25 @@ if(!String.format){
 }
 
 app.ltrim=function(str,charlist=String.raw`\s`){
-  return str.replace(new RegExp("^[" + charlist + "]+"), "");
+  return str.replace(new RegExp(`^[${charlist }]+`), "");
 };
 app.rtrim=function(str,charlist=String.raw`\s`){
-  return str.replace(new RegExp("[" + charlist + "]+$"), "");
+  return str.replace(new RegExp(`[${charlist }]+$`), "");
 };
 app.trim=function(str,charlist=String.raw`\s`){
-  return str.replace(new RegExp("^[" + charlist + "]+([^" + charlist + "]*)[" + charlist + "]+$"), function(m,n){return n;});
+  return str.replace(new RegExp(`^[${charlist }]*(.*?)[${charlist }]*$`), function(m,n){return n;});
+  // debugger
+  // str=ltrim(str,charlist);
+  // str=rtrim(str,charlist);
+  // return str
 }
 
 //app.pad2=function(n){ return ('0'+n).slice(-2);}
 app.pad2=function(n){return (n<10?'0':'')+n;}
 
+//app.pluralS=function(n) {return (n==1)?"":"s"}
+app.pluralS=function(n, s='',p='s') {return (n==1)?s:p}
 
-app.myParser=function(strText,obj){
-  var StrKey=Object.keys(obj);
-  for(var i=0;i<StrKey.length;i++){
-    var strKey=StrKey[i];
-    var regKey=new RegExp('\\$'+strKey, 'g');
-    strText.replace(regKey, obj[strKey]);
-  }
-  return strText;
-}
 
 
 
@@ -377,6 +367,32 @@ app.myUUID=function(){
   return Str.join("");
 }
 
+// app.myUUID=function(){
+//   var array = new Uint32Array(4);
+//   if('crypto' in app) app.crypto.getRandomValues(array); // On client
+//   else app.myCrypto.getRandomValues(array); // On Server (with npm library "crypto")
+  
+//   var Str=Array(4);
+//   for (var i = 0; i < array.length; i++) { Str[i]=array[i].toString(16).padStart(8,"0"); }
+//   return Str.join("");
+// }
+
+
+app.sha256=async function(message) {
+  // encode as UTF-8
+  const msgBuffer = new TextEncoder().encode(message);                    
+
+  // hash the message
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+
+  // convert ArrayBuffer to Array
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+  // convert bytes to hex string                  
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
 
 //
 // Dates and time
@@ -386,7 +402,7 @@ app.mySleepMS=async function(t){      await new Promise(resolve=>{setTimeout(res
 
 Date.prototype.toUnix=function(){return Math.round(this.valueOf()/1000);}
 Date.prototype.toISOStringMy=function(){return this.toISOString().substr(0,19);}
-app.swedDate=function(tmp){ if(tmp){tmp=UTC2JS(tmp);  tmp=tmp.getFullYear()+'-'+pad2(tmp.getMonth()+1)+'-'+pad2(tmp.getDate());}  return tmp;}
+app.swedDate=function(tmp){ if(tmp){tmp=UTC2JS(tmp);  tmp=`${tmp.getFullYear()}-${pad2(tmp.getMonth()+1)}-${pad2(tmp.getDate())}`;}  return tmp;}
 app.UTC2JS=function(utcTime){ var tmp=new Date(Number(utcTime)*1000);  return tmp;  }
 app.UTC2Readable=function(utcTime){ var tmp=new Date(Number(utcTime)*1000);   return tmp.toLocaleString();  }
 //myISODATE=function(d){ return d.toISOString().substr(0,19);}
@@ -394,18 +410,16 @@ app.UTC2Readable=function(utcTime){ var tmp=new Date(Number(utcTime)*1000);   re
 //unixNow=function(){return Math.round(unixNowMS()/1000);}
 app.unixNow=function(){return (new Date()).toUnix();}
 
-app.getSuitableTimeUnit=function(t){ // t in seconds
-  var tabs=Math.abs(t), tsign=t>=0?+1:-1;
-  if(tabs<=90) return [tsign*tabs,'s'];
-  tabs/=60; // t in minutes
-  if(tabs<=90) return [tsign*tabs,'m']; 
-  tabs/=60; // t in hours
-  if(tabs<=36) return [tsign*tabs,'h'];
-  tabs/=24; // t in days
-  if(tabs<=2*365) return [tsign*tabs,'d'];
-  tabs/=365; // t in years
-  return [tsign*tabs,'y'];
+app.getSuitableTimeUnit=function(t, objMax={s:120,m:120,h:48,d:730}){ // t in seconds
+  var tAbs=Math.abs(t), tSign=t>=0?1:-1, objConv={s:60,m:60,h:24,d:365}, arrK=['s','m','h','d'], strU='y'
+  for(var k of arrK){
+    if(tAbs<=objMax[k]) {strU=k; break}
+    tAbs/=objConv[k];
+  }
+  tAbs=Math.round(tAbs)
+  return [tSign*tAbs,strU];
 }
+
 app.getSuitableTimeUnitStr=function(tdiff,objLang=langHtml.timeUnit,boLong=0,boArr=0){
   var [ttmp,u]=getSuitableTimeUnit(tdiff), n=Math.round(ttmp);
   var strU=objLang[u][boLong][Number(n!=1)];
@@ -440,7 +454,7 @@ app.tabNStrCol2ArrObj=function(tabNStrCol){  //Ex: {tab:[[0,1],[2,3]],StrCol:['a
 }
 
 app.deserialize=function(serializedJavascript){
-  return eval('(' + serializedJavascript + ')');
+  return eval(`(${serializedJavascript })`);
 }
 
 app.parseQS=function(str){
@@ -460,7 +474,7 @@ app.filterPropKeyByB=function(Prop, iBit){ // Check all Prop[strKey].b[iBit] for
 
 app.b64UrlDecode=function(b64UrlString, boUint8Array=false){  // boUint8Array==true => output is in Uint8Array
   const padding='='.repeat((4-b64UrlString.length%4) % 4);
-  const base64=(b64UrlString+padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const base64=(b64UrlString+padding).replace(/\-/g, '+').replace(/_/g, '/'); 
 
   const rawData=globalThis.atob(base64);
   //const rawData=Buffer.from(base64, 'base64').toString();
@@ -502,19 +516,116 @@ app.myLinkEscape=function(str){ str=myAttrEscape(str); if(str.startsWith('javasc
  * Added with buvt
  **********************************************************/
 
-  
-var myMD5=async function(strFileName){
-  //strhash=subprocess.check_output(['md5sum', strFileName])
-  //return strhash.split(null, 1)[0]
-  var [err, objT] = await Neutralino.os.execCommand('md5sum '+strFileName).toNBP();
-  if(err) { debugger; return [err];}
-  var {exitCode, pid, stdErr, stdOut}=objT;
-  if(exitCode) {
-    debugger; return [new Error(stdErr)]
-  };
-  stdOut=stdOut.trim()
-  return [null, stdOut]
+// app.escDoubleQuote=function(str){
+//   return str.replaceAll(/"/g,`\\"`)
+// }
+app.escBashChar=function(str){
+  return str.replaceAll(/([ "'\(\)])/g,`\\$1`)
 }
+// app.escBashChar=function(str){
+//   return str.replaceAll(/([^a-zA-Z0-9,._+@%/-])/g,`\\$1`)
+// }
+
+  //escBashCharForDoubleQuote
+app.escBashDQ=function(str){ 
+  return str.replaceAll(/(["\$\\`])/g,`\\$1`)
+  //return str.replaceAll(/([\"\$\`])/g,`\\$1`)
+}
+if(NL_OS=='Windows'){
+  app.escBashDQ=function(str){
+    return str.replaceAll(/(["\$`\\\[\]\{\}\!\+\?])/g,`\\$1`)
+  }
+}
+
+  //escInQ
+app.escBashQ=function(str){ 
+  var strT=str.replaceAll(/'/g,`'"'"'`)
+  return strT
+}
+app.escCMDQ=function(str){ // Windows error message:   A file name can't contain any of the following characters: \/:*?"<>|
+  //var strT= str.replaceAll(/(["\$`\\\[\]\{\}\+\?])/g,`\\$1`)  
+  //var strT= str.replaceAll(/(["\$`\\\[\]\{\}\+\?])/g,`\\$1`)  
+  var strT=str
+  return strT
+}
+
+  
+app.escInQ=function(str){
+  if(NL_OS=='Windows'){ 
+    str=escCMDQ(str)
+    str= '"'+str+'"'
+  }
+  else{
+    str=escBashQ(str)
+    str= "'"+str+"'"
+  }
+  return str
+}
+
+
+var myMD5=async function(objEntry, fsDir, boSizeKnown=true){
+  var {strName, strType}=objEntry;
+  var fsName=fsDir+charF+strName, strhash
+  var fsNameEsc=escInQ(fsName)
+
+    // "certutil -hashfile fsDir MD5" cause an error if size is zero, so that is why workarounds are needed.
+  var strMD5OfEmptyString='d41d8cd98f00b204e9800998ecf8427e'
+  if(boSizeKnown && objEntry.size==0) return [null, strMD5OfEmptyString]; 
+
+  if(NL_OS=='Windows'){ // Running certutil(...) on a soft (symbolic) links (files ending with .lnk) gives a different result than running certutil on the target so everythings seems fine.
+    var strCommand=`certutil -hashfile ${fsNameEsc} MD5`;
+    var [err, objT] = await Neutralino.os.execCommand(strCommand).toNBP();  if(err) { debugger; return [err];}
+    var {exitCode, pid, stdErr, stdOut}=objT;
+    if(exitCode) {
+      if(stdOut.indexOf('1006')!=-1){
+        var [err, result]=await Neutralino.filesystem.getStats(fsName).toNBP(); if(err) {debugger; return [err];}
+        var {size}=result;
+        if(size) {debugger; return [Error(stdErr+'\n'+stdOut+`\nSize of ${fsName} = ${size}`)];}
+        return [null, strMD5OfEmptyString];
+      }
+      debugger; return [Error(stdErr+'\n'+stdOut)];  
+    };
+    stdOut=stdOut.trim()
+    var arrLines=stdOut.split(RegExp('\r?\n'))
+    strhash=arrLines[1]
+  }else{
+    if(strType=='l'){
+      var strCommand=`realpath --relative-to "${fsDir}" ${fsNameEsc}`;
+      var [err, objT] = await Neutralino.os.execCommand(strCommand).toNBP(); if(err) { debugger; return [err];}
+      var {exitCode, pid, stdErr, stdOut}=objT;
+      if(exitCode) {
+        debugger; return [Error(stdErr)]
+      };
+      stdOut=stdOut.trim()
+      var strData=stdOut.split(' ')[0]
+  
+      var strDataEsc=escInQ(strData)
+      var strCommand=`echo -n ${strDataEsc} | md5sum`;
+      var [err, objT] = await Neutralino.os.execCommand(strCommand).toNBP(); if(err) { debugger; return [err];}
+      var {exitCode, pid, stdErr, stdOut}=objT;
+      if(exitCode) {
+        debugger; return [Error(stdErr)]
+      };
+      stdOut=stdOut.trim()
+      strhash=stdOut.split(' ')[0]
+      
+    }else{
+      var strCommand=`md5sum ${fsNameEsc}`;
+      var [err, objT] = await Neutralino.os.execCommand(strCommand).toNBP(); if(err) { debugger; return [err];}
+      var {exitCode, pid, stdErr, stdOut}=objT;
+      if(exitCode) { debugger; return [Error(stdErr)];  };
+      stdOut=stdOut.trim()
+      strhash=stdOut.split(' ')[0]
+    }
+    
+  }
+
+  
+  return [null, strhash]
+}
+// certutil -hashfile fsDir MD5
+
+
 
 var mySplit=function(str, sep, n) {
   var out = [];
@@ -522,7 +633,6 @@ var mySplit=function(str, sep, n) {
   out.push(str.slice(sep.lastIndex));
   return out;
 }
-//console.log(mySplit("a=b=c=d", /=/g, 2)); // ['a', 'b', 'c=d']
 
 /*******************************************************
  * parseSSV   Parse "space separated data"
@@ -533,20 +643,21 @@ var mySplit=function(str, sep, n) {
 //var parseSSV=function(strData){
 var parseSSV=async function(fsFile){
   var [err, buf] = await Neutralino.filesystem.readFile(fsFile).toNBP(); if(err) return [err]
-  var strData=buf.toString()
+  var strData=buf.toString().trim()
   var arrOut=[]
   var arrInp=strData.split('\n')
 
-  var nData=arrInp.length
   //if(nData<=1) return [null, arrOut]
 
-  var strHead=arrInp[0].strip()
+  var strHead=arrInp[0].trim()
   var arrCol=strHead.split(' ')
   var nCol=arrCol.length
   var nSplit=nCol-1
 
+  //var nData=arrInp.length
+
   for(var strRow of arrInp.slice(1)){
-    var strRow=strRow.strip()
+    var strRow=strRow.trim()
     if(strRow.length==0) continue
     if(strRow.startsWith('#')) continue
     //var arrPart=strRow.split(null, nSplit)
@@ -563,11 +674,73 @@ var parseSSV=async function(fsFile){
 }
 
 
+
+
+/*******************************************************
+ * formatScalars
+ *******************************************************/
+// var calcStrTime=function(int32T, int32TNS){
+//   var strOut=int32T.myPadStart(10,'0')+'_'+int32TNS.myPadStart(9,'0'); return strOut;
+// }
+// var calcStrTimeSnake=function(int32T, int32TNS){
+//   var strOut=int32T.myPadStart(10,'0')+'_'+int32TNS.myPadStart(9,'0'); return strOut;
+// }
+
+
+
+var roundMTime64=function(t, charTRes=settings.charTRes){
+  const intDiv=IntTDiv[charTRes]
+  if(typeof intDiv=='undefined') throw Error('unrecognized charTRes')
+  var tR=(t/intDiv)*intDiv
+  return tR
+}
+var createSM64=function(size, mtime_ns64){ return size.myPad0(12)+'_'+mtime_ns64.toString(); }
+
+// var calcStrTime=function(t, tfrac){ 
+//   if(typeof tFrac=='undefined') var strOut=t.toString().padStart(19,'0')
+//   else var strOut=t.myPadStart(10,'0')+tfrac.myPadStart(9,'0');
+//   return strOut
+// }
+var calcStrTime=function(t){ 
+  var strOut=t.toString().padStart(19,'0')
+  return strOut
+}
+var calcStrTimeSnake=function(strT){
+  var strOut=strT.slice(0,10)+'_'+strT.slice(10); return strOut;
+}
+
+var formatWSnake=function(n){
+  const numberFormatter = new Intl.NumberFormat();
+  var str=numberFormatter.format(n)
+  //var str=n.toLocaleString()
+  str.replaceAll(',', '_')
+  return str;
+}
+// var formatWSnake=function(n){
+//   //var strN=n.toLocaleString()
+//   var strN=n.toString()
+//   var l=strN.length
+//   var iStart=0, step=((l+2)%3)+1
+//   var nGroup=Math.ceil(l/3)
+//   var arr=Array(nGroup)
+//   //for(var i=iEnd0;i<l;i+=3){
+//   for(var j=0;j<nGroup;j++){
+//     arr[j]=strN.slice(iStart,iStart+step);
+//     iStart=iStart+step; step=3
+//   }
+//   return arr.join('_')
+// }
+// var a=formatWSnake(12_345_678); console.log(a)
+// var b=formatWSnake(123_456_789); console.log(b)
+// var c=formatWSnake(1_234_567_890); console.log(c)
+
+
 /*******************************************************
  * formatColumnData
  *******************************************************/
 var createFormatInfo=function(arrKey, objType={}){
   for(var key of arrKey){
+    var strType
     if(key.slice(0,2)=='bo' && isupper(key[2])) strType='boolean'
     else if(key.slice(0,3)=='int' && isupper(key[3])) strType='number'
     else if(key[0]=='n' && isupper(key[1])) strType='number'
@@ -588,12 +761,11 @@ var formatColumnData=function(arrData, objType){
       row[key]=val
     }
   }
-// objType=createFormatInfo([*arrDB[0]]);   extend(objType, {"size":"number", "inode":"number", "mtime":"number", "inode0":"number"})
 }
 
 
 
-var formatTDiff=function(tDiff){
+var formatTDiff=function(tDiff){ // tDiff in seconds
   var boPos=tDiff>0
   var tDiffAbs=Math.abs(tDiff)
   var tDay=Math.floor(tDiffAbs/86400)
@@ -628,7 +800,7 @@ var formatTDiffStr=function(tDiff){
   var [tDay,tHour,tMin,tSec,tms,tus,tns]=formatTDiff(tDiff)
   //tDay,tHour,tMin,tSec,tFrac=formatTdiff(tDiff)
   //return "%d %02d:%02d:%02d.%03d %03d %03d" %(tDay,tHour,tMin,tSec,tms,tus,tns)
-  return tDay+' '+tHour.myPad0(2)+':'+tMin.myPad0(2)+':'+tSec.myPad0(2)+'.'+tms.myPad0(3)+' '+tus.myPad0(3)+' '+tns.myPad0(3)
+  return `${tDay} ${tHour.myPad0(2)}:${tMin.myPad0(2)}:${tSec.myPad0(2)}.${tms.myPad0(3)} ${tus.myPad0(3)} ${tns.myPad0(3)}`
   //return "%d %d:%d:%d.%s" %(tDay,tHour,tMin,tSec,tFrac)
 }
 
@@ -644,7 +816,7 @@ app.my_bisect_right=function(a, x, lo=0, hi=null, key=null, argExtra=null){
   slice of a to be searched.
   `
 
-  if(lo < 0) throw new Error('lo must be non-negative')
+  if(lo < 0) throw Error('lo must be non-negative')
   if(hi === null)  hi = a.length
   // Note, the comparison uses "<" to match the
   // __lt__() logic in list.sort() and in heapq.
@@ -683,7 +855,7 @@ app.my_bisect_left=function(a, x, lo=0, hi=null, key=null, argExtra=null){
   slice of a to be searched.
   `
 
-  if(lo < 0) throw new Error('lo must be non-negative')
+  if(lo < 0) throw Error('lo must be non-negative')
   if(hi===null)  hi = a.length
   // Note, the comparison uses "<" to match the
   // __lt__() logic in list.sort() and in heapq.
@@ -718,5 +890,5 @@ app.my_bisect_left=function(a, x, lo=0, hi=null, key=null, argExtra=null){
 //
 /*
 reload=function(){ confirm('reload'); window.location.reload(); }
-getColor = function(val, range){  var s=100, l=50, a=1,    h = 240-Math.round((240 / range) * val);      return "hsla("+h+","+s+"%,"+l+"%,"+a+")";    };
+getColor = function(val, range){  var s=100, l=50, a=1,    h = 240-Math.round((240 / range) * val);      return `hsla(${h},${s}%,${l}%,${a})`;    };
 */

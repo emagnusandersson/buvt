@@ -1,0 +1,30 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "singleFile",
+      "type": "python",
+      "request": "launch",
+      "program": "./pythonInterface.py",
+      "args": ["singleFile", "~/progPython/buvt-SourceFs/Source/aaa.txt"],
+      //"args": ["--boUseFilter", "1", "--fiDir", "~/progPython/buvt-TargetFs/Target"],
+      //"args": ["--boUseFilter", "1", "--fiDir", "/run/media/magnus/myPassport/buvt_folderForTest/mySync"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "parseTreeNDump",
+      "type": "python",
+      "request": "launch",
+      "program": "./pythonInterface.py",
+      "args": ["parseTreeNDump", "--fiDir", "~/progPython/buvt-SourceFs/Source"],
+      //"args": ["--boUseFilter", "1", "--fiDir", "~/progPython/buvt-TargetFs/Target"],
+      //"args": ["--boUseFilter", "1", "--fiDir", "/run/media/magnus/myPassport/buvt_folderForTest/mySync"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}

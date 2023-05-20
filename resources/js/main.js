@@ -1,7 +1,5 @@
-// This is just a sample app. You can structure your Neutralinojs app code as you wish.
-// This example app is written with vanilla JavaScript and HTML.
-// Feel free to use any frontend framework you like :)
-// See more details: https://neutralino.js.org/docs/how-to/use-a-frontend-library
+
+"use strict"
 
 //import fs, {promises as fsPromises} from "fs";
 //import fs from "fs";
@@ -13,73 +11,49 @@
 
 //import fs, {promises as fsPromises} from "fs";
 
-function showInfo() {
-    document.getElementById('info').innerHTML = `
-        ${NL_APPID} is running on port ${NL_PORT}  inside ${NL_OS}
-        <br/><br/>
-        <span>server: v${NL_VERSION} . client: v${NL_CVERSION}</span>
-        `;
-}
 
-function openDocs() {
-    Neutralino.os.open("https://neutralino.js.org/docs");
-}
+// Executed by execCommand
+// /home/magnus/progC/0NT/20230414ListFolder/main
+// rsync
+// stat --format="%i %.Y %f %s@%n" '+strPar+charF+strPrefix+'*'           // only in old myStatsOfDirContent
 
-function openTutorial() {
-    Neutralino.os.open("https://www.youtube.com/watch?v=txDlNNsgSh8&list=PLvTbqpiPhQRb2xNQlwMs0uVV0IN8N-pKj");
-}
+// md5sum
+// echo -n strData | md5sum
+// realpath --relative-to fsDir strFilename
 
-function setTray() {
-    if(NL_MODE != "window") {
-        console.log("INFO: Tray menu is only available in the window mode.");
-        return;
-    }
-    let tray = {
-        icon: "/resources/icons/trayIcon.png",
-        menuItems: [
-            {id: "VERSION", text: "Get version"},
-            {id: "SEP", text: "-"},
-            {id: "QUIT", text: "Quit"}
-        ]
-    };
-    Neutralino.os.setTray(tray);
-}
 
-function onTrayMenuItemClicked(event) {
-    switch(event.detail.id) {
-        case "VERSION":
-            Neutralino.os.showMessageBox("Version information",
-                `Neutralinojs server: v${NL_VERSION} | Neutralinojs client: v${NL_CVERSION}`);
-            break;
-        case "QUIT":
-            Neutralino.app.exit();
-            break;
-    }
-}
+// Note!!! max file size is 999999999999 bytes (So 1 TB is too big) (createSM64 should be rewritten if one needs bigger sizes)
+
+// Todo:
+// Check if one could have dry run on checking instead of "Check existance"
+// Cancel button when checking
+// Empty folders in target remains undeleted
+// syncbrutal should not reset numbers
+// Dark mode
+// "Save sort-order"-button, indDisplay
+// Checkbox switching default-Include/Exclude
+
+// T2D compare(target)-to-its-db-file (using sm only (not id))
+// Change name to myBuvt
+
+
+// Notes for video:
+//   Space for hash-codes in the meta-data
+//   Hard links
 
 function onWindowClose() {
     Neutralino.app.exit();
 }
 
+//console.log('NL_PATH'+NL_PATH)
 
 Neutralino.init();
 
-Neutralino.events.on("trayMenuItemClicked", onTrayMenuItemClicked);
 Neutralino.events.on("windowClose", onWindowClose);
-
-if(NL_OS != "Darwin") { // TODO: Fix https://github.com/neutralinojs/neutralinojs/issues/615
-    setTray();
-}
-
-//showInfo();
-
-
 
 
 
 globalThis.app=globalThis;
-app.leafFilter=".buvt-filter"
-app.leafFilterFirst=leafFilter
 
 
 
@@ -87,63 +61,144 @@ const normalizePath = path => path.replace(/[\\/]+/g, '/');
 
 
 window.elHtml=document.documentElement; window.elBody=document.body;
+window.boTouch = Boolean('ontouchstart' in document.documentElement);
+//var uLibImageFolder='./icons/'
+var fieImageFolder='./icons/'
+var fiBusy=fieImageFolder+'busy.gif';
+var fiBusyLarge=fieImageFolder+'busyLarge.gif';
+var fiIncreasing=fieImageFolder+'blackTriangleUp.png';
+var fiDecreasing=fieImageFolder+'blackTriangleDown.png';
+var fiUnsorted=fieImageFolder+'blackTriangleUpDown.png';
 
 
+var charBackSymbol='◄';
+var charDelete='✖'; //x, ❌, X, ✕, ☓, ✖, ✗, ✘
 
+var intConsoleHDefault=80
 
 var funLoad=async function(){
+  var [err, objT] =await Neutralino.window.setSize({ width: 900, height: 700 }).toNBP();
+  //setTray()
+  //var [err, objT] =await Neutralino.window.maximize().toNBP();
+
+  // var [err, objT] =await Neutralino.computer.getOSInfo().toNBP();
+  // var StrOSTypePat=['Linux', 'Windows'];
+  // var StrOSType=['linux', 'windows'];
+  // app.strOSType='linux'
+  // for(var i=0;i<StrOSType.length;i++){
+  //   if(objT.name.indexOf(StrOSTypePat[i])!=-1) strOSType=StrOSType[i];
+  // }
+  // if(err) { debugger; console.error(err);}
+  //app.charF=NL_OS=='Windows'?'\\':'/'
+  app.strExec=NL_OS=="Windows"?"start":"xdg-open"
+
+  
+
+  app.fsDataHome=await getDataHome();
+  app.FsFile=await calcFsFile(fsDataHome)
+
   //var fsDirSource=NL_CWD;
-  //alert("f")
   var flFile='resources/txt2.txt';
   //var [err, boExist]=await fileExist(flFile); if(err) return [err]
 
-  var fiDirSource=await getItemN('fiDirSource');  if(fiDirSource===null)  fiDirSource="";
-  var fiDirTarget=await getItemN('fiDirTarget');  if(fiDirTarget===null)  fiDirTarget="";
-  var fiMeta=await getItemN('fiMeta');  if(fiMeta===null)  fiMeta="";
-  var flPrepend=await getItemN('flPrepend');  if(flPrepend===null)  flPrepend="";
+  app.imgBusy=createElement('img').prop({src:fiBusy, alt:"busy"});
+  app.busyLarge=createElement('img').prop({src:fiBusyLarge, alt:"busy"}).css({position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', 'z-index':'1000', border:'solid 1px'}).addClass('invertOnDark').hide();
+  elBody.append(busyLarge);
 
-  // var [err, fsDirSource]=await myRealPath(fiDirSource); if(err) {console.log(err.message); debugger; return;}
-  // var [err, fsDirTarget]=await myRealPath(fiDirTarget); if(err) {console.log(err.message); debugger; return;}
-  //var prom = Neutralino.filesystem.readFile(flFile); 
-  // var fsFile=fsDirSource+'/'+flFile;
-  // var [err, DirEnt]=await Neutralino.filesystem.readDirectory('.').toNBP();
-  //var [err, stats] = await Neutralino.filesystem.getStats(flFile).toNBP(); debugger
+  var divMessageText=divMessageTextCreate();  copySome(window, divMessageText, ['setMess', 'resetMess', 'appendMess']);
+  var divMessageTextW=createElement('div').myAppend(divMessageText).css({width:'100%', position:'fixed', bottom:'0px', left:'0px', 'z-index':'10'});
+  //elBody.append(divMessageTextW);
+
+  //var [err]=await Neutralino.filesystem.createDirectory(fsDataHome+'/abc').toNBP(); if(err) return [err];
   
+  var [err, boExist]=await fileExist(fsDataHome); if(err) return [err];
+  if(!boExist){
+    var [err]=await myMkFolders([fsDataHome]);  if(err) {debugger; return [err]}
+  }
+ 
+  var [err, response]=await fetch(wPyParserOrg).toNBP(); if(err) return [err];
+  var [err, strPython]=await response.text().toNBP(); if(err) return [err];
+  var hashPython=await sha256(strPython)
+  app.fsPyParser=fsDataHome+charF+stemPyParser+'_'+hashPython.slice(0,10)+'.py';
+  var [err, boFileExist]=await fileExist(fsPyParser); if(err) return [err];
+  if(!boFileExist){
+    var [err]=await Neutralino.filesystem.writeFile(fsPyParser, strPython).toNBP(); if(err) return [err];
+  }
 
-  
-  var labSource=createElement('b').myText('Source');
-  var labTarget=createElement('b').myText('Target');
-  var labMeta=createElement('b').myText('Meta');
-  var labFlPrepend=createElement('b').myText('flPrepend');
-  // var inpSource=createElement('input').prop({type:'text'}); inpSource.value=fiDirSource
-  // var inpTarget=createElement('input').prop({type:'text'}); inpTarget.value=fiDirTarget
-  app.inpSource=createElement('input').prop({type:'text'}).attr('value',fiDirSource).on('change',  function(e){ 
-    setItemN('fiDirSource',this.value);return false;
-  } );
-  app.inpTarget=createElement('input').prop({type:'text'}).attr('value',fiDirTarget).on('change',  function(e){ 
-    setItemN('fiDirTarget',this.value);return false;
-  } );
-  app.inpMeta=createElement('input').prop({type:'text'}).attr('value',fiMeta).on('change',  function(e){ 
-    setItemN('fiMeta',this.value);return false;
-  } );
-  app.inpFlPrepend=createElement('input').prop({type:'text'}).attr('value',flPrepend).on('change',  function(e){ 
-    setItemN('flPrepend',this.value);return false;
-  } );
-  var Tmp=[inpSource, inpTarget, inpMeta, inpFlPrepend]; Tmp.forEach(ele=>ele.css({width:"20em"})); // span[name=cb]
-  var divSource=createElement('div').myAppend(labSource, inpSource);
-  var divTarget=createElement('div').myAppend(labTarget, inpTarget);
-  var divMeta=createElement('div').myAppend(labMeta, inpMeta);
-  var divFlPrepend=createElement('div').myAppend(labFlPrepend, inpFlPrepend);
-  var divA=createElement('div').myAppend(divSource, divTarget, divMeta, divFlPrepend);
-  app.divOut=createElement('div').myAppend('output');
-  var butCompareTreeToTree=createElement('button').myAppend('Compare tree to tree').on('click', compareTreeToTree);
-  var butHardLinkCheck=createElement('button').myAppend('Check for hard links').on('click', hardLinkCheck);
-  elBody.myAppend(divA, butHardLinkCheck, butCompareTreeToTree, divOut)
+  app.divConsole=createElement('pre').css({'font-family':'monospace', background:'lightgray', 'white-space':'pre-wrap', margin:'0px', width:"initial", height:intConsoleHDefault+'px', 'overflow-y':'scroll'})//.addClass('message')
+  app.myConsole=new MyConsole(divConsole)
+  //elBody.append(divConsole);
+  var funDragHRStartWHeight=function(){
+    viewFront.addClass('unselectable')
+    return divConsole.offsetHeight;
+  }
+  var funDragHR=function(hNew){
+    divConsole.css('height', hNew+'px');
+    viewFront.setBottomMargin(hNew)
+    viewCheck.setBottomMargin(hNew)
+    argumentTab.setBottomMargin(hNew)
+  }
+  var funDragHREnd=function(){
+    viewFront.removeClass('unselectable')
+  }
+  app.dragHR=dragHRExtend(createElement('hr'), funDragHRStartWHeight, funDragHR, funDragHREnd); dragHR.css({height:'0.3em',background:'grey',margin:0});
+  app.butClear=createElement('button').myAppend('C').prop({title:'Clear output console (and match results)'}).css({position: 'absolute', right: '0px', 'z-index':1}).on('click',  function(){
+    myConsole.clear();
+    viewFront.clearColumnDivsResult()
+  });
 
-  console.log("h")
+  app.hovHelpMy=createElement('span').myText('❓').addClass('btn-round', 'helpButtonGradient').css({color:'transparent', 'text-shadow':'0 0 0 #5780a8'}); //on('click', function(){return false;})    //'pointer-events':'none',
+  app.imgHelp=hovHelpMy;
 
+  app.divTop=divTopCreator(createElement('div')).css({display:'block', margin:'0.2em auto 0.2em'});
+
+  app.viewFront=viewFrontCreator(createElement('div'));
+  app.viewCheck=viewCheckCreator(createElement('div'));
+  app.argumentSetPop=argumentSetPopExtend(createElement('div'));
+  app.argumentDeletePop=argumentDeletePopExtend(createElement('div'));
+  app.argumentTab=argumentTabExtend(createElement('div')).addClass('viewDiv');
+  argumentTab.on('myupdate', async function(){await divTop.mySetLinkNLabel()});
+  await divTop.mySetLinkNLabel();
+
+
+  app.MainDiv=[viewFront, viewCheck, argumentSetPop, argumentDeletePop, argumentTab]; //viewT2D, viewT2T , editDiv, adminDiv
+  app.StrMainDiv=MainDiv.map(obj=>obj.toString());
+  app.StrMainDivFlip=array_flip(StrMainDiv);
+
+  funDragHR(intConsoleHDefault)
+
+
+  viewFront.setVis=async function(){
+    MainDiv.forEach(ele=>ele.hide()); this.show();
+    await this.setUp();
+    return true;
+  }
+  // viewT2D.setVis=async function(){
+  //   MainDiv.forEach(ele=>ele.hide()); this.show();
+  //   await this.setUp();
+  //   return true;
+  // }
+  // viewT2T.setVis=async function(){
+  //   MainDiv.forEach(ele=>ele.hide()); this.show();
+  //   await this.setUp();
+  //   return true;
+  // }
+  viewCheck.setVis=async function(){
+    MainDiv.forEach(ele=>ele.hide()); this.show();
+    await this.setUp();
+    return true;
+  }
+  argumentTab.setVis=async function(){
+    MainDiv.forEach(ele=>ele.hide()); this.show();
+    var [err]=await this.setUp(); if(err) return [err]
+    return [null, true];
+  }
+
+  //var MainNonDefault=AMinusB(MainDiv, [viewT2D]); MainNonDefault.forEach(ele=>ele.hide());
+  MainDiv.forEach(ele=>ele.hide());
+  elBody.append(...MainDiv);
+  viewFront.setVis()
 }
-
 
 
 funLoad()

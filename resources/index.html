@@ -4,32 +4,29 @@
     <meta charset="UTF-8">
     <title>NeutralinoJs sample app</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="icons/icon16.png" />
   </head>
   <body>
-    <!--<div id="neutralinoapp">
-      <h1>NeutralinoJs</h1>
-      <div id="info"></div>
-      <br/>
-      <img src="./icons/logo.gif" alt="Neutralinojs" />
-      <div>
-        <a href="#" onclick="openDocs();">Docs</a> &middot;  
-        <a href="#" onclick="openTutorial();">Tutorial</a>
-      </div>
-    </div>-->
-    <!-- Neutralino.js client. This file is gitignored, 
-        because `neu update` typically downloads it.
-        Avoid copy-pasting it. 
-        -->
-    <script  src="js/neutralino.js"></script>
+    <script src="js/neutralino.js"></script>
+<script>
+globalThis.app=globalThis;
+app.charF=NL_OS=='Windows'?'\\':'/';
+</script>
     <!-- Your app's source files -->
-    <script  src="js/lib.js"></script>
-    <script  src="js/libFilesystem.js"></script>
-    <script  src="js/libClient.js"></script>
-    <script  src="js/libBag.js"></script>
-    <script  src="js/libBagFS.js"></script>
-    <script  src="js/libMainUtil.js"></script>
-    <script  src="js/libMainFunction.js"></script>
-    <script  src="js/settings.js"></script>
-    <script  src="js/main.js"></script>
+    <script src="js/libMath.js"></script>
+    <script src="js/libBigInt.js"></script>
+    <script src="js/lib.js"></script>
+    <script src="js/libFs.js"></script>
+    <script src="js/libClient.js"></script>
+    <script src="js/libMyNeutralino.js"></script>
+    <script src="js/libBag.js"></script>
+    <script src="js/libBagFs.js"></script>
+    <script src="js/libParse.js"></script>
+    <script src="js/libMainFunction.js"></script>
+    <script src="js/libCheck.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/libDivs.js"></script>
+    <script src="js/main.js"></script>
+    
   </body>
 </html>
