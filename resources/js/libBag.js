@@ -1,4 +1,6 @@
 
+"use strict"
+
 // import bisect
 // import copy
 // from lib import *
@@ -9,13 +11,13 @@ var funStrShortest=function(rowA,rowB){
   if(strA<strB) return 1
   else if(strA>strB) return -1
   else if(strA==strB) return 0
-  else console.log("Error not lt, not gt and not equal???")
+  else myConsole.log("Error not lt, not gt and not equal???")
 }
 function funInt(a,b){
   if(a<b) return 1
   else if(a>b) return -1
   else if(a==b) return 0
-  else console.log("Error not lt, not gt and not equal???")
+  else myConsole.log("Error not lt, not gt and not equal???")
 }
 
 /***************************************************************************************
@@ -60,10 +62,10 @@ app.extractMatchingF=function(arrA, arrB, funM101){
     else if(boEndA && boEndB) break
     var rowA=arrA[iA], rowB=arrB[iB]
     var intVal=funM101(rowA,rowB)
-    if(intVal>0) {arrARem.push(rowA); iA+=1}     // The row exist in arrA but not in arrB
+    if(intVal>0) {arrARem.push(rowA); iA+=1}        // The row exist in arrA but not in arrB
     else if(intVal<0) {arrBRem.push(rowB); iB+=1}   // The row exist in arrB but not in arrA
     else if(intVal==0) {arrAMatching.push(rowA); arrBMatching.push(rowB); iB+=1; iA+=1}
-    else console.log("error when comparing strings")
+    else myConsole.log("error when comparing strings")
   }
   return [arrAMatching, arrBMatching, arrARem, arrBRem]
 }
@@ -107,7 +109,7 @@ var extractMatchingOneToManyUnsortedF=function(arrA, arrB, funVal, funB, funExtr
     var iBEnd = my_bisect_right(arrBWork, valA, iBStart, lenBWork, key=funB, argExtra=argExtra)
     if(iBStart!=iBEnd){
       arrAMatching.push(rowA);
-      debugger; alert() // Note to self, shouldn't the next line be  arrBMatching.push(...arrBWork.slice(iBStart,iBEnd));
+      debugger; alert() // Hmm, shouldn't the next line be  arrBMatching.push(...arrBWork.slice(iBStart,iBEnd));
       arrBMatching.push(arrBWork.slice(iBStart,iBEnd)); 
       arrBWork=[].concat(...arrBWork.slice(0,iBStart), ...arrBWork.slice(iBEnd))
     }
@@ -265,9 +267,9 @@ var extractMatchingManyToManyF=function(arrA, arrB, funVal){
  ***************************************************************************************/
 var extractUniques=function(arr,arrKey){
   if(!(arrKey instanceof Array)) arrKey=[arrKey]
-  var objDup={},  arrUniq=[];  //,  arrUniqified=[];
+  var objDup={},  arrUniq=[],  arrUniqified=[];
   var lenArr=arr.length
-  if(lenArr==0) return [arrUniqified, arrUniq, objDup]
+  if(lenArr==0) return [arrUniq, objDup, arrUniqified]
   for(var i=0;i<lenArr;i++){
     var row=arr[i], iNext=i+1
     var boMatch=true
@@ -291,23 +293,17 @@ var extractUniques=function(arr,arrKey){
     }
     else{
       //arrUniqified.push(extend({},row))
+      arrUniqified.push(row)
       if(strAttr in objDup) objDup[strAttr].push(row)
       else arrUniq.push(row)
     }
-
-    // Adding the last row.
-    //   If it had a duplicate, then it hasn't been added yet.
-    //   If it's unique, then it should be added.
   }
-
-  // rowNext=arr[lenArr-1]
-  // arrUniqified.push(rowNext)  
-  //return [arrUniq, objDup, arrUniqified]
-  return [arrUniq, objDup]
+  return [arrUniq, objDup, arrUniqified]
 }
 
-// var [arrUniq, objDup]= extractUniques([{"a":1}, {"a":1}, {"a":2}], "a")
-// var [arrUniq, objDup]= extractUniques([{"a":1}, {"a":1}, {"a":2}, {"a":2}], "a")
+// var [arrUniq, objDup, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}], "a")
+// var [arrUniq, objDup, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}, {"a":2}], "a")
+// var [arrUniq, objDup, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}, {"a":3}], "a")
 
 
 
@@ -321,7 +317,7 @@ var extractUniques=function(arr,arrKey){
 var objManyToManyRemoveEmpty=function(objA, objB){  // Modifies objA and objB
   var KeyDel=[]
   for(var key in objA){
-    var arrA=objA[key], arrB=objB[key], lenA=arrA.length; lenB=arrB.length;
+    var arrA=objA[key], arrB=objB[key], lenA=arrA.length, lenB=arrB.length;
     if(lenA==0 && lenB==0) KeyDel.push(key)
   }
   for(var key of KeyDel){

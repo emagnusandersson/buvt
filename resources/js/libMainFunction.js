@@ -1,36 +1,50 @@
 
+"use strict"
 
-var hardLinkCheck=async function(ev){
-  var [err, fsDirSource]=await myRealPath(inpSource.value.trim()); if(err) {debugger; console.error(err); return;}
-  var treeParser=new TreeParser()
-  var [err, arrSourcef, arrSourceF] =await treeParser.parseTree(fsDirSource, true); if(err) {debugger; console.error(err); return;}
+var hardLinkCheck=async function(fiDirSource, leafFilterFirst=leafFilter){
+  var [err, fsDirSource]=await myRealPath(fiDirSource); if(err) {debugger; myConsole.error(err); return;}
+  //var treeParser=new TreeParser()
+  //var [err, arrSourcef, arrSourceF] =await treeParser.parseTree(fsDirSource, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrSourcef, arrSourceF] =await parseTreePython(fsDirSource, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
   var funSorterNeg=(a,b)=>a.inode-b.inode;
   var arrSourcef=arrSourcef.sort(funSorterNeg);
-  var [arrUniq, objDup]= extractUniques(arrSourcef, "inode")
-  divOut.myText('Number of inodes with multiple references: '+Object.keys(objDup).length)
+  var arrSourceF=arrSourceF.sort(funSorterNeg);
+  var Str=[];
+  var [arrUniq, objDupf, arrUniqifiedf]= extractUniques(arrSourcef, "inode")
+  var [arrUniq, objDupF, arrUniqifiedF]= extractUniques(arrSourceF, "inode")
+  Str.push(`Hard linked files (inodes with multiple names): ${Object.keys(objDupf).length}`);
+  Str.push(`(inodes: ${arrUniqifiedf.length}, filenames: ${arrSourcef.length}), `);
+  Str.push(`<br>Hard linked folders (inodes with multiple names): ${Object.keys(objDupF).length}`);
+  Str.push(`(inodes: ${arrUniqifiedF.length}, dirnames: ${arrSourceF.length}) `);
+  myConsole.log(Str.join('\n'))
 }
-var compareTreeToTree=async function(){
+var compareTreeToTree=async function(fiDirSource, fiDirTarget, leafFilterFirst=leafFilter){
+  var tStart=new Date()
+  var [err, fsDirSource]=await myRealPath(fiDirSource); if(err) {debugger; myConsole.error(err); return;}
+  var [err, fsDirTarget]=await myRealPath(fiDirTarget); if(err) {debugger; myConsole.error(err); return;}
 
-  var [err, fsDirSource]=await myRealPath(inpSource.value.trim()); if(err) {debugger; console.error(err); return;}
-  var [err, fsDirTarget]=await myRealPath(inpTarget.value.trim()); if(err) {debugger; console.error(err); return;}
-
-  var treeParser=new TreeParser()
-  var [err, arrSourcef, arrSourceF] =await treeParser.parseTree(fsDirSource, true); if(err) {debugger; console.error(err); return;}
+  //var treeParser=new TreeParser()
+  //var [err, arrSourcef, arrSourceF] =await treeParser.parseTree(fsDirSource, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrSourcef, arrSourceF] =await parseTreePython(fsDirSource, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  var tStop=new Date();   myConsole.log('Source parsed, elapsed time '+(tStop-tStart)+'ms')
   var funSorterNeg=(a,b)=>a.inode-b.inode;
   var arrSourcef=arrSourcef.sort(funSorterNeg)
 
-  var [err, arrTargetf, arrTargetF] =await treeParser.parseTree(fsDirTarget, false); if(err) {debugger; console.error(err); return;}
+  //var [err, arrTargetf, arrTargetF] =await treeParser.parseTree(fsDirTarget, false); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrTargetf, arrTargetF] =await parseTreePython(fsDirTarget, false); if(err) {debugger; myConsole.error(err); return;}
   var arrTargetf=arrTargetf.sort(funSorterNeg)
 
   var comparisonWOID=new ComparisonWOID(arrSourcef, arrTargetf)
-  var [err]=comparisonWOID.compare(); if(err) {debugger; console.error(err); return;}
-  //if(err) {console.log(err.strTrace); debugger; return}
+  var [err]=comparisonWOID.compare(); if(err) {debugger; myConsole.error(err); return;}
+  //if(err) {myConsole.log(err.strTrace); debugger; return}
   //   var strCommandName=sys._getframe().f_code.co_name
   var strCommandName='compareTreeToTree'
   var [err, StrScreen, StrResultFile, StrRenameOTO, StrRenameAncestorOnly, StrRenameAncestorOnlyCmd, StrDuplicateInitial, StrDuplicateFinal, StrRenameAdditional]=comparisonWOID.format(strCommandName, fsDirTarget, 'buvt-meta.txt');
-  if(err) {debugger; console.error(err); return;}
+  if(err) {debugger; myConsole.error(err); return;}
   var [err]=await writeResultInfo(StrScreen, StrResultFile, StrRenameOTO, StrRenameAncestorOnly, StrRenameAncestorOnlyCmd, StrDuplicateInitial, StrDuplicateFinal, StrRenameAdditional);
-  if(err) {debugger; console.error(err); return;}
+  if(err) {debugger; myConsole.error(err); return;}
+
+  myConsole.log('elapsed time '+(new Date()-tStart)+'ms')
 }
 
 
@@ -95,116 +109,84 @@ var compareTreeToTree=async function(){
 // os.path.isfile
 // .copy
 // os.stat
-
-
-// print
-
+// strip
 // os.path.realpath
 // os.path
-
 //mtime=Math.floor
-
 //.count
 
 
 app.boAskBeforeWrite=true
 
-
-var compareTreeToST=async function(){
-  // parser = argparse.ArgumentParser()
-  // parser.add_argument('-d', "--fiDir", default='.')
-  // parser.add_argument("-m", "--fiMeta", default='buvt-meta.txt')
-  // parser.add_argument("--flPrepend", default='')
-
-  // args = parser.parse_args(argv)
-
+var compareTreeToMetaSTOnly=async function(fiDir='.', fiMeta='buvt-meta.txt', flPrepend='', leafFilterFirst=leafFilter){
     // Parse tree
-  //fsDir=os.path.realpath(args.fiDir)
-  var fiDir=inpSource.value.trim()
-  var [err, fsDir]=await myRealPath(fiDir); if(err) {debugger; console.error(err); return;}
-  var treeParser=new TreeParser()
-  var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true); if(err) {debugger; console.error(err); return;}
-  //for(var row of arrTreef) row.mtime=Math.floor(row.mtime) // Floor mtime
+  var [err, fsDir]=await myRealPath(fiDir); if(err) {debugger; myConsole.error(err); return;}
+  // var treeParser=new TreeParser()
+  // var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrTreef, arrTreeF] =await parseTreePython(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
 
-    // Parse DB
-  // fiMeta=args.fiMeta
-  // fsMeta=os.path.realpath(args.fiMeta)
-  var fiMeta=inpMeta.value.trim()
-  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; console.error(err); return;}
-  var [err, arrDB]=await parseSSVCustom(fsMeta)
+    // Parse fiMeta
+  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDB]=await parseMeta(fsMeta)
   if(err){
     if(err.code=="NE_FS_FILRDER"){err=null; arrDB=[]}
-    else{debugger; console.error(err); return}
+    else{debugger; myConsole.error(err); return}
   }
 
-  //var flPrepend=args.flPrepend;
-  var flPrepend=inpFlPrepend.value.trim()
-  var [arrDBNonRelevant, arrDBRelevant] =selectFrArrDB(arrDB, flPrepend)
-  var arrDBOrg=arrDB,   arrDB=arrDBRelevant
+  var [arrDBNonRelevant, arrDBRelevant]=selectFrArrDB(arrDB, flPrepend)
+  var arrDBOrg=arrDB, arrDB=arrDBRelevant
 
   var comparisonWOID=new ComparisonWOID(arrTreef, arrDB)
-  var [err]=comparisonWOID.compare(); if(err) {debugger; console.error(err); return;}
-  //strCommandName=sys._getframe().f_code.co_name
-  var strCommandName='compareTreeToST'
+  var [err]=comparisonWOID.compare(); if(err) {debugger; myConsole.error(err); return;}
+  var strCommandName='compareTreeToMetaSTOnly'
   var [err, StrScreen, StrResultFile, StrRenameOTO, StrRenameAncestorOnly, StrRenameAncestorOnlyCmd, StrDuplicateInitial, StrDuplicateFinal, StrRenameAdditional]=comparisonWOID.format(strCommandName, fsDir, fiMeta)
-  if(err) {debugger; console.error(err); return;}
+  if(err) {debugger; myConsole.error(err); return;}
   var [err]=await writeResultInfo(StrScreen, StrResultFile, StrRenameOTO, StrRenameAncestorOnly, StrRenameAncestorOnlyCmd, StrDuplicateInitial, StrDuplicateFinal, StrRenameAdditional)
-  if(err) {debugger; console.error(err); return;}
+  if(err) {debugger; myConsole.error(err); return;}
 }
 
-
-var syncTreeToTreeBrutal=async function(){ // buCopyUnlessNameSTMatch
-  // parser = argparse.ArgumentParser()
-  // parser.add_argument('-s', "--fiDirSource", default='.')
-  // parser.add_argument('-t', "--fiDirTarget", required=true)
-  // args = parser.parse_args(argv)
-  // fsDirSource=os.path.realpath(args.fiDirSource)
-  // fsDirTarget=os.path.realpath(args.fiDirTarget)
-  var fiDirSource=inpSource.value.trim()
-  var [err, fsDirSource]=await myRealPath(fiDirSource); if(err) {debugger; console.error(err); return;}
-  var fiDirTarget=inpTarget.value.trim()
-  var [err, fsDirTarget]=await myRealPath(fiDirTarget); if(err) {debugger; console.error(err); return;}
+var syncTreeToTreeBrutal=async function(fiDirSource, fiDirTarget, leafFilterFirst=leafFilter){ // buCopyUnlessNameSTMatch
+  var tStart=new Date()
+  var [err, fsDirSource]=await myRealPath(fiDirSource); if(err) {debugger; myConsole.error(err); return;}
+  var [err, fsDirTarget]=await myRealPath(fiDirTarget); if(err) {debugger; myConsole.error(err); return;}
 
 
     // Parse trees
-  var treeParser=new TreeParser()
-  var [err, arrSourcef, arrSourceF] =await treeParser.parseTree(fsDirSource, true); if(err) {debugger; console.error(err); return;}
-  var [err, arrTargetf, arrTargetF] =await treeParser.parseTree(fsDirTarget, false); if(err) {debugger; console.error(err); return;}
-  // for(var row of arrSourcef) row.mtime=Math.floor(row.mtime) // Floor mtime
-  // for(var row of arrTargetf) row.mtime=Math.floor(row.mtime) // Floor mtime
+  // var treeParser=new TreeParser()
+  // var [err, arrSourcef, arrSourceF] =await treeParser.parseTree(fsDirSource, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrSourcef, arrSourceF] =await parseTreePython(fsDirSource, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  //var [err, arrTargetf, arrTargetF] =await treeParser.parseTree(fsDirTarget, false); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrTargetf, arrTargetF] =await parseTreePython(fsDirTarget, false); if(err) {debugger; myConsole.error(err); return;}
 
-    // Remove untouched
+    // Separate out untouched files
   arrSourcef=arrSourcef.sort(funSorterStrNameNeg);   arrTargetf=arrTargetf.sort(funSorterStrNameNeg);
-  var [err, arrSourceUntouched, arrTargetUntouched, arrSourceRem, arrTargetRem]=extractMatching(arrSourcef, arrTargetf, ['strName', 'size', 'mtime'])
-  var lenSource=arrSourceRem.length, lenTarget=arrTargetRem.length
+  var [err, arrSourcefUntouched, arrTargetfUntouched, arrSourcefRem, arrTargetfRem]=extractMatching(arrSourcef, arrTargetf, ['strName', 'size', 'mtime'])
+  var lenSourcef=arrSourcefRem.length, lenTargetf=arrTargetfRem.length
+
+    // Separate out existing Folders
+  arrSourceF=arrSourceF.sort(funSorterStrNameNeg);   arrTargetF=arrTargetF.sort(funSorterStrNameNeg)
+  var [err, arrSourceFUntouched, arrTargetFUntouched, arrSourceFRem, arrTargetFRem]=extractMatching(arrSourceF, arrTargetF, ['strName'])
+  var lenSourceF=arrSourceFRem.length, lenTargetF=arrTargetFRem.length
+
+    
   //if(lenSource==0 && lenTarget==0) {print('Nothing to do, aborting'); return}
 
   //var funSorterNeg=(a,b)=>a.size-b.size || a.mtime-b.mtime;
-  //arrSourceRem=arrSourceRem.sort(funSorterNeg);   arrTargetRem=arrTargetRem.sort(funSorterNeg)
+  //arrSourcefRem=arrSourcefRem.sort(funSorterNeg);   arrTargetfRem=arrTargetfRem.sort(funSorterNeg)
 
-  //alert(`Deleting ${lenTarget} then creating ${lenSource} file(s). Press enter to continue.`)
+  arrSourceFRem=arrSourceFRem.sort(funSorterStrNameNeg) // So that root-most folders come before its children
+  arrTargetFRem=arrTargetFRem.sort(funSorterStrNameNegNeg) // So that leaf-most folders come before its parents
+
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Deleting ${lenTarget} then creating (copying) ${lenSource} file(s). Press enter to continue.`)
+    var boOK=confirm(`🗎 Deleting ${lenTargetf} file(s) \n🗀 Deleting ${lenTargetF} folder(s)\n🗀 Creating ${lenSourceF} folder(s).\n🗎 Creating (copying) ${lenSourcef} file(s).`)
+    if(!boOK) return
   }
-  var [err]=await myRmFiles(arrTargetRem, fsDirTarget);  if(err) {debugger; console.error(err); return;}
-  var [err]=await myCopyEntries(arrSourceRem, fsDirSource, fsDirTarget);  if(err) {debugger; console.error(err); return;}
-
-    // Delete remaining Folders
-  arrSourceF=arrSourceF.sort(funSorterStrNameNeg);   arrTargetF=arrTargetF.sort(funSorterStrNameNeg)
-  var [err, arrSourceUntouched, arrTargetUntouched, arrSourceRem, arrTargetRem]=extractMatching(arrSourceF, arrTargetF, ['strName'])
-  var lenSource=arrSourceRem.length, lenTarget=arrTargetRem.length
-
-  if(lenSource==0 && lenTarget==0) {debugger; var err=new Error("lenSource==0 && lenTarget==0"); console.error(err); return;}
-
-  arrSourceRem=arrSourceRem.sort(funSorterStrNameNegNeg)
-  arrTargetRem=arrTargetRem.sort(funSorterStrNameNegNeg)
-  if(boAskBeforeWrite){
-    debugger
-    alert(`Deleting ${lenTarget} then creating (making sure they exist) ${lenSource} Folder(s). Press enter to continue.`)
-  }
-  var [err]=await myRmFolders(arrTargetRem, fsDirTarget);  if(err) {debugger; console.error(err); return;}
+  var [err]=await myRmFiles(arrTargetfRem, fsDirTarget);  if(err) {debugger; myConsole.error(err); return;}
+  var [err]=await myRmFolders(arrTargetFRem, fsDirTarget);  if(err) {debugger; myConsole.error(err); return;}
+  var [err]=await myMkFolders(arrSourceFRem, fsDirTarget);  if(err) {debugger; myConsole.error(err); return;}
+  var [err]=await myCopyEntries(arrSourcefRem, fsDirSource, fsDirTarget);  if(err) {debugger; myConsole.error(err); return;}
+  myConsole.log('elapsed time '+(new Date()-tStart)+'ms')
 }
 
 
@@ -219,38 +201,27 @@ var syncTreeToTreeBrutal=async function(){ // buCopyUnlessNameSTMatch
  * With Id
  *********************************************************************/
 
-var syncTreeToMeta=async function(strCommandName){
-  var boSync=strCommandName=='syncTreeToMeta'
-  // parser = argparse.ArgumentParser()
-  // parser.add_argument('-d', "--fiDir", default='.')
-  // parser.add_argument('-m', "--fiMeta", default='buvt-meta.txt')
-  // parser.add_argument("--flPrepend", default='')
-  // args = parser.parse_args(argv)
+var syncTreeToMeta=async function(fiDir='.', fiMeta='buvt-meta.txt', flPrepend='', strCommandName, leafFilterFirst=leafFilter){
+  var tStart=new Date();
+  var boCompareOnly=strCommandName=='compareTreeToMeta';
 
     // Parse tree
-  //fsDir=os.path.realpath(args.fiDir)
-  var fiDir=inpSource.value.trim()
-  var [err, fsDir]=await myRealPath(fiDir); if(err) {debugger; console.error(err); return;}
-  var treeParser=new TreeParser()
-  var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true); if(err) {debugger; console.error(err); return;}
-  //for(var row of arrTreef) row.mtime=Math.floor(row.mtime)  // Floor mtime
+  var [err, fsDir]=await myRealPath(fiDir); if(err) {debugger; myConsole.error(err); return;}
+  // var treeParser=new TreeParser()
+  // var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrTreef, arrTreeF] =await parseTreePython(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
 
     // Parse fiMeta
-  //fiMeta=args.fiMeta
-  //fsMeta=os.path.realpath(args.fiMeta)
-  var fiMeta=inpMeta.value.trim()
-  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; console.error(err); return;}
-  var [err, arrDB]=await parseSSVCustom(fsMeta)
+  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDB]=await parseMeta(fsMeta)
   if(err){
     if(err.code=="NE_FS_FILRDER"){err=null; arrDB=[]}
-    else{debugger; console.error(err); return}
+    else{debugger; myConsole.error(err); return}
   }
 
-  //flPrepend=args.flPrepend;
-  var flPrepend=inpFlPrepend.value.trim()
   var nPrepend=flPrepend.length
   var [arrDBNonRelevant, arrDBRelevant]=selectFrArrDB(arrDB, flPrepend)
-  var arrDBOrg=arrDB,   arrDB=arrDBRelevant
+  var arrDBOrg=arrDB, arrDB=arrDBRelevant
 
 
       // Check for duplicate inode
@@ -260,76 +231,93 @@ var syncTreeToMeta=async function(strCommandName){
   var [arrDBUniqueIno, objDBDup]=extractUniques(arrDB,"inode")
   var lenTreeDup=objTreeDup.length,   lenDBDup=objDBDup.length
   if(lenTreeDup) {
-    var strTmp=`Duplicate inode, in tree:${lenTreeDup} (hard links? (Note! hard links are !allowed))`, err=new Error(strTmp);
-    debugger; console.error(err);  return
+    var strTmp=`Duplicate inode, in tree:${lenTreeDup} (hard links? (Note! hard links are not allowed))`, err=new Error(strTmp);
+    debugger; myConsole.error(err);  return
   }
-  if(lenDBDup) { var strTmp=`Duplicate inode, in meta:${lenDBDup}`, err=new Error(strTmp); debugger; console.error(err);  return }
+  if(lenDBDup) { var strTmp=`Duplicate inode, in meta:${lenDBDup}`, err=new Error(strTmp); debugger; myConsole.error(err);  return }
 
 
-  var comparisonWID=ComparisonWID('inode', arrTreef, arrDB)
-  var [err]=comparisonWID.compare(); if(err) {debugger; console.error(err); return;}
-  //if(err) {debugger; console.error(err); return}
-  var [StrScreen, StrResultFile, StrRenameOTO, StrRenameAncestorOnly, StrRenameAncestorOnlyCmd]=comparisonWID.format(strCommandName, fsDir, fiMeta)
+  var comparisonWID=new ComparisonWID('inode', arrTreef, arrDB)
+  var [err]=comparisonWID.compare(); if(err) {debugger; myConsole.error(err); return;}
+  //if(err) {debugger; myConsole.error(err); return}
+  //var strCommandName=boCompareOnly?'compareTreeToMeta':'syncTreeToMeta'
+  var [err, StrScreen, StrResultFile, StrRenameOTO, StrRenameAncestorOnly, StrRenameAncestorOnlyCmd]=comparisonWID.format(strCommandName, fsDir, fiMeta)
+  if(err) {debugger; myConsole.error(err); return;}
   var [err]=await writeResultInfo(StrScreen, StrResultFile, StrRenameOTO, StrRenameAncestorOnly, StrRenameAncestorOnlyCmd)
-  if(err) {debugger; console.error(err); return;}
+  if(err) {debugger; myConsole.error(err); return;}
 
-  var [err, arrTreeUnTouched, arrDBUnTouched, arrTreeChanged, arrDBChanged, arrTreeMetaMatch, arrDBMetaMatch, arrTreeNST, arrDBNST, arrTreeMatchingId, arrDBMatchingId, arrTreeMatchingStrName, arrDBMatchingStrName, arrSourceRem, arrTargetRem]=comparisonWID.getCategoryArrays();
-  if(err) {debugger; console.error(err); return;}
+  var [arrTreeUnTouched, arrDBUnTouched, arrTreeChanged, arrDBChanged, arrTreeMetaMatch, arrDBMetaMatch, arrTreeNST, arrDBNST, arrTreeMatchingId, arrDBMatchingId, arrTreeMatchingStrName, arrDBMatchingStrName, arrSourceRem, arrTargetRem]=comparisonWID.getCategoryArrays();
 
   var arrCreate=arrSourceRem, arrDelete=arrTargetRem
   //boAllOK=arrCreate.length==0 && arrDelete.length==0
   //if(boAllOK) {print('No changes, aborting'); return}
-  if(!boSync) return
+  if(boCompareOnly) {
+    var tStop=new Date();   myConsole.log('elapsed time '+(tStop-tStart)+'ms')
+    return
+  }
 
+
+    // Change arrDBUnTouched
+  for(var i in arrTreeUnTouched){
+    var row=arrTreeUnTouched[i],   rowDB=arrDBUnTouched[i]
+    extend(rowDB, {"mtime_ns":row.mtime_ns}) // Incase lower resolution was used on the old database
+    //extend(rowDB, {strType:row.strType})     // Incase strType was not set in DB
+  }
 
     // Change arrDBChanged
   for(var i in arrTreeChanged){
   //for(var [i, row] of arrTreeChanged){
-    var row=arrTreeChanged[i]
-    var rowDB=arrDBChanged[i]
-    console.log(`Calculating hash for changed file: ${row.strName}`)
-    var [err, strHash]=myMD5(fsDir+'/'+row.strName); if(err) {debugger; console.error(err); return;}
-    extend(rowDB, {"strHash":strHash, "size":row.size, "mtime":row.mtime})
+    var row=arrTreeChanged[i],   rowDB=arrDBChanged[i]
+    myConsole.log(`Calculating hash for changed file: ${row.strName}`)
+    //var [err, strHash]=await myMD5(fsDir+'/'+row.strName); if(err) {debugger; myConsole.error(err); return;}
+    var [err, strHash]=await myMD5W(row, fsDir); if(err) {debugger; myConsole.error(err); return;} 
+    extend(rowDB, {"strHash":strHash, "size":row.size, "mtime":row.mtime, "mtime_ns":row.mtime_ns})
+    //extend(rowDB, {strType:row.strType})     // Incase strType was not set in DB
   }
 
     // Rename arrDBMetaMatch
   for(var i in arrTreeMetaMatch){
-    var row=arrTreeMetaMatch[i]
-    var rowDB=arrDBMetaMatch[i]
+    var row=arrTreeMetaMatch[i],   rowDB=arrDBMetaMatch[i]
     rowDB.strName=row.strName
+    extend(rowDB, {"mtime_ns":row.mtime_ns}) // Incase lower resolution was used on the old database
+    //extend(rowDB, {strType:row.strType})     // Incase strType was not set in DB
   }
 
     // Rename Copy renamed to origin
   for(var i in arrTreeNST){
-    var row=arrTreeNST[i]
-    var rowDB=arrDBNST[i]
+    var row=arrTreeNST[i],   rowDB=arrDBNST[i]
     rowDB.inode=row.inode
+    extend(rowDB, {"mtime_ns":row.mtime_ns}) // Incase lower resolution was used on the old database
+    //extend(rowDB, {strType:row.strType})     // Incase strType was not set in DB
   }
 
     // Matching inode
   for(var i in arrTreeMatchingId){
-    var row=arrTreeMatchingId[i]
-    var rowDB=arrDBMatchingId[i]
-    console.log(`Calculating hash for changed+renamed file: ${row.strName}`)
-    var [err, strHash]=myMD5(fsDir+'/'+row.strName); if(err) {debugger; console.error(err); return;}
-    extend(rowDB, {"strHash":strHash, "size":row.size, "mtime":row.mtime, "strName":row.strName})
+    var row=arrTreeMatchingId[i],   rowDB=arrDBMatchingId[i]
+    myConsole.log(`Calculating hash for changed+renamed file: ${row.strName}`)
+    //var [err, strHash]=await myMD5(fsDir+'/'+row.strName); if(err) {debugger; myConsole.error(err); return;}
+    var [err, strHash]=await myMD5W(row, fsDir); if(err) {debugger; myConsole.error(err); return;} 
+    extend(rowDB, {"strHash":strHash, "size":row.size, "mtime":row.mtime, "mtime_ns":row.mtime_ns, "strName":row.strName})
+    //extend(rowDB, {strType:row.strType})     // Incase strType was not set in DB
   }
 
     // Matching strName
   for(var i in arrTreeMatchingStrName){
-    var row=arrTreeMatchingStrName[i]
-    var rowDB=arrDBMatchingStrName[i]
-    console.log(`Calculating hash for deleted+recreated file: ${row.strName}`)
-    var [err, strHash]=myMD5(fsDir+'/'+row.strName); if(err) {debugger; console.error(err); return;}
-    extend(rowDB, {"inode":row.inode, "strHash":strHash, "size":row.size, "mtime":row.mtime})
+    var row=arrTreeMatchingStrName[i],   rowDB=arrDBMatchingStrName[i]
+    myConsole.log(`Calculating hash for deleted+recreated file: ${row.strName}`)
+    //var [err, strHash]=await myMD5(fsDir+'/'+row.strName); if(err) {debugger; myConsole.error(err); return;}
+    var [err, strHash]=await myMD5W(row, fsDir); if(err) {debugger; myConsole.error(err); return;} 
+    extend(rowDB, {"inode":row.inode, "strHash":strHash, "size":row.size, "mtime":row.mtime, "mtime_ns":row.mtime_ns})
+    //extend(rowDB, {strType:row.strType})     // Incase strType was not set in DB
   }
 
       // Remaining
   for(var i in arrCreate){
     var row=arrCreate[i]
-    console.log(`Calculating hash for created file: ${row.strName}`)
-    var [err, strHash]=myMD5(fsDir+'/'+row.strName); if(err) {debugger; console.error(err); return;}
-    extend(row, {"strHash":strHash}) //, "uuid":myUUID()
+    myConsole.log(`Calculating hash for created file: ${row.strName}`)
+    //var [err, strHash]=await myMD5(fsDir+'/'+row.strName); if(err) {debugger; myConsole.error(err); return;}
+    var [err, strHash]=await myMD5W(row, fsDir); if(err) {debugger; myConsole.error(err); return;} 
+    extend(row, {"strHash":strHash}) 
   }
 
 
@@ -347,10 +335,14 @@ var syncTreeToMeta=async function(strCommandName){
   
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Writing ${arrDBNew.length} entries to meta-file. Press enter to continue.`)
+    var lOld=arrDB.length, lNew=arrDBNew.length,lUntouched=arrDBUnTouched.length,lChanged=arrDBChanged.length,lMetaMatch=arrDBMetaMatch.length,lNST=arrDBNST.length,lMatchingId=arrDBMatchingId.length,lMatchingStrName=arrDBMatchingStrName.length,lCreate=arrCreate.length,lDelete=arrDelete.length;
+    var strOut=`Old meta-file had ${lOld} entries.\nThe new one will have ${lNew} entries:\nuntouched:${lUntouched}\nchanged:${lChanged}\nmetaMatch:${lMetaMatch}\nNST:${lNST}\nmatchingId:${lMatchingId}\nmatchingStrName:${lMatchingStrName}\ncreated:${lCreate}\ndeleted:${lDelete}`;
+    var boOK=confirm(strOut)
+    if(!boOK) return
   }
-  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; console.error(err); return;}
+  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; myConsole.error(err); return;}
+
+  var tStop=new Date();   myConsole.log('elapsed time '+(tStop-tStart)+'ms')
 }
 
 
@@ -366,62 +358,56 @@ var syncTreeToMeta=async function(strCommandName){
  * renameFinish functions
  *********************************************************************/
 
-var renameFinishToTree=async function(boDir=false, strStartToken=null){
+var renameFinishToTree=async function(fiDir, leafFile=leafRenameSuggestionsOTO, boDir=false, strStartToken=null){
   // parser = argparse.ArgumentParser()
   // parser.add_argument('-d', "--fiDir", required=true)
   // parser.add_argument('-f', "--file")
 
-  // args = parser.parse_args(argv)
-  //fsRenameFold=os.path.realpath(args.fiDir)
-  var fiDirTarget=inpTarget.value.trim()
-  var [err, fsDirTarget]=await myRealPath(fiDirTarget); if(err) {debugger; console.error(err); return;}
+  var [err, fsDir]=await myRealPath(fiDir); if(err) {debugger; myConsole.error(err); return;}
 
   // var leafFile;
   // if(args.file) leafFile=args.file
   // else if(boDir) leafFile=leafRenameSuggestionsAncestorOnly
   // else leafFile=leafRenameSuggestionsOTO
 
-  var leafFile=this.leafRenameFile||leafRenameSuggestionsOTO
-  //fsFile=os.path.realpath(leafFile)
   
 
-  var [err, arrRename]=await parseRenameInput(leafFile, strStartToken); if(err) {debugger; console.error(err); return}
+  var [err, arrRename]=await parseRenameInput(leafFile, strStartToken); if(err) {debugger; myConsole.error(err); return}
   var funSorterNeg=(a,b)=>{if(a.strOld>b.strOld) return 1; else if(a.strOld<b.strOld) return -1; return 0;};
   arrRename=arrRename.sort(funSorterNeg)
 
-  //alert(`Renaming ${arrRename.length} files. Press enter to continue.`)
+  //var boOK=confirm(`Renaming ${arrRename.length} files.`)
+  //if(!boOK) return
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Renaming ${arrRename.length} entry/entries. Press enter to continue.`)
+    var boOK=confirm(`Renaming ${arrRename.length} entry/entries.`)
+    if(!boOK) return
   }
-  var [err]=renameFiles(fsDirTarget, arrRename)
-  if(err) {debugger; console.error(err); return}
+  var [err]=await renameFiles(fsDir, arrRename)
+  if(err) {debugger; myConsole.error(err); return}
 }
 
-var renameFinishToMeta=async function(){
+var renameFinishToMeta=async function(fiMeta){
   // parser = argparse.ArgumentParser()
   // parser.add_argument("-m", "--fiMeta", default='buvt-meta.txt')
   // args = parser.parse_args(argv)
 
     // Parse leafRenameSuggestionsOTO
-  var [err, arrRename]=await parseRenameInput(leafRenameSuggestionsOTO); if(err) {debugger; console.error(err); return}
+  var [err, arrRename]=await parseRenameInput(leafRenameSuggestionsOTO); if(err) {debugger; myConsole.error(err); return}
   var funSorterNeg=(a,b)=>{if(a.strOld>b.strOld) return 1; else if(a.strOld<b.strOld) return -1; return 0;};
   arrRename=arrRename.sort(funSorterNeg)
 
     // Parse fiMeta
-  //fsMeta=os.path.realpath(args.fiMeta)
-  var fiMeta=inpMeta.value.trim()
-  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; console.error(err); return;}
-  var [err, arrDB]=await parseSSVCustom(fsMeta)
+  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDB]=await parseMeta(fsMeta)
   if(err){
     if(err.code=="NE_FS_FILRDER"){err=null; arrDB=[]}
-    else{debugger; console.error(err); return}
+    else{debugger; myConsole.error(err); return}
   }
   arrDB=arrDB.sort(funSorterStrNameNeg)
 
   var [err, arrRenameMatch, arrDBMatch, arrRenameRem, arrDBRem]=extractMatching(arrRename, arrDB, ['strOld'], ['strName']);
-  if(err) {debugger; console.error(err); return;}
+  if(err) {debugger; myConsole.error(err); return;}
 
     // Rename arrDBMatch
   for(var i in arrRenameMatch){
@@ -435,12 +421,13 @@ var renameFinishToMeta=async function(){
   
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Writing ${arrDBNew.length} entries to meta-file. Press enter to continue.`)
+    var boOK=confirm(`Writing ${arrDBNew.length} entries to meta-file.`)
+    if(!boOK) return
   }
-  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; console.error(err); return;}
+  debugger
+  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; myConsole.error(err); return;}
 
-  console.log('done')
+  myConsole.log('done')
 }
 
 var renameFinishToMetaByFolder=async function(){
@@ -450,18 +437,19 @@ var renameFinishToMetaByFolder=async function(){
 
     // Parse leafRenameSuggestionsAncestorOnly
   var [err, arrRename]=await parseRenameInput(leafRenameSuggestionsAncestorOnly, "RelevantAncestor")
-  if(err) {debugger; console.error(err); return}
+  if(err) {debugger; myConsole.error(err); return}
   var funSorterNeg=(a,b)=>{if(a.strOld>b.strOld) return 1; else if(a.strOld<b.strOld) return -1; return 0;};
   arrRename=arrRename.sort(funSorterNeg)
 
     // Parse fiMeta
-  //fsMeta=os.path.realpath(args.fiMeta)
-  var fiMeta=inpMeta.value.trim()
-  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; console.error(err); return;}
-  var [err, arrDB]=await parseSSVCustom(fsMeta)
+  //var fiMeta=inpMeta.value.trim()
+  var [err, result]=await argumentTab.getSelected(); if(err) {debugger; myConsole.error(err); return;}
+  var {fiMeta}=result
+  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDB]=await parseMeta(fsMeta)
   if(err){
     if(err.code=="NE_FS_FILRDER"){err=null; arrDB=[]}
-    else{debugger; console.error(err); return}
+    else{debugger; myConsole.error(err); return}
   }
   arrDB=arrDB.sort(funSorterStrNameNeg)
 
@@ -471,7 +459,7 @@ var renameFinishToMetaByFolder=async function(){
   var funExtra=function(val) {return val.strOld.length}
   var [arrRenameMatch, arrDBMatch, arrRenameRem, arrDBRem]=extractMatchingOneToManyUnsortedFW(arrRename, arrDB, funVal, funB, funExtra)
 
-  if(arrRenameMatch.length!=arrDBMatch.length) {var err=new Error("Error: arrRenameMatch.length!=arrDBMatch.length"); debugger; console.error(err); return;}
+  if(arrRenameMatch.length!=arrDBMatch.length) {var err=new Error("Error: arrRenameMatch.length!=arrDBMatch.length"); debugger; myConsole.error(err); return;}
 
     // Rename arrDBMatch
   for(var i in arrRenameMatch){
@@ -486,12 +474,12 @@ var renameFinishToMetaByFolder=async function(){
   
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Writing ${arrDBNew.length} entries to meta-file. Press enter to continue.`)
+    var boOK=confirm(`Writing ${arrDBNew.length} entries to meta-file.`)
+    if(!boOK) return
   }
-  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; console.error(err); return;}
+  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; myConsole.error(err); return;}
 
-  console.log('done')
+  myConsole.log('done')
 }
 
 
@@ -499,17 +487,18 @@ var renameFinishToMetaByFolder=async function(){
 /*********************************************************************
  * testFilter
  *********************************************************************/
-var testFilter=async function(){
+var testFilter=async function(leafFilterFirst=leafFilter){
   // parser = argparse.ArgumentParser()
   // parser.add_argument('-s', "--fiDirSource", default='.')
-  // args = parser.parse_args(argv)
-  //fsDirSource=os.path.realpath(args.fiDirSource)
-  var fiDirSource=inpSource.value.trim()
-  var [err, fsDirSource]=await myRealPath(fiDirSource); if(err) {debugger; console.error(err); return;}
-  var [err, arrRsf, arrRsF, arrRsOther]=await getRsyncList(fsDirSource); if(err) {debugger; console.error(err); return}
+  //var fiDirSource=inpSource.value.trim()
+  var [err, result]=await argumentTab.getSelected(); if(err) {debugger; myConsole.error(err); return;}
+  var {fiDirSource}=result
+  var [err, fsDirSource]=await myRealPath(fiDirSource); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrRsf, arrRsF, arrRsOther]=await getRsyncList(fsDirSource); if(err) {debugger; myConsole.error(err); return}
 
-  var treeParser=new TreeParser()
-  var [err, arrSourcef, arrSourceF] =await treeParser.parseTree(fsDirSource, true); if(err) {debugger; console.error(err); return;}
+  // var treeParser=new TreeParser()
+  // var [err, arrSourcef, arrSourceF] =await treeParser.parseTree(fsDirSource, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrSourcef, arrSourceF] =await parseTreePython(fsDirSource, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
 
   arrSourcef=arrSourcef.sort(funSorterStrNameNeg)
   arrSourceF=arrSourceF.sort(funSorterStrNameNeg)
@@ -522,7 +511,7 @@ var testFilter=async function(){
   for(var row of arrSourcef) StrOut.push(row.strName)
   for(var row of arrSourceF) StrOut.push(row.strName)
   var strOut=StrOut.join('\n')
-  var [err]=await Neutralino.filesystem.writeFile(leafResult, strTmp).toNBP(); if(err) {debugger; console.error(err); return;}
+  var [err]=await Neutralino.filesystem.writeFile(leafResult, strTmp).toNBP(); if(err) {debugger; myConsole.error(err); return;}
 
   var leafResultRs='resultFrTestFilterRs.txt'
   var StrOut=[]
@@ -531,15 +520,15 @@ var testFilter=async function(){
   StrOut.push('  arrRsOther:\n')
   for(var row of arrRsOther) StrOut.push(row)
   var strOut=StrOut.join('\n')
-  var [err]=await Neutralino.filesystem.writeFile(leafResultRs, strTmp).toNBP(); if(err) {debugger; console.error(err); return;}
+  var [err]=await Neutralino.filesystem.writeFile(leafResultRs, strTmp).toNBP(); if(err) {debugger; myConsole.error(err); return;}
 
 
-  console.log(`${leafResult} and ${leafResultRs} written`)
+  myConsole.log(`${leafResult} and ${leafResultRs} written`)
 }
 
 
 
-var convertHashcodeFileToMeta=async function(){ // Add inode and create uuid
+var convertHashcodeFileToMeta=async function(leafFilterFirst=leafFilter){ // Add inode and create uuid
   // parser = argparse.ArgumentParser()
   // parser.add_argument("-d", "--fiDir", default='.')
   // parser.add_argument("-h", "--fiHash", default='hashcodes.txt')
@@ -548,19 +537,21 @@ var convertHashcodeFileToMeta=async function(){ // Add inode and create uuid
   // args = parser.parse_args(argv)
 
     // Parse tree
-  var fsDir=os.path.realpath(args.fiDir)
-  var treeParser=new TreeParser()
-  var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true); if(err) {debugger; console.error(err); return;}  // boUseFilter should perhaps be false (although it might be slow)
-  //for(var row of arrTreef) row.mtime=Math.floor(row.mtime) // Floor mtime
+  var [err, fsDir]=await myRealPath(args.fiDir); if(err) {debugger; myConsole.error(err); return;}
+      // boUseFilter should perhaps be false (although it might be slow)
+  // var treeParser=new TreeParser()
+  // var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}  
+  var [err, arrTreef, arrTreeF] =await parseTreePython(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
 
     // Parse fiHash
-  var fsHash=os.path.realpath(args.fiHash)
-  var [err, arrDB]=await parseHashFile(fsHash); if(err) {debugger; console.error(err); return}
+  var [err, fsHash]=await myRealPath(args.fiHash); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDB]=await parseHashFile(fsHash); if(err) {debugger; myConsole.error(err); return}
 
     // fiMeta
-  //fsMeta=os.path.realpath(args.fiMeta)
-  var fiMeta=inpMeta.value.trim()
-  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; console.error(err); return;}
+  //var fiMeta=inpMeta.value.trim()
+  var [err, result]=await argumentTab.getSelected(); if(err) {debugger; myConsole.error(err); return;}
+  var {fiMeta}=result
+  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; myConsole.error(err); return;}
 
   // var [arrDBNonRelevant, arrDBRelevant] =selectFrArrDB(arrDB, args.flPrepend)
   // arrDBOrg=arrDB;   arrDB=arrDBRelevant
@@ -569,7 +560,7 @@ var convertHashcodeFileToMeta=async function(){ // Add inode and create uuid
   var [err, arrTreeMatch, arrDBMatch, arrTreeRem, arrDBRem]=extractMatching(arrTreef, arrDB, ['strName'], ['strName'])
 
   //if(arrTreeRem.length || arrDBRem.length) return "Error: "+"arrTreeRem.length OR arrDBRem.length"
-  if(arrTreeRem.length) {var err=new Error("Error: "+"arrTreeRem.length"); debugger; console.error(err); return;}  
+  if(arrTreeRem.length) {var err=new Error("Error: "+"arrTreeRem.length"); debugger; myConsole.error(err); return;}  
 
   for(var i in arrDBMatch){
     //if(!("uuid" in rowDB)) rowDB.uuid=myUUID() // Add uuid if it doesn't exist
@@ -582,11 +573,11 @@ var convertHashcodeFileToMeta=async function(){ // Add inode and create uuid
   
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Writing ${arrDBNew.length} entries to meta-file. Press enter to continue.`)
+    var boOK=confirm(`Writing ${arrDBNew.length} entries to meta-file.`)
+    if(!boOK) return
   }
-  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; console.error(err); return;}
-  console.log('done')
+  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; myConsole.error(err); return;}
+  myConsole.log('done')
 }
 
 
@@ -599,14 +590,14 @@ var convertMetaToHashcodeFile=async function(){ // Add inode and create uuid
   // args = parser.parse_args(argv)
 
     // Parse fiMeta
-  //fsMeta=os.path.realpath(args.fiMeta)
-  var fiMeta=inpMeta.value.trim()
-  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; console.error(err); return;}
-  var [err, arrDB]=await parseSSVCustom(fsMeta); if(err) {debugger; console.error(err); return}
+  //var fiMeta=inpMeta.value.trim()
+  var [err, result]=await argumentTab.getSelected(); if(err) {debugger; myConsole.error(err); return;}
+  var {fiMeta}=result
+  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDB]=await parseMeta(fsMeta); if(err) {debugger; myConsole.error(err); return}
 
     // Parse fiHash
-  //var fsHash=os.path.realpath(args.fiHash)
-  var [err, fsHash]=await myRealPath(fiHash); if(err) {debugger; console.error(err); return;}
+  var [err, fsHash]=await myRealPath(args.fiHash); if(err) {debugger; myConsole.error(err); return;}
 
   // var [arrDBNonRelevant, arrDBRelevant] =selectFrArrDB(arrDB, args.flPrepend)
   // arrDBOrg=arrDB;   arrDB=arrDBRelevant
@@ -615,16 +606,16 @@ var convertMetaToHashcodeFile=async function(){ // Add inode and create uuid
   
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Writing ${arrDBNew.length} entries to hash-file. Press enter to continue.`)
+    var boOK=confirm(`Writing ${arrDBNew.length} entries to hash-file.`)
+    if(!boOK) return
   }
   var [err]=await writeHashFile(arrDBNew, fsHash)
-  console.log('done')
+  myConsole.log('done')
 }
 
 
 
-var moveMeta=async function(){
+var moveMeta=async function(leafFilterFirst=leafFilter){
   // parser = argparse.ArgumentParser()
   // parser.add_argument("-s", "--fiMetaS", default='buvt-meta.txt')
   // parser.add_argument("-o", "--fiMetaOther", required=true)
@@ -633,22 +624,22 @@ var moveMeta=async function(){
   // args = parser.parse_args(argv)
 
     // Parse fiMetaS
-  var fsMetaS=os.path.realpath(args.fiMetaS)
-  var [err, arrDBS]=await parseSSVCustom(fsMetaS); if(err) {debugger; console.error(err); return}
+  var [err, fsMetaS]=await myRealPath(args.fiMetaS); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDBS]=await parseMeta(fsMetaS); if(err) {debugger; myConsole.error(err); return}
 
     // Parse fiMetaOther
-  var fsMetaOther=os.path.realpath(args.fiMetaOther)
-  var [err, arrDBOther]=await parseSSVCustom(fsMetaOther)
+  var [err, fsMetaOther]=await myRealPath(args.fiMetaOther); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDBOther]=await parseMeta(fsMetaOther)
   if(err){
     if(err.code=="NE_FS_FILRDER"){err=null; arrDBOther=[]}
-    else{debugger; console.error(err); return}
+    else{debugger; myConsole.error(err); return}
   }
 
     // Parse tree
-  var fsDir=os.path.realpath(args.fiDirT)
-  var treeParser=new TreeParser()
-  var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true); if(err) {debugger; console.error(err); return;}
-  //for(var row of arrTreef) row.mtime=Math.floor(row.mtime) // Floor mtime
+  var [err, fsDir]=await myRealPath(args.fiDirT); if(err) {debugger; myConsole.error(err); return;}
+  // var treeParser=new TreeParser()
+  // var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrTreef, arrTreeF] =await parseTreePython(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
 
   var flPrepend=args.flPrepend,    nPrepend=flPrepend.length
   var [arrDBOtherNonRelevant, arrDBOtherRelevant] =selectFrArrDB(arrDBOther, flPrepend)
@@ -660,7 +651,7 @@ var moveMeta=async function(){
 
   arrTreef=arrTreef.sort(funSorterStrNameNeg);   arrDBS=arrDBS.sort(funSorterStrNameNeg)
   var [err, arrTreeMatch, arrDBSMatch, arrTreeRem, arrDBSRem]=extractMatching(arrTreef, arrDBS, ['strName'], ['strName']);
-  if(err) {debugger; console.error(err); return;}
+  if(err) {debugger; myConsole.error(err); return;}
 
   //if(arrTreeRem.length || arrDBRem.length) return "Error "+"arrTreeRem.length OR arrDBRem.length"
   //if(arrTreeRem.length) return "Error: "+"arrTreeRem.length"
@@ -679,10 +670,10 @@ var moveMeta=async function(){
   arrDBOtherNew=arrDBOtherNonRelevant+arrDBOtherNew
   arrDBOtherNew=arrDBOtherNew.sort(funSorterStrNameNeg)
   if(boAskBeforeWrite){
-    debugger
-    alert(`Writing ${arrDBOtherNew.length} entries to meta-file. Press enter to continue.`)
+    var boOK=confirm(`Writing ${arrDBOtherNew.length} entries to meta-file.`)
+    if(!boOK) return
   }
-  var [err]=await writeMetaFile(arrDBOtherNew, fsMetaOther); if(err) {debugger; console.error(err); return;}
+  var [err]=await writeMetaFile(arrDBOtherNew, fsMetaOther); if(err) {debugger; myConsole.error(err); return;}
 }
 
 
@@ -694,39 +685,39 @@ var sortHashcodeFile=async function(){
   // args = parser.parse_args(argv)
 
     // Parse fiHash
-  var fsHash=os.path.realpath(args.fiHash)
-  var [err, arrDB]=await parseHashFile(fsHash); if(err) {debugger; console.error(err); return}
+  var [err, fsHash]=await myRealPath(args.fiHash); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDB]=await parseHashFile(fsHash); if(err) {debugger; myConsole.error(err); return}
 
   arrDB=arrDB.sort(funSorterStrNameNeg)
 
-  var [err]=await writeHashFile(arrDB, fsHash); if(err) {debugger; console.error(err); return;}
-  console.log('done')
+  var [err]=await writeHashFile(arrDB, fsHash); if(err) {debugger; myConsole.error(err); return;}
+  myConsole.log('done')
 }
 
 
-var changeIno=async function(){
+var changeIno=async function(leafFilterFirst=leafFilter){
   // parser = argparse.ArgumentParser()
   // parser.add_argument('-d', "--fiDir", default='.')
   // parser.add_argument("-m", "--fiMeta", default='buvt-meta.txt')
   // parser.add_argument("--flPrepend", default='')
   // args = parser.parse_args(argv)
-  var fsDir=os.path.realpath(args.fiDir)
+  var [err, fsDir]=await myRealPath(args.fiDir); if(err) {debugger; myConsole.error(err); return;}
 
     // Parse tree
-  var treeParser=new TreeParser()
-  var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true); if(err) {debugger; console.error(err); return;}
-  //for(var row of arrTreef) row.mtime=Math.floor(row.mtime) // Floor mtime
+  // var treeParser=new TreeParser()
+  // var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrTreef, arrTreeF] =await parseTreePython(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
 
     // Parse fiMeta
-  var fsMeta=os.path.realpath(args.fiMeta)
-  var [err, arrDB]=await parseSSVCustom(fsMeta); if(err) {debugger; console.error(err); return}
+  var [err, fsMeta]=await myRealPath(args.fiMeta); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDB]=await parseMeta(fsMeta); if(err) {debugger; myConsole.error(err); return}
 
   var [arrDBNonRelevant, arrDBRelevant] =selectFrArrDB(arrDB, args.flPrepend)
   var arrDBOrg=arrDB,   arrDB=arrDBRelevant
 
   arrTreef=arrTreef.sort(funSorterStrNameNeg);  arrDB=arrDB.sort(funSorterStrNameNeg)
   var [err, arrTreeMatch, arrDBMatch, arrTreeRem, arrDBRem]=extractMatching(arrTreef, arrDB, ['strName'], ['strName'])
-  if(err) {debugger; console.error(err); return;}
+  if(err) {debugger; myConsole.error(err); return;}
 
 
   for(var i in arrDBMatch){
@@ -740,30 +731,30 @@ var changeIno=async function(){
   
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Writing ${arrDBNew.length} entries to meta-file. Press enter to continue.`)
+    var boOK=confirm(`Writing ${arrDBNew.length} entries to meta-file.`)
+    if(!boOK) return
   }
-  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; console.error(err); return;}
+  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; myConsole.error(err); return;}
 
-  console.log('done')
+  myConsole.log('done')
 }
 
-var utilityMatchTreeAndMeta=async function(){ // For running different experiments 
+var utilityMatchTreeAndMeta=async function(leafFilterFirst=leafFilter){ // For running different experiments 
   // parser = argparse.ArgumentParser()
   // parser.add_argument('-d', "--fiDir", default='.')
   // parser.add_argument("-m", "--fiMeta", default='buvt-meta.txt')
   // parser.add_argument("--flPrepend", default='')
   // args = parser.parse_args(argv)
-  var fsDir=os.path.realpath(args.fiDir)
+  var [err, fsDir]=await myRealPath(args.fiDir); if(err) {debugger; myConsole.error(err); return;}
 
     // Parse tree
-  var treeParser=new TreeParser()
-  var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true); if(err) {debugger; console.error(err); return;}
-  //for(var row of arrTreef) row.mtime=Math.floor(row.mtime) // Floor mtime
+  // var treeParser=new TreeParser()
+  // var [err, arrTreef, arrTreeF] =await treeParser.parseTree(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrTreef, arrTreeF] =await parseTreePython(fsDir, true, leafFilterFirst); if(err) {debugger; myConsole.error(err); return;}
 
     // Parse fiMeta
-  var fsMeta=os.path.realpath(args.fiMeta)
-  var [err, arrDB]=await parseSSVCustom(fsMeta);if(err) {debugger; console.error(err); return}
+  var [err, fsMeta]=await myRealPath(args.fiMeta); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDB]=await parseMeta(fsMeta);if(err) {debugger; myConsole.error(err); return}
 
   var [arrDBNonRelevant, arrDBRelevant] =selectFrArrDB(arrDB, args.flPrepend)
   var arrDBOrg=arrDB,   arrDB=arrDBRelevant
@@ -783,12 +774,12 @@ var utilityMatchTreeAndMeta=async function(){ // For running different experimen
   
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Writing ${arrDBNew.length} entries to meta-file. Press enter to continue.`)
+    var boOK=confirm(`Writing ${arrDBNew.length} entries to meta-file.`)
+    if(!boOK) return
   }
-  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; console.error(err); return;}
+  var [err]=await writeMetaFile(arrDBNew, fsMeta); if(err) {debugger; myConsole.error(err); return;}
 
-  console.log('done')
+  myConsole.log('done')
 }
 
 
@@ -800,12 +791,12 @@ var utilityMatchMetaAndMeta=async function(){  // For running different experime
   // args = parser.parse_args(argv)
 
     // Parse fiMetaS
-  var fsMetaS=os.path.realpath(args.fiMetaS)
-  var [err, arrDBS]=await parseSSVCustom(fsMetaS); if(err) {debugger; console.error(err); return}
+  var [err, fsMetaS]=await myRealPath(args.fiMetaS); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDBS]=await parseMeta(fsMetaS); if(err) {debugger; myConsole.error(err); return}
 
     // Parse fiMetaT
-  var fsMetaT=os.path.realpath(args.fiMetaT)
-  var [err, arrDBT]=await parseSSVCustom(fsMetaT); if(err) {debugger; console.error(err); return}
+  var [err, fsMetaT]=await myRealPath(args.fiMetaT); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDBT]=await parseMeta(fsMetaT); if(err) {debugger; myConsole.error(err); return}
 
   var [arrDBTNonRelevant, arrDBTRelevant] =selectFrArrDB(arrDBT, args.flPrepend)
   var arrDBTOrg=arrDBT,   arrDBT=arrDBTRelevant
@@ -829,12 +820,12 @@ var utilityMatchMetaAndMeta=async function(){  // For running different experime
   
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Writing ${arrDBNew.length} entries to meta-file. Press enter to continue.`)
+    var boOK=confirm(`Writing ${arrDBNew.length} entries to meta-file.`)
+    if(!boOK) return
   }
-  var [err]=await writeMetaFile(arrDBNew, fsMetaT); if(err) {debugger; console.error(err); return;}
+  var [err]=await writeMetaFile(arrDBNew, fsMetaT); if(err) {debugger; myConsole.error(err); return;}
 
-  console.log('done')
+  myConsole.log('done')
 }
 
 var utilityAddToMetaStrName=async function(){  // For running different experiments 
@@ -844,8 +835,8 @@ var utilityAddToMetaStrName=async function(){  // For running different experime
   // args = parser.parse_args(argv)
 
     // Parse fiMetaS
-  var fsMeta=os.path.realpath(args.fiMeta)
-  var [err, arrDB]=await parseSSVCustom(fsMeta); if(err) {debugger; console.error(err); return}
+  var [err, fsMeta]=await myRealPath(args.fiMeta); if(err) {debugger; myConsole.error(err); return;}
+  var [err, arrDB]=await parseMeta(fsMeta); if(err) {debugger; myConsole.error(err); return}
   arrDB=arrDB.sort(funSorterStrNameNeg)
 
   var flPrepend=args.flPrepend, nPrepend=flPrepend.length
@@ -858,36 +849,25 @@ var utilityAddToMetaStrName=async function(){  // For running different experime
   
   //if(boDryRun) {print("(Dry run) exiting"); return}
   if(boAskBeforeWrite){
-    debugger
-    alert(`Writing ${arrDB.length} entries to meta-file. Press enter to continue.`)
+    var boOK=confirm(`Writing ${arrDB.length} entries to meta-file.`)
+    if(!boOK) return
   }
-  var [err]=await writeMetaFile(arrDB, fsMeta); if(err) {debugger; console.error(err); return;}
+  var [err]=await writeMetaFile(arrDB, fsMeta); if(err) {debugger; myConsole.error(err); return;}
 
-  console.log('done')
+  myConsole.log('done')
 }
 
 
-var check=async function(){ // buCopyUnlessNameSTMatch
-  // parser = argparse.ArgumentParser()
-  // parser.add_argument('-d', "--fiDir", default='.')
-  // parser.add_argument("-m", "--fiMeta", default='buvt-meta.txt')
-  // parser.add_argument( "--start", default=0)
-  // args = parser.parse_args(argv)
-  var fsDir=os.path.realpath(args.fiDir)
-  var fsMeta=os.path.realpath(args.fiMeta)
-  var intStart=int(args.start)
-  checkInterior(fsMeta, fsDir, intStart)
+var check=async function(fiDir='.', fiMeta='buvt-meta.txt', intStart=0){ // buCopyUnlessNameSTMatch
+  var [err, fsDir]=await myRealPath(fiDir); if(err) {debugger; myConsole.error(err); return;}
+  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; myConsole.error(err); return;}
+  checkHash(fsMeta, fsDir, intStart)
 }
 
-var checkSummarizeMissing=async function(){
-  // parser = argparse.ArgumentParser()
-  // parser.add_argument('-d', "--fiDir", default='.')
-  // parser.add_argument("-m", "--fiMeta", default='buvt-meta.txt')
-  // args = parser.parse_args(argv)
-  var fsDir=os.path.realpath(args.fiDir)
-  //var fsMeta=os.path.realpath(args.fiMeta)
-  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; console.error(err); return;}
-  var [err]=await checkSummarizeMissingInterior(fsMeta, fsDir); if(err) {debugger; console.error(err); return;}
+var checkSummarizeMissing=async function(fiDir='.', fiMeta='buvt-meta.txt'){
+  var [err, fsDir]=await myRealPath(fiDir); if(err) {debugger; myConsole.error(err); return;}
+  var [err, fsMeta]=await myRealPath(fiMeta); if(err) {debugger; myConsole.error(err); return;}
+  var [err]=await checkSummarizeMissingInterior(fsMeta, fsDir); if(err) {debugger; myConsole.error(err); return;}
 }
 
 var deleteResultFiles=async function(){ 
@@ -897,10 +877,10 @@ var deleteResultFiles=async function(){
     // except FileNotFoundError as e{ print("Couldn't delete: "+leafTmp) }  
     var [err, result]=await Neutralino.filesystem.removeFile(leafTmp).toNBP();
     if(err) {
-      if(err.code=='NE_FS_FILRMER') console.log("Couldn't delete: "+leafTmp)
-      else {debugger; console.error(err); return}
+      if(err.code=='NE_FS_FILRMER') myConsole.log("Couldn't delete: "+leafTmp)
+      else {debugger; myConsole.error(err); return}
     }
-    console.log("Deleted: "+leafTmp)
+    myConsole.log("Deleted: "+leafTmp)
   }
 }
 

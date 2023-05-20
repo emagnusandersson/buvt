@@ -44,13 +44,6 @@ app.copyDeepB=function(o, isdeep=true){
   return n;
 }
 
-/*JSON.myParse=function(str){
-    try{
-        return [null, JSON.parse(str)];
-    }catch(err){
-        return [err, undefined];
-    }
-}*/
 app.isEmpty=function(v){ 
   if(typeof v=='undefined') return true;
   if(typeof v=='number') return v==0;
@@ -133,8 +126,8 @@ app.array_removeVal=function(a, ...Val){
   }
 }
 
-app.array_splice=function(arr,st,len,arrIns){
-  [].splice.apply(arr, [st,len].concat(arrIns));
+app.array_splice=function(arr, st, len, arrIns){
+  [].splice.apply(arr, [st, len].concat(arrIns));
 }
 app.array_merge=function(){  return Array.prototype.concat.apply([],arguments);  } // Does not modify origin
 //app.array_mergeM=function(a,b){  a.push.apply(a,b); return a; } // Modifies origin (first argument)
@@ -223,15 +216,6 @@ app.trim=function(str,charlist=String.raw`\s`){
 app.pad2=function(n){return (n<10?'0':'')+n;}
 
 
-app.myParser=function(strText,obj){
-  var StrKey=Object.keys(obj);
-  for(var i=0;i<StrKey.length;i++){
-    var strKey=StrKey[i];
-    var regKey=new RegExp('\\$'+strKey, 'g');
-    strText.replace(regKey, obj[strKey]);
-  }
-  return strText;
-}
 
 
 
@@ -377,6 +361,16 @@ app.myUUID=function(){
   return Str.join("");
 }
 
+// app.myUUID=function(){
+//   var array = new Uint32Array(4);
+//   if('crypto' in app) app.crypto.getRandomValues(array); // On client
+//   else app.myCrypto.getRandomValues(array); // On Server (with npm library "crypto")
+  
+//   var Str=Array(4);
+//   for (var i = 0; i < array.length; i++) { Str[i]=array[i].toString(16).padStart(8,"0"); }
+//   return Str.join("");
+// }
+
 
 //
 // Dates and time
@@ -394,18 +388,16 @@ app.UTC2Readable=function(utcTime){ var tmp=new Date(Number(utcTime)*1000);   re
 //unixNow=function(){return Math.round(unixNowMS()/1000);}
 app.unixNow=function(){return (new Date()).toUnix();}
 
-app.getSuitableTimeUnit=function(t){ // t in seconds
-  var tabs=Math.abs(t), tsign=t>=0?+1:-1;
-  if(tabs<=90) return [tsign*tabs,'s'];
-  tabs/=60; // t in minutes
-  if(tabs<=90) return [tsign*tabs,'m']; 
-  tabs/=60; // t in hours
-  if(tabs<=36) return [tsign*tabs,'h'];
-  tabs/=24; // t in days
-  if(tabs<=2*365) return [tsign*tabs,'d'];
-  tabs/=365; // t in years
-  return [tsign*tabs,'y'];
+app.getSuitableTimeUnit=function(t, objMax={s:120,m:120,h:48,d:730}){ // t in seconds
+  var tAbs=Math.abs(t), tSign=t>=0?1:-1, objConv={s:60,m:60,h:24,d:365}, arrK=['s','m','h','d'], strU='y'
+  for(var k of arrK){
+    if(tAbs<=objMax[k]) {strU=k; break}
+    tAbs/=objConv[k];
+  }
+  tAbs=Math.round(tAbs)
+  return [tSign*tAbs,strU];
 }
+
 app.getSuitableTimeUnitStr=function(tdiff,objLang=langHtml.timeUnit,boLong=0,boArr=0){
   var [ttmp,u]=getSuitableTimeUnit(tdiff), n=Math.round(ttmp);
   var strU=objLang[u][boLong][Number(n!=1)];
@@ -502,19 +494,64 @@ app.myLinkEscape=function(str){ str=myAttrEscape(str); if(str.startsWith('javasc
  * Added with buvt
  **********************************************************/
 
-  
+app.escDoubleQuote=function(str){
+  return str.replaceAll(/"/g,`\\"`)
+}
+app.escBashChar=function(str){
+  return str.replaceAll(/([ "'\(\)])/g,`\\$1`)
+}
+
+
 var myMD5=async function(strFileName){
   //strhash=subprocess.check_output(['md5sum', strFileName])
   //return strhash.split(null, 1)[0]
-  var [err, objT] = await Neutralino.os.execCommand('md5sum '+strFileName).toNBP();
+  strFileName=escDoubleQuote(strFileName)
+  var [err, objT] = await Neutralino.os.execCommand('md5sum "'+strFileName+'"').toNBP();
   if(err) { debugger; return [err];}
   var {exitCode, pid, stdErr, stdOut}=objT;
   if(exitCode) {
     debugger; return [new Error(stdErr)]
   };
   stdOut=stdOut.trim()
+  stdOut=stdOut.split(' ')[0]
   return [null, stdOut]
 }
+
+var myMD5W=async function(objEntry, fsDir){
+  var {strName, strType}=objEntry;
+  var strFileName=fsDir+'/'+strName, strhash
+  strFileName=escDoubleQuote(strFileName)
+  if(strType=='l'){
+    var [err, objT] = await Neutralino.os.execCommand(`realpath --relative-to "${fsDir}" "${strFileName}"`).toNBP();
+    if(err) { debugger; return [err];}
+    var {exitCode, pid, stdErr, stdOut}=objT;
+    if(exitCode) {
+      debugger; return [new Error(stdErr)]
+    };
+    stdOut=stdOut.trim()
+    var strData=stdOut.split(' ')[0]
+
+    var [err, objT] = await Neutralino.os.execCommand(`echo -n "${strData}" | md5sum`).toNBP();
+    if(err) { debugger; return [err];}
+    var {exitCode, pid, stdErr, stdOut}=objT;
+    if(exitCode) {
+      debugger; return [new Error(stdErr)]
+    };
+    stdOut=stdOut.trim()
+    strhash=stdOut.split(' ')[0]
+  }else{
+    var [err, objT] = await Neutralino.os.execCommand('md5sum "'+strFileName+'"').toNBP();
+    if(err) { debugger; return [err];}
+    var {exitCode, pid, stdErr, stdOut}=objT;
+    if(exitCode) {
+      debugger; return [new Error(stdErr)]
+    };
+    stdOut=stdOut.trim()
+    strhash=stdOut.split(' ')[0]
+  }
+  return [null, strhash]
+}
+
 
 var mySplit=function(str, sep, n) {
   var out = [];
@@ -522,7 +559,7 @@ var mySplit=function(str, sep, n) {
   out.push(str.slice(sep.lastIndex));
   return out;
 }
-//console.log(mySplit("a=b=c=d", /=/g, 2)); // ['a', 'b', 'c=d']
+//myConsole.log(mySplit("a=b=c=d", /=/g, 2)); // ['a', 'b', 'c=d']
 
 /*******************************************************
  * parseSSV   Parse "space separated data"
@@ -533,20 +570,21 @@ var mySplit=function(str, sep, n) {
 //var parseSSV=function(strData){
 var parseSSV=async function(fsFile){
   var [err, buf] = await Neutralino.filesystem.readFile(fsFile).toNBP(); if(err) return [err]
-  var strData=buf.toString()
+  var strData=buf.toString().trim()
   var arrOut=[]
   var arrInp=strData.split('\n')
 
-  var nData=arrInp.length
   //if(nData<=1) return [null, arrOut]
 
-  var strHead=arrInp[0].strip()
+  var strHead=arrInp[0].trim()
   var arrCol=strHead.split(' ')
   var nCol=arrCol.length
   var nSplit=nCol-1
 
+  //var nData=arrInp.length
+
   for(var strRow of arrInp.slice(1)){
-    var strRow=strRow.strip()
+    var strRow=strRow.trim()
     if(strRow.length==0) continue
     if(strRow.startsWith('#')) continue
     //var arrPart=strRow.split(null, nSplit)

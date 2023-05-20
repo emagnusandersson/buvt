@@ -1,4 +1,6 @@
 
+"use strict"
+
 var funSorterStrNameNeg=(a,b)=>{if(a.strName>b.strName) return 1; else if(a.strName<b.strName) return -1; return 0;};
 var funSorterStrNameNegNeg=(a,b)=>{if(a.strName>b.strName) return -1; else if(a.strName<b.strName) return 1; return 0;};
 
@@ -120,28 +122,28 @@ var formatMatrix=function(Mat, nOTOAdd=0){
 
   var nOTO=Mat.arrAOTO.length, nAMTO=Mat.arrAMTO.length, nBMTO=Mat.arrBMTO.length, nAOTM=Mat.arrAOTM.length, nBOTM=Mat.arrBOTM.length, nAMTM=Mat.arrAMTM.length, nBMTM=Mat.arrBMTM.length, nAOTNull=Mat.arrAOTNull.length, nAMTNull=Mat.arrAMTNull.length, nBNullTO=Mat.arrBNullTO.length, nBNullTM=Mat.arrBNullTM.length
   var strNullTO=`${nBNullTO}`
-  var strNullTM=`${nBNullTM}(${nPatNullTM})`
+  var strNullTM=`${nBNullTM}(ST:${nPatNullTM})`
   var strOTM=`${nAOTM}\\${nBOTM}`
   var strOTNull=`${nAOTNull}`
-  var strMTNull=`${nAMTNull}(${nPatMTNull})`
+  var strMTNull=`${nAMTNull}(ST:${nPatMTNull})`
   var strMTO=`${nAMTO}\\${nBMTO}`
-  var strMTM=`${nAMTM}\\${nBMTM}(${nPatMTM})`
+  var strMTM=`${nAMTM}\\${nBMTM}(ST:${nPatMTM})`
   if(nPatNullTO!=nBNullTO) {debugger; return [new Error("nPatNullTO!=nBNullTO")];}
   if(nPatOTNull!=nAOTNull) {debugger; return [new Error("nPatOTNull!=nAOTNull")];}
   if(nPatOTM!=nAOTM) {debugger; return [new Error("nPatOTM!=nAOTM")];}
   if(nPatMTO!=nBMTO) {debugger; return [new Error("nPatMTO!=nBMTO")];}
   var nFileChangedNDeleted=nBNullTO+nBNullTM
   var nPatChangedNDeleted=nBNullTO+nPatNullTM
-  var strChangedNDeleted=`${nFileChangedNDeleted}(${nPatChangedNDeleted})`
+  var strChangedNDeleted=`${nFileChangedNDeleted} (ST:${nPatChangedNDeleted})`
   var nFileChangedNCreated=nAOTNull+nAMTNull
   var nPatChangedNCreated=nAOTNull+nPatMTNull
-  var strChangedNCreated=`${nFileChangedNCreated}(${nPatChangedNCreated})`
-  var strOut=`Source⇣ \ Target⇢  Null          One         Many
+  var strChangedNCreated=`${nFileChangedNCreated} (ST:${nPatChangedNCreated})`
+  var strOut=`Source⇣ \\ Target⇢  Null          One         Many
 Null ${"-".padStart(18)} ${strNullTO.padStart(12)} ${strNullTM.padStart(12)} ⇠Deleted+Changed: ${strChangedNDeleted}
 One  ${strOTNull.padStart(18)} ${(nOTO+nOTOAdd).myPadStart(12)} ${strOTM.padStart(12)}
 Many ${strMTNull.padStart(18)} ${strMTO.padStart(12)} ${strMTM.padStart(12)}
-     Created+Changed⇡ ${strChangedNCreated}`
-     return [null, strOut]
+       Created+Changed⇡ ${strChangedNCreated}`
+  return [null, strOut]
 }
 
 
@@ -150,7 +152,6 @@ var formatMatchingDataWDup=function(ArrS, ArrT, boIno){
   for(var i in ArrS){
     var arrS=ArrS[i], arrT=ArrT[i]
     var {size, mtime, inode}=arrS[0]
-    var strKeyST=size.toString()+mtime.toString()
     var strIno=boIno?inode.toString():""
 
     var strTmp=`  MatchingData ${strIno} ${size.myPadStart(10)} ${mtime.myPadStart(10)}`
@@ -206,7 +207,7 @@ class ComparisonWOID{
   
   compare(){
     var {arrSource, arrTarget}=this
-      // Untouched
+      // Remove untouched files
     //var funSorterNeg=(a,b)=>a.strName.localeCompare(b.strName);
     arrSource=arrSource.sort(funSorterStrNameNeg);   arrTarget=arrTarget.sort(funSorterStrNameNeg)
     var [err, arrA, arrB, arrSourceTouched, arrTargetTouched]=extractMatching(arrSource, arrTarget, ['strName', 'size', 'mtime']); if(err) return [err]
@@ -325,9 +326,9 @@ class ComparisonWOID{
     StrResultFile.push(...arrData)
 
     var strTmp=`Created: ${nSourceRem}${strDupExtra}`; StrScreen.push(strTmp);  StrResultFile.push('\n'+strTmp)
-    for(var row of this.arrSourceRem) StrResultFile.push(row.size.myPadStart(10) + row.mtime.myPadStart(10) + row.strName)
+    for(var row of this.arrSourceRem) StrResultFile.push(row.size.myPadStart(10)+' '+row.mtime.myPadStart(10)+' '+row.strName)
     var strTmp=`Deleted: ${nTargetRem}${strDupExtra}`; StrScreen.push(strTmp);  StrResultFile.push('\n'+strTmp)
-    for(var row of this.arrTargetRem) StrResultFile.push(row.size.myPadStart(10) + row.mtime.myPadStart(10) + row.strName)
+    for(var row of this.arrTargetRem) StrResultFile.push(row.size.myPadStart(10)+' '+row.mtime.myPadStart(10)+' '+row.strName)
 
     return [null, StrScreen, StrResultFile, StrRenameOTO, StrRenameAncestorOnly, StrRenameAncestorOnlyCmd, StrDuplicateInitial, StrDuplicateFinal, StrRenameAdditional]
   }
@@ -342,7 +343,7 @@ class ComparisonWID{
   
   compare(){
     var {strIdType, arrSource, arrTarget}=this
-        // Untouched
+        // Remove untouched files
     arrSource=arrSource.sort(funSorterStrNameNeg);   arrTarget=arrTarget.sort(funSorterStrNameNeg)
     var [err, arrA, arrB, arrSourceRem, arrTargetRem]=extractMatching(arrSource, arrTarget, ['strName', strIdType, 'size', 'mtime']); if(err) return [err]
     this.arrSourceUnTouched=arrA; this.arrTargetUnTouched=arrB
@@ -363,7 +364,7 @@ class ComparisonWID{
     var funSorterNeg=(a,b)=>b.n-a.n;
     arrAncestorOnlyRenamed=arrAncestorOnlyRenamed.sort(funSorterNeg);
     var funSorterNeg=(a,b)=>b.lev-a.lev;
-     arrAncestorOnlyRenamed=arrAncestorOnlyRenamed.sort(funSorterNeg)
+    arrAncestorOnlyRenamed=arrAncestorOnlyRenamed.sort(funSorterNeg)
     extend(this, {arrAncestorOnlyRenamed});
 
         // Copy renamed to origin
@@ -477,16 +478,17 @@ class ComparisonWID{
     
     return [null, StrScreen, StrResultFile, StrRenameOTO, StrRenameAncestorOnly, StrRenameAncestorOnlyCmd]
   }
+
+  getCategoryArrays=function(){
+    var {arrSourceUnTouched, arrTargetUnTouched,
+    arrSourceChanged, arrTargetChanged,
+    arrSourceMetaMatch, arrTargetMetaMatch,
+    arrSourceNST, arrTargetNST,
+    arrSourceMatchingId, arrTargetMatchingId,
+    arrSourceMatchingStrName, arrTargetMatchingStrName,
+    arrSourceRem, arrTargetRem}=this;
+    return [arrSourceUnTouched, arrTargetUnTouched, arrSourceChanged, arrTargetChanged, arrSourceMetaMatch, arrTargetMetaMatch, arrSourceNST, arrTargetNST, arrSourceMatchingId, arrTargetMatchingId, arrSourceMatchingStrName, arrTargetMatchingStrName, arrSourceRem, arrTargetRem]
+  }
 }
 
-var getCategoryArrays=function(self){
-  var {arrSourceUnTouched, arrTargetUnTouched,
-  arrSourceChanged, arrTargetChanged,
-  arrSourceMetaMatch, arrTargetMetaMatch,
-  arrSourceNST, arrTargetNST,
-  arrSourceMatchingId, arrTargetMatchingId,
-  arrSourceMatchingStrName, arrTargetMatchingStrName,
-  arrSourceRem, arrTargetRem}=self;
-  return [arrSourceUnTouched, arrTargetUnTouched, arrSourceChanged, arrTargetChanged, arrSourceMetaMatch, arrTargetMetaMatch, arrSourceNST, arrTargetNST, arrSourceMatchingId, arrTargetMatchingId, arrSourceMatchingStrName, arrTargetMatchingStrName, arrSourceRem, arrTargetRem]
-}
 

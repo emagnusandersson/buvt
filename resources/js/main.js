@@ -1,3 +1,6 @@
+
+"use strict"
+
 // This is just a sample app. You can structure your Neutralinojs app code as you wish.
 // This example app is written with vanilla JavaScript and HTML.
 // Feel free to use any frontend framework you like :)
@@ -13,50 +16,6 @@
 
 //import fs, {promises as fsPromises} from "fs";
 
-function showInfo() {
-    document.getElementById('info').innerHTML = `
-        ${NL_APPID} is running on port ${NL_PORT}  inside ${NL_OS}
-        <br/><br/>
-        <span>server: v${NL_VERSION} . client: v${NL_CVERSION}</span>
-        `;
-}
-
-function openDocs() {
-    Neutralino.os.open("https://neutralino.js.org/docs");
-}
-
-function openTutorial() {
-    Neutralino.os.open("https://www.youtube.com/watch?v=txDlNNsgSh8&list=PLvTbqpiPhQRb2xNQlwMs0uVV0IN8N-pKj");
-}
-
-function setTray() {
-    if(NL_MODE != "window") {
-        console.log("INFO: Tray menu is only available in the window mode.");
-        return;
-    }
-    let tray = {
-        icon: "/resources/icons/trayIcon.png",
-        menuItems: [
-            {id: "VERSION", text: "Get version"},
-            {id: "SEP", text: "-"},
-            {id: "QUIT", text: "Quit"}
-        ]
-    };
-    Neutralino.os.setTray(tray);
-}
-
-function onTrayMenuItemClicked(event) {
-    switch(event.detail.id) {
-        case "VERSION":
-            Neutralino.os.showMessageBox("Version information",
-                `Neutralinojs server: v${NL_VERSION} | Neutralinojs client: v${NL_CVERSION}`);
-            break;
-        case "QUIT":
-            Neutralino.app.exit();
-            break;
-    }
-}
-
 function onWindowClose() {
     Neutralino.app.exit();
 }
@@ -64,22 +23,13 @@ function onWindowClose() {
 
 Neutralino.init();
 
-Neutralino.events.on("trayMenuItemClicked", onTrayMenuItemClicked);
 Neutralino.events.on("windowClose", onWindowClose);
-
-if(NL_OS != "Darwin") { // TODO: Fix https://github.com/neutralinojs/neutralinojs/issues/615
-    setTray();
-}
-
-//showInfo();
-
-
 
 
 
 globalThis.app=globalThis;
 app.leafFilter=".buvt-filter"
-app.leafFilterFirst=leafFilter
+//app.leafFilterFirst=leafFilter
 
 
 
@@ -87,63 +37,64 @@ const normalizePath = path => path.replace(/[\\/]+/g, '/');
 
 
 window.elHtml=document.documentElement; window.elBody=document.body;
+window.boTouch = Boolean('ontouchstart' in document.documentElement);
 
+var uLibImageFolder='./icons/'
+var uBusy=uLibImageFolder+'busy.gif';
+var uBusyLarge=uLibImageFolder+'busyLarge.gif';
+var uIncreasing=uLibImageFolder+'blackTriangleUp.png';
+var uDecreasing=uLibImageFolder+'blackTriangleDown.png';
+var uUnsorted=uLibImageFolder+'blackTriangleUpDown.png';
 
+var charBackSymbol='◄';
+var charDelete='✖'; //x, ❌, X, ✕, ☓, ✖, ✗, ✘
 
 
 var funLoad=async function(){
+  var [err, objT] =await Neutralino.computer.getOSInfo().toNBP();
+  var StrOSTypePat=['Linux', 'Windows'];
+  var StrOSType=['linux', 'windows'], strOSType='linux'
+  for(var i=0;i<StrOSType.length;i++){
+    if(objT.name.indexOf(StrOSTypePat[i])!=-1) strOSType=StrOSType[i];
+  }
+  if(err) { debugger; console.error(err);}
   //var fsDirSource=NL_CWD;
-  //alert("f")
   var flFile='resources/txt2.txt';
   //var [err, boExist]=await fileExist(flFile); if(err) return [err]
 
-  var fiDirSource=await getItemN('fiDirSource');  if(fiDirSource===null)  fiDirSource="";
-  var fiDirTarget=await getItemN('fiDirTarget');  if(fiDirTarget===null)  fiDirTarget="";
-  var fiMeta=await getItemN('fiMeta');  if(fiMeta===null)  fiMeta="";
-  var flPrepend=await getItemN('flPrepend');  if(flPrepend===null)  flPrepend="";
+  app.imgBusy=createElement('img').prop({src:uBusy, alt:"busy"});
 
-  // var [err, fsDirSource]=await myRealPath(fiDirSource); if(err) {console.log(err.message); debugger; return;}
-  // var [err, fsDirTarget]=await myRealPath(fiDirTarget); if(err) {console.log(err.message); debugger; return;}
-  //var prom = Neutralino.filesystem.readFile(flFile); 
-  // var fsFile=fsDirSource+'/'+flFile;
-  // var [err, DirEnt]=await Neutralino.filesystem.readDirectory('.').toNBP();
-  //var [err, stats] = await Neutralino.filesystem.getStats(flFile).toNBP(); debugger
-  
+  var divMessageText=divMessageTextCreate();  copySome(window, divMessageText, ['setMess', 'resetMess', 'appendMess']);
+  var divMessageTextW=createElement('div').myAppend(divMessageText).css({width:'100%', position:'fixed', bottom:'0px', left:'0px', 'z-index':'10'});
+  elBody.append(divMessageTextW);
 
-  
-  var labSource=createElement('b').myText('Source');
-  var labTarget=createElement('b').myText('Target');
-  var labMeta=createElement('b').myText('Meta');
-  var labFlPrepend=createElement('b').myText('flPrepend');
-  // var inpSource=createElement('input').prop({type:'text'}); inpSource.value=fiDirSource
-  // var inpTarget=createElement('input').prop({type:'text'}); inpTarget.value=fiDirTarget
-  app.inpSource=createElement('input').prop({type:'text'}).attr('value',fiDirSource).on('change',  function(e){ 
-    setItemN('fiDirSource',this.value);return false;
-  } );
-  app.inpTarget=createElement('input').prop({type:'text'}).attr('value',fiDirTarget).on('change',  function(e){ 
-    setItemN('fiDirTarget',this.value);return false;
-  } );
-  app.inpMeta=createElement('input').prop({type:'text'}).attr('value',fiMeta).on('change',  function(e){ 
-    setItemN('fiMeta',this.value);return false;
-  } );
-  app.inpFlPrepend=createElement('input').prop({type:'text'}).attr('value',flPrepend).on('change',  function(e){ 
-    setItemN('flPrepend',this.value);return false;
-  } );
-  var Tmp=[inpSource, inpTarget, inpMeta, inpFlPrepend]; Tmp.forEach(ele=>ele.css({width:"20em"})); // span[name=cb]
-  var divSource=createElement('div').myAppend(labSource, inpSource);
-  var divTarget=createElement('div').myAppend(labTarget, inpTarget);
-  var divMeta=createElement('div').myAppend(labMeta, inpMeta);
-  var divFlPrepend=createElement('div').myAppend(labFlPrepend, inpFlPrepend);
-  var divA=createElement('div').myAppend(divSource, divTarget, divMeta, divFlPrepend);
-  app.divOut=createElement('div').myAppend('output');
-  var butCompareTreeToTree=createElement('button').myAppend('Compare tree to tree').on('click', compareTreeToTree);
-  var butHardLinkCheck=createElement('button').myAppend('Check for hard links').on('click', hardLinkCheck);
-  elBody.myAppend(divA, butHardLinkCheck, butCompareTreeToTree, divOut)
+  app.hovHelpMy=createElement('span').myText('❓').addClass('btn-round', 'helpButtonGradient').css({color:'transparent', 'text-shadow':'0 0 0 #5780a8'}); //on('click', function(){return false;})    //'pointer-events':'none',
+  app.imgHelp=hovHelpMy;
 
-  console.log("h")
+  app.viewFront=viewFrontCreator(createElement('div'))
+  app.argumentSetPop=argumentSetPopExtend(createElement('div'));
+  app.argumentDeletePop=argumentDeletePopExtend(createElement('div'));
+  app.argumentTab=argumentTabExtend(createElement('div')).addClass('viewDiv');
 
+
+  app.MainDiv=[viewFront, argumentSetPop, argumentDeletePop, argumentTab]; //, editDiv, adminDiv
+  app.StrMainDiv=MainDiv.map(obj=>obj.toString());
+  app.StrMainDivFlip=array_flip(StrMainDiv);
+
+  var MainNonDefault=AMinusB(MainDiv, [viewFront]); MainNonDefault.forEach(ele=>ele.hide());
+  elBody.append(...MainDiv);
+
+  viewFront.setVis=async function(){
+    MainDiv.forEach(ele=>ele.hide()); this.show();
+    await this.setUp();
+    return true;
+  }
+  argumentTab.setVis=async function(){
+    MainDiv.forEach(ele=>ele.hide()); this.show();
+    this.setUp();
+    return true;
+  }
 }
-
 
 
 funLoad()

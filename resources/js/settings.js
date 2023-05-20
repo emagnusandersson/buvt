@@ -1,5 +1,7 @@
+
+"use strict"
+
 var leafFilter=".buvt-filter"
-var leafFilterFirst=leafFilter
 
 
 var leafResultCompare="resultCompare.txt"
@@ -14,3 +16,6 @@ var leafRenameSuggestionsAdditional="renameSuggestionsAdditional.txt"
 
  // For compareWOId used for renameFinish-calls
 var leafRenameSuggestionsOTO="renameSuggestionsOneToOne.txt"
+
+
+var charTRes='n'  // s,m,u or n
