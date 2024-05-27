@@ -1,0 +1,27 @@
+{
+  "name": "buvt",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron32 ."
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "mv": "2.1.1",
+    "string-similarity-js": "2.1.4"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "mac": {
+    "icon": "./icons/iconWhite24.png"
+  },
+  "win": {
+    "icon": "./icons/iconWhite24.png"
+  },
+  "linux": {
+    "icon": "./icons/iconWhite24.png"
+  }
+}
