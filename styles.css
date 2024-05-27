@@ -1,0 +1,294 @@
+
+
+/*Emp=emphasis*/
+/* @media (prefers-color-scheme:light) */ 
+:root {
+  --bg-colorRoot:white;
+  --bg-color:#eee;
+  --bg-colorEmp:#ccc;
+  --bg-colorEmp2:#a0a0a0;
+  --bg-colorImg:lightblue;
+  --bg-green:lightgreen;
+  --bg-red:#ff7f7f;
+  --bg-blue:lightblue;
+  --bg-yellow:yellow;
+  --bg-orange:orange;
+  --text-color:#123;
+  --text-color-intense:black;
+  --border-color:#123;
+  --link-external:#36b;
+  --link-external-visited:#636;
+  --color-link:#0000ee;
+  --color-link-visited:#551a8b;
+  --bg-seller:lightblue;
+  --bg-buyer:pink;
+  --invert:0;
+  --border-shadow-color:#191919; --border-lit-color:#666;   /* To make ios buttons look like chrome. */
+
+  --bg-button:#efefef;
+  --bg-input:#fff;
+  --text-red:red;
+  --text-green:green;
+  --text-grey:grey
+
+}
+
+/* @media (prefers-color-scheme:dark) */ 
+[data-theme="dark"] {
+  --bg-colorRoot:#222;
+  --bg-color:#333;
+  --bg-colorEmp:#555; /*Emp=emphasis*/
+  --bg-colorEmp2:#606060;
+  --bg-colorImg:#005470;
+  --bg-green:#007300;
+  --bg-red:#c00020;
+  --bg-blue:#005470;
+  --bg-yellow:#353500;
+  --bg-orange:#b17300;
+  --text-color:#dddddd;
+  --text-color-intense:white;
+  --border-color:#dddddd;
+  --link-external:#88b1f7;
+  --link-external-visited:#b477b4;
+  --color-link:#368cff;
+  --color-link-visited:#de41ff;
+  --bg-seller:#1e8aad;
+  --bg-buyer:#d8566b;
+  --invert:1;
+  --border-shadow-color:#191919; --border-lit-color:grey;
+
+  --bg-button:#6b6b6b;
+  --bg-input:#3b3b3b;
+  background:var(--bg-colorRoot);
+  color:var(--text-color);
+  --text-red:#ff7f7f;
+  --text-green:green;
+  --text-grey:#a0a0a0
+}
+
+.boxShadowOn {box-shadow:0 0 0 0.2em lightgreen inset; background-color:#eee; color:limegreen}
+.boxShadowOff {box-shadow:0 0 0 0.2em darkgrey inset; background-color:#ddd; color:#000}
+.boxShadowOn [data-theme="dark"] {box-shadow:0 0 0 0.2em lightgreen inset; background-color:var(--bg-colorEmp); color:limegreen}
+.boxShadowOff [data-theme="dark"] {box-shadow:0 0 0 0.2em #777 inset; background-color:var(--bg-color); color:darkgrey}
+
+:root {
+  color-scheme:light dark;
+  /* background:var(--bg-colorRoot); */
+  /* color:var(--text-color) */
+}
+
+a:link{color:var(--color-link)}
+a:visited{color:var(--color-link-visited)}
+.invertOnDark {filter:invert(var(--invert))}
+.invertOnDarkBright {filter:invert(var(--invert)) brightness(calc(1 + var(--invert) * 0.4))}
+
+
+
+html {height:100%; font-family: sans-serif;}
+body  {height:100%; margin:0px;}
+* {box-sizing:border-box}
+html, body {-webkit-overflow-scrolling:touch} /* "Invalid property value" in chrome webtools. "Invalid property name" firefox webtools */
+html, body {overscroll-behavior:contain} /*; overflow:auto (commented out since it makes stat.html look funny)*/
+
+  /* Is there really a difference using this. Tested values "100%" and "none" (Used by Chrome, Edge. Not used by Safari, Firefox) */
+/* body {-webkit-text-size-adjust:none} */
+
+  /* -webkit-appearance:none is required to make disabled buttons have grey text on Safari. */
+html, body {-webkit-appearance:none; appearance:none}
+select, button, input, input[type=file]::file-selector-button {color:inherit} /* Removing blue text in buttons ... on Safari */
+:disabled {color:var(--text-grey)}
+button, select, input, textarea {font:inherit}  /* Preventing zoom, especially?!?! on Safari. */
+
+
+button, select, button-toggle, input[type=file]::file-selector-button {
+  border-radius:0.3em; background-color:var(--bg-colorEmp); padding:0.0em 0.2em; font-size:inherit; vertical-align:middle; user-select:none;
+  border-bottom-color:var(--border-shadow-color); border-right-color:var(--border-shadow-color);
+  border-top-color:var(--border-lit-color); border-left-color:var(--border-lit-color);
+  border-width:2px
+}
+
+input[type='text'], input[type='number'], input[type='password'], textarea {font-size:16px}
+
+
+[title] {text-decoration-line:underline; text-decoration-style:dotted} /*Add underline on any element with a title*/
+
+
+a.external {
+	background:url(icons/external.png) center right no-repeat;
+	padding-right:13px;
+  color:var(--link-external)
+}
+a.external:visited {color:var(--link-external-visited)}
+a.disabled {
+  /*pointer-events: none;*/
+  cursor: default;
+  opacity: 0.6;
+  color:var(--text-grey);
+  text-decoration:none
+}
+
+button {white-space:nowrap; width:intrinsic}
+
+button.smallBut {padding: 0em 0.3em;
+  vertical-align: bottom;
+  /*font-size: 0.85em;*/
+  }
+
+table {border-collapse:collapse; border:solid 1px}
+tbody,thead,tr,td,th {border-width:inherit; border-style:inherit}
+
+th{background-color: var(--bg-colorEmp);}
+/*td{background-color: var(--bg-color);}*/
+
+table td.crossed{
+   background-image: linear-gradient(to bottom right,  transparent calc(50% - 1px), var(--text-color), transparent calc(50% + 1px)); 
+}
+table.main td[colspan="2"] {
+  text-align:center
+}
+table th.backcrossed{
+   background-image: linear-gradient(to top right,  transparent calc(50% - 1px), var(--text-color), transparent calc(50% + 1px)); 
+}
+
+
+div.section {background:lightgray; margin-top:3px}
+.num {background:var(--bg-colorEmp2);}
+
+
+.argumentTab td {  word-wrap:anywhere}  /*word-break:break-all; background-color: var(--bg-color);*/
+
+
+.tableSticky {border-width:0px;}
+ /*box-shadow:0 0 0.3em 0.1em darkgrey inset .tableSticky td, .tableSticky th {background:var(--bg-color)}*/
+.tableSticky th {position:sticky; position: sticky; top:0px; background:var(--bg-colorEmp)}
+
+.tableInset td {box-shadow:0 0 0.3em 0.1em var(--bg-colorEmp2) inset} /*var(--border-color) , .tableInset th*/
+
+.popupHover {
+  position:absolute;
+  z-index:9010;
+}
+.popupHoverHelp {
+  padding: 0.2em;
+  margin-left: .7em;
+  margin-top: .3em;
+  max-width: 16em;
+  border: 1px solid var(--border-color);
+  background-color:var(--bg-color);
+  color:var(--text-color);
+  font-size: 0.95em;
+}
+
+
+.blanket{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color:var(--bg-color);
+  opacity:0.5;
+  position: fixed;
+  top:0px;
+}
+.Center-Container {
+  position: relative;
+}
+.Center {
+  max-width:300px;
+  min-width:200px;
+  overflow: auto;  
+  margin: auto;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  background-color:var(--bg-color);
+  border:1px solid;
+  transform: translate(-50%,-50%);
+}
+/* .popupErrorConsole{
+  position:fixed;
+  bottom:0px;
+  background:yellow;
+  width:100%;
+  z-index:9002
+} */
+
+
+*.unselectable {
+  -webkit-user-select: none; /* Safari */
+  user-select: none;
+}
+
+
+.message{
+  border:black 1px solid;
+  position:absolute;
+  bottom:0%;
+  right:0%;
+  margin:0;
+  padding:1px;
+  background-color:var(--bg-yellow);
+  color:var(--text-color-intense);
+  font-size: 0.8em;
+  z-index: 10000;
+}
+
+
+.btn-round {
+  text-align: center;
+  min-width: 1.6em;
+  height: 1.6em;
+  border-radius: 0.8em;
+  border: 1px solid;
+  display: inline-block;
+  text-decoration: none;
+  line-height: 1.7em;
+  cursor: default
+}
+.helpButtonGradient {
+  /*background-image: radial-gradient(#daeaff, #8cbdfd, #0064ea);*/
+  background-image: linear-gradient(#0064ea, #8cbdfd, #daeaff, #8cbdfd, #0064ea);
+  color: #5780a8;
+  border: 0;
+  font-weight: bold;
+  font-size: 90%;
+}
+
+
+.viewDiv {
+  text-align:center;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch
+}
+.contDiv { /*Should be called contDivW, like: content-wrapper, or container or something*/
+  flex:1 1 0; 
+  overflow-y:scroll;
+  width:100%
+}
+.footDivW {
+  margin: 0em auto;
+  /* max-width: var(--maxWidth); */
+  width: 100%;
+  border-top: solid 1px;
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between
+}
+.footDiv {
+  min-width:min(100vw, var(--menuMaxWidth));
+  /*margin:.5em auto .5em;*/
+  display:flex;
+  align-items:center;
+  justify-content:space-between
+}
+span.labMatch{
+  background:#777;
+  display:inline-block;
+  font-weight:bold;
+}
+.labMatch>span{
+  width:2.5em;
+  display:inline-block;
+}
