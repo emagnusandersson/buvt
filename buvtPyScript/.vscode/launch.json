@@ -1,0 +1,109 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "singleFile",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./buvtPyScript.py",
+      "args": ["singleFile", "~/progPython/buvt-SourceFs/Source/aaa.txt"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "parseTreeNDump",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./__main__.py",
+
+      //"args": ["parseTreeNDump", "--charFilterMethod", "b", "--leafFilter", ".buvt-filter", "--leafFilterFirst", ".buvt-filter", "--fiDir", "/home/magnus/progPython/buvt-SourceFs/Source"],
+      "args": ["parseTreeNDump", "--charFilterMethod", "b", "--leafFilter", ".buvt-filter", "--leafFilterFirst", ".buvt-filter", "--fiDir", "/run/media/magnus/40exfat/t"],
+      //"args": ["parseTreeNDump", "--charFilterMethod", "R", "--leafFilter", ".rsync-filter", "--leafFilterFirst", ".rsync-filter", "--fiDir", "~/progPython/buvt-SourceFs/Source"],
+      //"args": ["parseTreeNDump", "--charFilterMethod", "R", "--leafFilter", ".rsync-filter", "--leafFilterFirst", ".rsync-filter", "--fiDir", "~/progPython/buvt-SourceFs/Source"],
+      //"args": ["parseTreeNDump", "--charFilterMethod", "r", "--leafFilter", ".rsync-filter", "--leafFilterFirst", ".rsync-filter", "--fiDir", "~"],
+      //"args": ["parseTreeNDump", "--leafFilter", ".buvt-filter", "--fiDir", "~/progPython/buvt-SourceFs/Source"],
+      //"args": ["parseTreeNDump", "--leafFilter", ".buvt-filter", "--fiDir", "C:\\Users\\emagn\\Documents\\Source"],
+      //"args": ["parseTreeNDump", "--leafFilter", ".buvt-filter", "--fiDir", "~/progPython/buvt-TargetFs/Target"],
+      //"args": ["parseTreeNDump", "--leafFilter", ".buvt-filter", "--fiDir", "/run/media/magnus/myPassport/buvt_folderForTest/mySync"],
+      //"args": ["parseTreeNDump", "--leafFilter", ".buvt-filter", "--leafFilterFirst", ".buvt-filter-1G-test", "--fiDir", "D:\\synced"],
+      //"args": ["parseTreeNDump", "--leafFilter", ".buvt-filter", "--leafFilterFirst", ".buvt-filter", "--fiDir", "~"],
+
+      //"args": ["rmFiles", "--fiFile", "/run/media/magnus/myPassport/buvtArg/argA.txt"],
+      //"args": ["rmFolders", "--fiFile", "/run/media/magnus/myPassport/buvtArg/argA.txt"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "makeFolders",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./__main__.py",
+      "args": ["makeFolders", "--fiFile", "/tmp/buvtArg.txt"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "renameFiles",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./__main__.py",
+      "args": ["renameFiles", "--fiFile", "/tmp/buvtArg.txt"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "check",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./__main__.py",
+      //"args": ["check", "--fiDir", "~/progPython/buvt-SourceFs/Source"],
+      //"args": ["check", "--iStart", "0", "--fiDir", "/run/media/magnus/myPassport/sync"],
+      //"args": ["check", "--iStart", "20629", "--fiDir", "~"],
+      "args": ["check", "--iStart", "0", "--fiDir", "/run/media/magnus/myPassport/filmM/seen/test"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "copyLocally",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./__main__.py",
+      "args": ["copyLocally", "--fiDir", "~/progPython/buvt-TargetFs/Target", "--fiFile", "/tmp/buvtArg.txt"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "calcHashes",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./__main__.py",
+      //"args": ["calcHashes", "--fiDir", "~/progPython/buvt-SourceFs/Source", "--fiFile", "/run/media/magnus/myPassport/buvtArg/arg.txt"],
+      "args": ["calcHashes", "--fiDir", "/home/magnus/progPython/buvt-SourceFs/Source", "--fiFile", "/run/media/magnus/myPassport/buvtArg/arg.txt"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "getId",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./__main__.py",
+      //"args": ["getId", "--fiDir", "/home/magnus/progPython/buvt-SourceFs/Source", "--fiFile", "/run/media/magnus/myPassport/buvtArg/arg.txt"],
+      "args": ["getId", "--fiDir", "/home/magnus/progPython/buvt-TargetFs/Target", "--fiFile", "/run/media/magnus/myPassport/buvtArg/arg.txt"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "setMTime",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "./__main__.py",
+      //"args": ["setMTime", "--fiDir", "/home/magnus/progPython/buvt-SourceFs/Source", "--fiFile", "/run/media/magnus/myPassport/buvtArg/arg.txt"],
+      "args": ["setMTime", "--fiDir", "/home/magnus/progPython/buvt-TargetFs/Target", "--fiFile", "/run/media/magnus/myPassport/buvtArg/arg.txt"],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}
