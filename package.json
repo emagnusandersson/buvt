@@ -1,0 +1,23 @@
+{
+  "name": "20240519test",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron28 ."
+  },
+  "dependencies": {
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "mac": {
+    "icon": "./icons/iconWhite24.png"
+  },
+  "win": {
+    "icon": "./icons/iconWhite24.png"
+  },
+  "linux": {
+    "icon": "./icons/iconWhite24.png"
+  }
+}
