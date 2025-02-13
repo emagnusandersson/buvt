@@ -23,3 +23,10 @@ Mat.transposeAlt=function(M) { // Doesn't require all rows to have equal number 
   } 
   return Out;
 }
+
+
+globalThis.find=function(V) { // Returns indexes of nonzero elements
+  var W=[];
+  V.forEach(function(x,i) { if(x) W.push(i);});
+  return W;
+}
