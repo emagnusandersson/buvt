@@ -267,7 +267,7 @@ gThis.bound=function(value, opt_min=null, opt_max=null){
   if(opt_max != null) value = Math.min(value, opt_max);
   return value;
 }
-
+gThis.boundPos=function(value){ value=bound(value,0); return value; }
 gThis.closest2Val=function(v, val){
   var bestFit=Number.MAX_VALUE, curFit, len=v.length, best_i;
   for(var i=0;i<len;i++){
@@ -668,8 +668,7 @@ var parseSSV=function(strData, StrCol){
     StrCol=strHead.split(' ')
     arrInp=arrInp.slice(1)
   }
-  var nCol=StrCol.length
-  var nSplit=nCol-1
+  var nCol=StrCol.length, nSplit=nCol-1
 
   for(var strRow of arrInp){
     var strRow=strRow.trim()
@@ -688,8 +687,44 @@ var parseSSV=function(strData, StrCol){
   //return [null, arrOut]
   return arrOut
 }
+var funCast=function(strType, strVal){
+  if(strType=="int") return Number(strVal)
+  else if(strType=="int64") {
+    try{strVal=BigInt(strVal);}
+    catch{strVal=null;}
+  }
+  return strVal
+}
+var parseSSVWType=function(strData){
+  strData=strData.trim()
+  if(strData.length==0) return [null,[]]
+  var arrInp=strData.split('\n'), n=arrInp.length;
+  
+  if(n<2) return [Error("n<2")]
 
+  var [strColType, strCol]=arrInp.slice(0, 2) 
+  var StrColType=strColType.trim().split(' '), StrCol=strCol.trim().split(' ')
+  arrInp=arrInp.slice(2); n=arrInp.length
 
+  var nCol=StrCol.length, nSplit=nCol-1
+  var arrOut=[]
+
+  for(var strRow of arrInp){
+    var strRow=strRow.trim()
+    if(strRow.length==0) continue
+    if(strRow.startsWith('#')) continue
+    //var arrPart=strRow.split(null, nSplit)
+    var arrPart=mySplit(strRow, /\s+/g, nSplit), nPart=arrPart.length
+    if(nPart<nCol) {debugger; return [Error("nPart<nCol")];}
+    var row={}
+    for(var i in StrCol) { var strCol=StrCol[i], strType=StrColType[i], val=funCast(strType, arrPart[i]); row[strCol]=val; }
+    //for(var i in StrCol) { var strCol=StrCol[i]; row[strCol]=arrPart[i]; }
+    arrOut.push(row)
+
+  }
+  
+  return [null, arrOut]
+}
 
 
 /*******************************************************

@@ -311,14 +311,14 @@ var parseRelations=function(strData, boAssignObj=false, funCreateKey=arr=>arr.jo
   var StrColTypeM=strColTypeM.trim().split(' '), StrColM=strColM.trim().split(' ')
   var StrColTypeU=strColTypeU.trim().split(' '), StrColU=strColU.trim().split(' ')
 
-  var funCast=function(strType, strVal){
-    if(strType=="int") return Number(strVal)
-    else if(strType=="int64") {
-      try{strVal=BigInt(strVal);}
-      catch{strVal=null;}
-    }
-    return strVal
-  }
+  // var funCast=function(strType, strVal){
+  //   if(strType=="int") return Number(strVal)
+  //   else if(strType=="int64") {
+  //     try{strVal=BigInt(strVal);}
+  //     catch{strVal=null;}
+  //   }
+  //   return strVal
+  // }
 
   arrInp=arrInp.slice(4); n=arrInp.length
   var nColM=StrColM.length, nSplitM=nColM-1, nColU=StrColU.length, nSplitU=nColU-1
@@ -366,7 +366,7 @@ var parseMultSTFile=async function(fiInpFile){
   var [err, fsInpFile]=await myRealPath(fiInpFile); if(err) {debugger; return [err]; }
   var [err, strData]=await readStrFile(fsInpFile);
   strData=strData.trim()
-  var arrS=[], arrT=[], objS={}, objT={}
+  var arrS=[], arrT=[], objS={}, objT={}, RelM={}
   var arrInp=strData.split('\n')
   for(var i in arrInp){
     var strRow=arrInp[i]
@@ -386,6 +386,7 @@ var parseMultSTFile=async function(fiInpFile){
       var sm=createSM64(size, mtime_ns64Floored)
       if(!(sm in objS)) objS[sm]=[]
       if(!(sm in objT)) objT[sm]=[]
+      if(!(sm in RelM)) RelM[sm]={arrA:[],arrB:[]}
         // Exact time
       //var strMTime=nPartMatching==3?trim(arrPartMatching[2],'()'):arrPartMatching[1] 
       //var mtime_ns64=BigInt(strMTime)
@@ -399,11 +400,11 @@ var parseMultSTFile=async function(fiInpFile){
       var mtime_ns64=BigInt(strMTime)
       var row={strType, size, id, mtime_ns64, mtime_ns64Floored, strName, strMTime, strMTimeFloored}
       
-      if(strFirst=='T') {objT[sm].push(row); arrT.push(row);} 
-      else {objS[sm].push(row); arrS.push(row);}
+      if(strFirst=='T') {objT[sm].push(row); arrT.push(row); RelM[sm].arrB.push(row);} 
+      else {objS[sm].push(row); arrS.push(row); RelM[sm].arrA.push(row);}
     } 
   }
-  return [null, objS, objT, arrS, arrT]
+  return [null, objS, objT, arrS, arrT, RelM]
   //return [null, arrS, arrT, objS, objT]
 }
   
@@ -462,12 +463,12 @@ var parseDb=function(strData, charTRes){
 
   var strOSTypeDbFile=checkPathFormat(arrDb)
   if(strOSTypeDbFile=='linux' && strOS=='win32'){
-    for(var obj of arrDb) obj["strName"]=obj["strName"].replaceAll('/','\\')
+    for(var obj of arrDb) obj.strName=obj.strName.replaceAll('/','\\')
   }
   else if(strOSTypeDbFile=='win32' && (strOS=='linux' || strOS=='darwin')){
     //var strE="strOSTypeDbFile=='win32' && (strOS=='linux' || strOS=='darwin')"
     //return [Error(strE)]
-    for(var obj of arrDb) obj["strName"]=obj["strName"].replaceAll('\\','/')
+    for(var obj of arrDb) obj.strName=obj.strName.replaceAll('\\','/')
   }
 
     // If any mtime is longer than 10 char, then assume ns

@@ -38,7 +38,9 @@ gThis.LeafFilter={b:".buvt-filter", r:".rsync-filter", R:".rsync-filter"};
 var KeyD=[
   "hl", 
   "hash", 
-  "untouchedWOExactMTime",
+  "allS",
+  "allT",
+  "untouched",
   "renamed",
   "defragmented",
   "changed",
@@ -46,7 +48,7 @@ var KeyD=[
   "reusedId",
   "created",
   "deleted",
-  "1T1NoName",
+  "M1T1",
   "STMatch1_02",
   "STMatch1_12",
   "STMatch1_20",
@@ -80,7 +82,11 @@ var KeyT2T=[
 "moveOnTarget",
 "moveOnTargetNSetMTime",
 "categoryDelete",
-"categorySetMTime"] 
+"categorySetMTime",
+"link",
+"caseCollision",
+"reservedChar",
+"reservedCharF"] 
 
 
 
