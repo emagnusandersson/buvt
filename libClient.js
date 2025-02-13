@@ -213,12 +213,20 @@ gThis.findPos=function(el) {
     this.style.visibility= b?'':'hidden';
     return this;
   };
+  Element.prototype.enable = function(b=true) {    this.disabled=!b;  return this;};
+  Element.prototype.disable = function() {    this.disabled=true;  return this;};
+  Element.prototype.enableToggle=function(b){
+    if(typeof b=='undefined') b=!this.disabled;
+    this.disabled=!b;
+    return this;
+  };
   
   Node.prototype.detach=function(){ this.remove(); return this; }
   
   gThis.isVisible=function(el) {  // Could be replaced with el.isVisible ?!?
     return !!( el.offsetWidth || el.offsetHeight || el.getClientRects().length );
   }
+  gThis.myArrMatches=function(arrI, strQ) {return arrI.filter(el=>el.matches(strQ)); }
   
 
 

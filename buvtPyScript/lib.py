@@ -99,21 +99,17 @@ def myMD5W(objEntry, fsDir):
   #   The header (first line) determines the number of columns. (Header-fields may not contain spaces)
   #   The remaining rows are expected to have at least as many space-separations as the first line.
   #   Last column contains all remaining data of the row (so it may contain spaces (but not newlines))
-def parseSSV(fsDBFile):  
-  try: fi=open(fsDBFile,'r')
+def parseSSV(fsFile):  
+  try: fi=open(fsFile,'r')
   except FileNotFoundError as e:
     return {"e":e, "strTrace":myErrorStack(e.strerror)}, None    #"strErr":e.strerror, 
   strData=fi.read(); fi.close()
+  arrInp=strData.split('\n'); nData=len(arrInp)
+  if(nData<=1): return None, []
+
+  strCol=arrInp[0].strip(); StrCol=strCol.split(None)
+  nCol=len(StrCol); nSplit=nCol-1
   arrOut=[]
-  arrInp=strData.split('\n')
-
-  nData=len(arrInp)
-  if(nData<=1): return None,  []
-
-  strHead=arrInp[0].strip()
-  arrHead=strHead.split(None)
-  nHead=len(arrHead)
-  nSplit=nHead-1
 
   for strRow in arrInp[1:]:
     strRow=strRow.strip()
@@ -121,11 +117,50 @@ def parseSSV(fsDBFile):
     if(strRow.startswith('#')): continue
     arrPart=strRow.split(None, nSplit)
     obj={}
-    #for i, strHead in enumerate(arrHead): obj[strHead]=arrPart[i]
-    for strHead, part in zip(arrHead, arrPart): obj[strHead]=part
+    #for i, strHead in enumerate(StrCol): obj[strHead]=arrPart[i]
+    for strHead, part in zip(StrCol, arrPart): obj[strHead]=part
     arrOut.append(obj)
   
   return None, arrOut
+
+
+def funCast(strType, strVal):
+  if(strType=="int" or strType=="int64"): return int(strVal)
+  # elif(strType=="int64"):
+  #   breakpoint()
+  #   try: strVal=int(strVal);
+  #   except: strVal=None;
+  return strVal
+
+def parseSSVWType(fsFile):  
+  try: fi=open(fsFile,'r')
+  except FileNotFoundError as e:
+    return {"e":e, "strTrace":myErrorStack(e.strerror)}, None    #"strErr":e.strerror, 
+  strData=fi.read(); fi.close()
+  strData=strData.strip()
+  if(len(strData)==0): return None, []
+  arrInp=strData.split('\n'); nData=len(arrInp);
+  if(nData<2): return Error("n<2"), None
+
+  strColType=arrInp[0].strip(); StrColType=strColType.split(None);
+  strCol=arrInp[1].strip(); StrCol=strCol.split(None)
+  nCol=len(StrCol); nSplit=nCol-1
+  arrOut=[]
+
+  for strRow in arrInp[2:]:
+    strRow=strRow.strip()
+    if(len(strRow)==0): continue
+    if(strRow.startswith('#')): continue
+    arrPart=strRow.split(None, nSplit)
+    nPart=len(arrPart)
+    if(nPart<nCol): breakpoint(); return Error("nPart<nCol"), None
+    row={}
+    for i, strCol in enumerate(StrCol): strType=StrColType[i]; val=funCast(strType, arrPart[i]); row[strCol]=val; 
+    arrOut.append(row)
+
+  return None, arrOut
+
+
 
 #def pluralS(n): return "" if(n==1) else "s"
 def pluralS(n,s="",p="s"): return s if(n==1) else p
@@ -134,13 +169,15 @@ def pluralS(n,s="",p="s"): return s if(n==1) else p
 # formatScalars
 #######################################################################################
 
-def roundMTime(t, charTRes):
+def floorMTime64(t, charTRes):
   # if(charTRes=='d'): div=2000000000
   # else: n=int(charTRes); div=10**(9-n)
-  div=settings.IntTDiv[charTRes]
-  tCalc=(t//div)
-  tRound=tCalc*div
+  intDiv=settings.IntTDiv[charTRes]
+  tCalc=(t//intDiv)
+  tRound=tCalc*intDiv
   return tRound, tCalc
+
+
 
 
 #######################################################################################
@@ -163,7 +200,7 @@ def formatColumnData(arrData, objType):
       elif(objType[key]=='boolean'): val=val.lower()=='true'
       elif(objType[key]=='number'): val=int(val)
       row[key]=val
-# objType=createFormatInfo([*arrDB[0]]);   objType.update({"size":"number", "ino":"number", "mtime":"number", "inode0":"number"})
+# objType=createFormatInfo([*arrDb[0]]);   objType.update({"size":"number", "ino":"number", "mtime":"number", "inode0":"number"})
 
 
 

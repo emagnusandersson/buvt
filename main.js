@@ -20,7 +20,7 @@
 
 // md5sum
 // echo -n strData | md5sum
-// realpath --relative-to fsDir strFilename
+// realpath --relative-to fsDataDir strFilename
 
 
 // Note!!! max file size is 999999999999 bytes (So 1 TB is too big) (createSM64 should be rewritten if one needs bigger sizes)
@@ -30,59 +30,55 @@
 
 // scp -r sleek15.local:progJS/buvt ~/progJS/buvt
 
-// ssh l750.local python /home/magnus/progJS/buvt/buvtPyScript/buvtPyScript.py parseTreeNDump --leafFilter .buvt-filter --leafFilterFirst .buvt-filter --fiDir /home/magnus/progPython/buvt-SourceFs/Source
+// ssh l750.local python /home/magnus/progJS/buvt/buvtPyScript/buvtPyScript.py parseTreeNDump --leafFilter .buvt-filter --leafFilterFirst .buvt-filter --fiDataDir /home/magnus/progPython/buvt-SourceFs/Source
 
 // rsync -rtvzPi --files-from="/home/magnus/progPython/buvt-SourceFs/list.txt" --delete /home/magnus/progPython/buvt-SourceFs/Source/ /home/magnus/progPython/buvt-SourceFs/Target/
 
-// Trying to find a bug in rsync:
-// 2Gb of data, about 32000 files (no links, no files with case-collisions)
-//   fat32
-//     c660:
-//       rsync via buvt: BUG: kernel NULL pointer dereference,  address: 0000000000000137
-//       rsync with textfileinput: OK
-//       rsync running normally: OK
-//     r50:
-//       rsync via buvt: general protection fault, probably for non-canonical address 0xffac1343feb908ff: 0000 [#1] PREEMPT SMP PTI
-//       rsync with textfileinput: OK
-//     sleek15:
-//       rsync via buvt: error (forgot to write down error message)
-//       rsync with textfileinput: OK
-//   exfat
-//     c660: (Also tested OK with 16G (although I don't remember the conditions.))
-//       rsync via buvt: general protection fault, probably for non-canonical address 0xff9ee6950916c0de: 0000 [#1] PREEMPT SMP PTI
-//       rsync with textfileinput: OK
-//     r50: (Once OK (although I don't remember the conditions.))
-//       rsync via buvt: BUG: kernel NULL pointer dereference,  address: 0000000000000030
-//       rsync with textfileinput: general protection fault, probably for non-canonical address 0xff9c758324d6c0de: 0000 [#1] PREEMPT SMP PTI
-//       rsync running normally: Kernel panic
-//     sleek15:
-//       rsync via buvt: OK
-//     l750: Segmentation fault
-//     cq61: Segmentation fault
-//     easynote: Segmentation fault
-// linktest, 2 files (one normal file and one link):
-//   exfat:
-//     r50: Killed, rsync: [generator] write error: Broken pipe (23), rsync error: error in socked IO (code 10) at io.c(848) [generator=3.3.0]
-//     l750: (error (exact message not recorded, (but like above sort of)))
-//     cq61: not tested
-//     easynote: not tested
+// rsync -nrl --filter "dir-merge /.buvt-filter" --filter ! --filter "merge /run/media/magnus/myPassport/.rsync-filter-linkTest" --out-format='%n' /run/media/magnus/myPassport/ trash
+
+
+
 
 // ^([fl] +[0-9]+ +[0-9a-f]+ +[0-9]+ +[0-9]+) (.+)$
 // \1 sync/\2
 
-// boIncludeLinks
-// boAbortIfEntryNamesOnlyDifferingInCaseAreFound, boCheckCaseCollision
-// "do action"-button should be disabled after it is clicked
-// T2T "deleted" should be first 
-// Elegantly skipp links when target doesn't support them
+// TargetOther should be targetB
+// [Find relevant tree SM not found in relevant local Db] or [Find new SM] [categorize SM-occurancies]
+//   created_SM.txt
+//   deleted_SM.txt
+//   inc_number_of_certain_SM.txt (copiesAdded.txt)
+//   dec_number_of_certain_SM.txt (copiesDeleted.txt)
+//   NSMMatch.txt (untouched.txt)
+//   1T1.txt
+//   NTN.txt (remainer)
+// [Calc hashes of created_SM.txt] 
+//   created_SM.txt
+// [Find SM collision without consistent hash]
+//   smMultHashNonConsistent_S.txt
+// [Find new mtimes]
+//   smToChange_S.txt,  smRevert_S.txt
+// [Write new mtimes], [Revert]
+//   (to created_SM.txt as well as to actual files)
+// [Merge created_SM.txt to db]
+
+
+// When syncing T2T from myPassport to c660 with tResT=9 lots of files gets a timestamp with 9 significant decimals. Though on the source (myPassport) (both actual file as well as in the database) they have only 7 significant decimals (last two being zero). Example .buvt-filter
+// "CopyToTarget" should be right after "Deleted" (Unchanged on the top perhaps)
+// Source/Target switch in miniViewHashMatchDeleteCreator ?!?!?
+// tDiffMax-input in miniViewSMMatchCreator
+// ST should be SD source/destination
+//   SM collisions
+//   TRes
+//   Source / Target
+//   Extra entries
+//
+// strSide should be Tr(Tree)/Db on T2D and S/T on T2T CopyOn/MoveOn/CopyTo
 // List/count soft links
-// boIncLinks in settings
 // make buvt-filter work as rsync-filter
 // Stream data when parsing from pythonscript
 // Create .bak-file when updating target db through T2T
 // Window starts with the lowest part outside of screen
 // send python kill signal
-// Red cells when value is non-zero.
 // divDisclaimer
 // Separate settings (table) for T2D and T2T
 // getLeafDb method on ArgumentTab
@@ -90,10 +86,8 @@
 //   python output on separate stream
 // Checkbox switching default-Include/Exclude
 
-// Selectable Result-folder in settings
-// T2D compare(target)-to-its-db-file (using sm only (not id))
-
-// In SyncDb one could refer to "Source" as "Tree" instead. Although it would break conformity with SyncT2T.
+// create new db first, then run rsync
+// In SyncDbI one could refer to "Source" as "Tree" instead. Although it would break conformity with SyncT2T.
 
 // Windows softlinks points back to the source
 
@@ -101,7 +95,7 @@
 // Separate Video for Hard links
 // Separate Video for the .buvt-filter
 // Video for buvt
-//   Excuses for the software
+//   Why does buvt exist:
 //     Comparisson with rsync
 //     Filesystems should have space (field) for a hash-code in the meta-data
 //   
@@ -122,6 +116,8 @@ Mainly tested on Linux...
 
 // Flaws:
 //   As the scanning is done in python, there is no good way to interupt, which can be a bit awkward
+
+// coderabbit.link/veritasium
 
 
 //globalThis.appMy=globalThis;

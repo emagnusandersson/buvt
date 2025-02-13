@@ -31,46 +31,68 @@ class KeyST:
 
 
 def parseDb(fsDb, charTRes):
-  err, arrDB=parseSSV(fsDb)
+  err, arrDb=parseSSV(fsDb)
   if(err):  return err, None
-  nData=len(arrDB)
-  if(nData==0):  return None, arrDB
+  nData=len(arrDb)
+  if(nData==0):  return None, arrDb
     # Cast some properties 
-  formatColumnData(arrDB, {"size":"number", "id":"number", "inode":"number", "ino":"number"})
+  formatColumnData(arrDb, {"size":"number", "id":"number", "inode":"number", "ino":"number"})
 
-  strOSTypeMeta=checkPathFormat(arrDB)
+  strOSTypeMeta=checkPathFormat(arrDb)
   if(strOSTypeMeta=='linux' and sys.platform=='win32'):
-    for obj in arrDB: obj["strName"]=obj["strName"].replace('/','\\')
+    for obj in arrDb: obj["strName"]=obj["strName"].replace('/','\\')
   elif(strOSTypeMeta=='win32' and sys.platform=='linux'):
     #globvar.myConsole.error("strOSTypeMeta=='win32' and sys.platform=='linux'")
-    for obj in arrDB: obj["strName"]=obj["strName"].replace('\\','/')
+    for obj in arrDb: obj["strName"]=obj["strName"].replace('\\','/')
 
     # Rename inode to ino
-  if('inode' in arrDB[0]):
-    for obj in arrDB: obj["ino"]=obj.pop("inode")
+  if('inode' in arrDb[0]):
+    for obj in arrDb: obj["ino"]=obj.pop("inode")
     # Rename id to ino
-  if('id' in arrDB[0]):
-    for obj in arrDB: obj["ino"]=obj.pop("id")
+  if('id' in arrDb[0]):
+    for obj in arrDb: obj["ino"]=obj.pop("id")
   
     # If any mtime is longer than 10 char, then assume ns
   boNs=False
-  for obj in arrDB:
+  for obj in arrDb:
     if(len(obj["mtime"])>10): boNs=True; break
   if(boNs):
-    for obj in arrDB:
+    for obj in arrDb:
       obj["mtime_ns64"]=int(obj["mtime"])
       #obj["mtime"]=int(obj["mtime"][:-9])
   else:
-    for obj in arrDB:
+    for obj in arrDb:
       mtimeS=int(obj["mtime"])
       #obj["mtime"]=mtimeS
       obj["mtime_ns64"]=mtimeS*1e9
 
     # Create st
-  for obj in arrDB:
-    mtime_ns64Round, tCalc=roundMTime(obj["mtime_ns64"], charTRes)
-    obj["mtime_ns64Round"]=mtime_ns64Round
+  for obj in arrDb:
+    mtime_ns64Floored, tCalc=floorMTime64(obj["mtime_ns64"], charTRes)
+    obj["mtime_ns64Floored"]=mtime_ns64Floored
     obj["st"]=KeyST(obj["size"], tCalc)
-  return None, arrDB
+  return None, arrDb
+
+
+def parseDbWType(fsDb, charTRes):
+  err, arrDb=parseSSVWType(fsDb)
+  if(err):  return err, None
+  nData=len(arrDb)
+  if(nData==0):  return None, arrDb
+
+  strOSTypeDbFile=checkPathFormat(arrDb)
+  if(strOSTypeDbFile=='linux' and sys.platform=='win32'):
+    for obj in arrDb: obj["strName"]=obj["strName"].replace('/','\\')
+  elif(strOSTypeDbFile=='win32' and (sys.platform=='linux' or sys.platform=='darwin')):
+    for obj in arrDb: obj["strName"]=obj["strName"].replace('\\','/')
+
+  #for obj in arrDb: funSetMTime(obj, charTRes); 
+
+    # Create st
+  for obj in arrDb:
+    mtime_ns64Floored, tCalc=floorMTime64(obj["mtime_ns64"], charTRes)
+    obj["mtime_ns64Floored"]=mtime_ns64Floored
+    obj["st"]=KeyST(obj["size"], tCalc)
+  return None, arrDb
 
 

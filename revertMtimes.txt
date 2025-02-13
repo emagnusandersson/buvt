@@ -1,0 +1,47 @@
+int64 string\nmtime_ns64 strName
+mtime_ns64 strName
+1724432449110295226 a1.txt
+1701812620420021499 linkTarget.txt
+1654119041229667000 Downloads/a.xml
+1743293061328909991 a0.txt
+1742816087882860486 New Empty File
+1740639050656540273 reservedCharMS/file\abc.txt
+1740639034276541395 reservedCharMS/file<abc.txt
+1740639022093208896 reservedCharMS/file|abc.txt
+1740639000989877008 reservedCharMS/file>abc.txt
+1740638985439878067 reservedCharMS/file:abc.txt
+1740638971963212329 reservedCharMS/file*abc.txt
+1724659225399276291 specialChar/file(abc.txt
+1716905346502143507 b0.txt
+1713255764820247862 c1.txt
+1712231969669287254 c0.txt
+1711284064557847099 specialChar/dir&abc/AlbumArt_{D7EEDE4B-277B-4804-81F1-6FC6BA32F154}_Large.txt
+1711279044024094736 specialChar/dir&abc/a.txt
+1711278932530752097 specialChar/file&abc.txt
+1711032593595858031 specialChar/diråabc/a.txt
+1711032571902522887 specialChar/fileåabc.txt
+1711008203917155803 specialChar/dir!abc/a.txt
+1711008073167144889 specialChar/file!abc.txt
+1710934529000000000 reservedCharMS/dir"abc/a.txt
+1710934529000000000 reservedCharMS/dir*abc/a.txt
+1710934529000000000 reservedCharMS/dir:abc/a.txt
+1710934529000000000 reservedCharMS/dir<abc/a.txt
+1710934529000000000 reservedCharMS/dir>abc/a.txt
+1710934529000000000 reservedCharMS/dir\abc/a.txt
+1710934529000000000 reservedCharMS/dir|abc/a.txt
+1710934506000000000 reservedCharMS/file"abc.txt
+1710934411000000000 specialChar/dir(abc/a.txt
+1710934411000000000 specialChar/dir`abc/a.txt
+1710934348000000000 specialChar/file`abc.txt
+1710934268000000000 specialChar/dir abc/a.txt
+1710934256000000000 specialChar/dir$abc/a.txt
+1710921641000000000 specialChar/file$abc.txt
+1701817740436337546 perm/a.txt
+1701816931179726298 perm.txt
+1697137995172534710 hardLinkB.txt
+1682962462000000000 specialChar/dir'abc/a.txt
+1681386937000000000 specialChar/file'abc.txt
+1679408823000000000 specialChar/file abc.txt
+1653319751612331000 progC/stm32/libopencm3-examples/examples/stm32/f4/nucleo-f41/t.txt
+1653319751612331000 progC/stm32/libopencm3-examples/examples/stm32/f4/nucleo-f422/t.txt
+1653244447944110000 Downloads/backup/abc.txt

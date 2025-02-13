@@ -2,6 +2,32 @@
 "use strict"
 
 
+var formatTitleOld=function(arrIn, n=nShortListMax, fun=row=>row.strName){
+  var l=arrIn.length, nOut=Math.min(n,l), StrOut=Array(nOut)
+  if(nOut==0) return undefined
+  for(var i=0;i<nOut;i++) { var row=arrIn[i]; StrOut[i]=fun(row);}
+  if(l>n) StrOut.push('⋮')
+  return StrOut.join('\n')
+}
+
+var formatTitle=function(arrIn, fun){ // If fun is not supplied the input is assumed to be StrIn (array of strings)
+  var lIn=arrIn.length;
+  if(lIn==0) return undefined
+  var arrT=arrIn.slice(0,nShortListMax);
+  if(fun) arrT=arrT.map(fun)
+  if(arrT.length==nShortListMax) arrT.push('⋮');
+  return arrT
+  //return arrT.join('\n')
+}
+var formatTitleStr=function(){ // Like formatTitle but returns a string (instead of String)
+  return formatTitle(...arguments)?.join('\n')
+}
+var formatTitleStrName=function(arrIn){ // Assumes and array of {strName:"blah"}
+  return formatTitle(arrIn, row=>row.strName)?.join('\n')
+}
+
+
+
 //
 // Theme functions
 //
@@ -328,7 +354,7 @@ var makeOpenExtCB=function(PathFile){
     var arrCommand=[strExec, PathFile.fsName]
     var strCommand=arrCommand.join(' ');
     // var [exitCode, stdErr, stdOut]=await execMy(arrCommand);   if(stdErr) { debugger; return [stdErr];}  // Using spawn doesn't work on Windows !!!?!?!?
-    var [err, objT]=await exec(strCommand).toNBP(); if(err) { debugger; return [err];}
+    var [err, objT]=await exec(strCommand).toNBP(); if(err) { debugger; myConsole.error(err); return;}
   }
   return cbFunI
 }
