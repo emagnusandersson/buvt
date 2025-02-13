@@ -181,21 +181,23 @@ var extractMatchingOneToManyF=function(arrA, arrB, fun){
  * categorizeByProp
  ***********************************************************/
   // Inputs:
-  // arrA and arrB are arrays of objects (dicts). Ex: arrA=[{a:1,b:1}, {a:1,b:1}] 
-  // arrA and arrB must both be sorted: meaning when calling "funVal" on each element gives an increasing (although not necessarily strictly increasing (the result can be equal)) order.
-  // funVal takes an element as input and outputs a (sortable) value.
-  // What does categorizeByProp do: 
-  // Elements that gives the same value when passed through the funVal, are collected in arrays and stored in objAMatching resp objBMatching using the funVal-result as key.
-  // That is each property key (of objAMatching and objBMatching) are the output of funVal. The corresponding value is an array of the elements that outputted that key. 
-  // That array may be empty, then that property key (funVal-value) only exist in the opposite arrA/arrB.
+  //   arrA and arrB are arrays of objects. Ex: arrA=[{a:1,b:1}, {a:1,b:1}] 
+  //   arrA and arrB must both be sorted increasingly: meaning when calling "funVal" on each array-element, you get non-decreasing values (two consecutive elments may be equal, but not decrease).
+  //   funVal takes an element as input and outputs a (sortable) value.
+  // Output:
+  //   objMatching:
+  //     Elements from arrA resp. arrB that gets the value v when passed through the funVal, are collected in objMatching[v].arrA resp. objMatching[v].arrB.
 
   // Ex:
   // var arrA=[{"a":1,"b":1}, {"a":1,"b":2}, {"a":2}];
   // var arrB=[{"a":1,"b":1}, {"a":1,"b":3}, {"a":3}];
   // var funVal=row=>row["a"]
-  // var [objAMatching, objBMatching]=categorizeByProp(arrA, arrB, funVal)
-  // objAMatching={"1":[{"a":1,"b":1}, {"a":1,"b":2}], "2":[{"a":2}], "3":[]}
-  // objBMatching={"1":[{"a":1,"b":1}, {"a":1,"b":3}], "2":[], "3":[{"a":3}]}
+  // var [objMatching]=categorizeByProp(arrA, arrB, funVal)
+  // objAMatching={
+  //   "1":{arrA:[{"a":1,"b":1}, {"a":1,"b":2}], arrB:[{"a":1,"b":1}, {"a":1,"b":3}]}, 
+  //   "2":{arrA:[{"a":2}], arrB:[]}, 
+  //   "3":{arrA:[], arrB:[{"a":3}]}
+  // }
 
 var categorizeByProp=function(arrA, arrB, funVal){
   var objMatching={};
@@ -211,23 +213,6 @@ var categorizeByProp=function(arrA, arrB, funVal){
   }
   return [objMatching]
 }
-var convertObjMatchingSingleToDouble=function(objMatching){
-  var objAMatching={}, objBMatching={}
-  for(var key in objMatching){
-    var objTmp=objMatching[key]
-    objAMatching[key]=objTmp.arrA
-    objBMatching[key]=objTmp.arrB
-  }
-  return [objAMatching, objBMatching]
-}
-
-var categorizeByPropOld=function(arrA, arrB, funVal){
-  var [objMatching]=categorizeByProp(arrA, arrB, funVal)
-  var [objAMatching, objBMatching]=convertObjMatchingSingleToDouble(objMatching)
-  return [objAMatching, objBMatching]
-}
-// var [objMatching]=categorizeByProp(arrA, arrB, funVal)
-// var [objAMatching, objBMatching]=convertObjMatchingSingleToDouble(objMatching)
 
 // debugger
 // var a=categorizeByProp([3,6,9], [2,3,8], x=>x)
@@ -237,100 +222,44 @@ var categorizeByPropOld=function(arrA, arrB, funVal){
 
 
 
-/***************************************************************************************
- * [arrUniq, objMult, arrUniqified]=extractUniques(arr, Key)
- *   extract uniques (as measured by the properties named in Key) within a single array arr.
- *   Inputs:
- *     arr: array of elements
- *     Key: the keys of each element that is evaluted
- *   Output:
- *     arrUniq: all the unique entries
- *     objMult: Object where each property contains an array of multiples.
- *     arrUniqified: Like arrUniq plus one entry for each of the multiples.
- *   NOTE!!! arr is expected to be sorted (equal entries (with respect to Key) next to each other)
- ***************************************************************************************/
-var extractUniques=function(arr, Key){
-  if(!(Key instanceof Array)) Key=[Key]
-  var objMult={},  arrUniq=[],  arrUniqified=[];
+// var BundA= bundleOnProperty([{"a":1}, {"a":1}, {"a":2}, {"a":3}], "a")
+//   BundA: {"1":[{"a":1},{"a":1}], "2":[{"a":2}], "3":[{"a":3}]}
+
+
+var bundleOnProperty=function(arr, arg){
+  var boFun=typeof arg=='function'
+  if(boFun){ var fun=arg;}
+  else{ var Key=arg instanceof Array?arg:[arg] }
+  var Bund={}
   var lenArr=arr.length
-  //if(lenArr==0) return [arrUniq, objMult, arrUniqified]
-  for(var i=0;i<lenArr;i++){
-    var row=arr[i], iNext=i+1
-    var boMatch=true
-    if(iNext!=lenArr){
-      var rowNext=arr[iNext]
-      for(var key of Key){
-        var attr=row[key], attrNext=rowNext[key]
-        if(attrNext!=attr) boMatch=false
-      }
-    } else boMatch=false
-      // Create strAttr (key in objMult)
-    var strAttr=""
-    for(var key of Key){
-      var attr=row[key];
-      strAttr+=attr.toString();
-    }
-
-    if(boMatch){
-      if(strAttr in objMult) objMult[strAttr].push(row)
-      else objMult[strAttr]=[row]
-    }
-    else{
-      //arrUniqified.push(extend({},row))
-      arrUniqified.push(row)
-      if(strAttr in objMult) objMult[strAttr].push(row)
-      else arrUniq.push(row)
-    }
-  }
-  return [arrUniq, objMult, arrUniqified]
-}
-
-// var [arrUniq, objMult, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}], "a")
-// var [arrUniq, objMult, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}, {"a":2}], "a")
-// var [arrUniq, objMult, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}, {"a":3}], "a")
-
-
-var bucketifyByKey=function(arr, Key){
-  if(!(Key instanceof Array)) Key=[Key]
-  var objByKey={}
-  var lenArr=arr.length
-  //if(lenArr==0) return [arrUniq, objByKey, arrUniqified]
   for(var i=0;i<lenArr;i++){
     var row=arr[i];
-      // Create strAttr (key in objByKey)
-    var strAttr=""
-    for(var key of Key){
-      var attr=row[key];
-      strAttr+=attr.toString();
+      // Create strKey
+    if(boFun) var strKey=fun(row);
+    else{
+      var strKey=""
+      for(var k of Key){
+        var attr=row[k];
+        strKey+=attr.toString();
+      }
     }
-
-    if(strAttr in objByKey) objByKey[strAttr].push(row)
-    else objByKey[strAttr]=[row];
+    if(strKey in Bund) Bund[strKey].push(row);  else Bund[strKey]=[row];
   }
-  return objByKey
+  return Bund
 }
-// var objByKey= bucketifyByKey([{"a":1}, {"a":1}, {"a":2}], "a")
-// var objByKey= bucketifyByKey([{"a":1}, {"a":1}, {"a":2}, {"a":2}], "a")
-// var objByKey= bucketifyByKey([{"a":1}, {"a":1}, {"a":2}, {"a":3}], "a")
-//   objByKey: {"1":[{"a":1},{"a":1}], "2":[{"a":2}], "3":[{"a":3}]}
 
-
-// var bucketifyByKeyMultSum=function(arrA, Key){ // bucketifyByKey Multple Summary
-//   var objMult={}, nMult=0
-//   var objEntryByKey=bucketifyByKey(arrA, Key);
-//   var nPat=Object.keys(objEntryByKey).length
-//   for(var k in objEntryByKey) { var arr=objEntryByKey[k]; if(arr.length>1) {objMult[k]=arr; nMult+=arr.length;} }
-//   var nPatMult=Object.keys(objMult).length;
-//   return [nPat, nPatMult, nMult, objMult]
-// }
-
-var extractBucketsWMultiples=function(objEntryByKey){ // bucketifyByKey Multple Summary
-  var objMult={}, nMult=0
-  for(var k in objEntryByKey) { var arr=objEntryByKey[k]; if(arr.length>1) {objMult[k]=arr; nMult+=arr.length;} }
-  return [nMult, objMult]
+var extractBundlesWMultiples=function(Bund){ // bundleOnProperty Multple Summary
+  var BundMult={}, nMult=0, arrSingle=[]
+  for(var k in Bund) {
+    var arr=Bund[k], l=arr.length;
+    if(l>1) {BundMult[k]=arr; nMult+=l;} 
+    else if(l==1){arrSingle.push(arr[0])} 
+    else {throw Error(`l==${l}`)}
+  }
+  return [BundMult, nMult, arrSingle]
 }
-// var objEntryByKey=bucketifyByKey(arrA, Key),  nPat=Object.keys(objEntryByKey).length
-// var [nMult, objMult]=extractBucketsWMultiples(objEntryByKey),  nPatMult=Object.keys(objMult).length;
+// var Bund=bundleOnProperty(arrA, Key),  nPat=Object.keys(Bund).length
+// var [BundMult, nMult]=extractBundlesWMultiples(Bund),  nPatMult=Object.keys(BundMult).length;
 
 
 var objManyToManyRemoveEmpty=function(objA, objB){  // Modifies objA and objB
@@ -657,7 +586,7 @@ var setBestNameMatchFirst=function(ArrA, ArrB){
       for(var k in arrB){
         var elB=arrB[k], strNameB=elB.strName
         //var rat=similarity(strNameA, strNameB)
-        var rat=stringSimilarity(strNameA, strNameB, 2, true) 
+        var rat=stringSimilarity.stringSimilarity(strNameA, strNameB, 2, true) 
         if(rat>fitBest) {fitBest=rat; jBest=j; kBest=k}
       }
     }
@@ -680,7 +609,8 @@ var rearrangeByBestNameMatch=function(relation){
     var elA=arrA[i], strNameA=elA.strName
     for(var j=0;j<lenB;j++){
       var elB=arrB[j], strNameB=elB.strName
-      var rat=similarity(strNameA, strNameB)
+      //var rat=similarity(strNameA, strNameB)
+      var rat=stringSimilarity.stringSimilarity(strNameA, strNameB, 2, true) 
       FitVal[i*lenB+j]={i,j,rat}
       if(rat===1) nExactName++
     }
@@ -775,9 +705,10 @@ var rearrangeByMatchintMTime=function(relation, nExactName){
 var seperateOutCaseCollisions=function(arr){
   var l=arr.length, obj={}, nCollision=0;
   for(var i=0;i<l;i++){
-    var row=arr[i], strNameLC=row.strName.toLowerCase()
+    var row=arr[i], {strName}=row, strNameLC=strName.toLowerCase()
     if(strNameLC in obj) {obj[strNameLC].push(row); nCollision++;}
     else {obj[strNameLC]=[row];}
   }
-  return nCollision
+  var arr=Object.values(obj)
+  return arr
 }
