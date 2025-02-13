@@ -154,9 +154,7 @@ class TreeParserJS{
       var mtime_ns64Floored=floorMTime64(mtime_ns64, charTRes);
       var strMTime=calcStrTime(mtime_ns64)
       var strMTimeFloored=calcStrTime(mtime_ns64Floored);
-      var strMTimeSnake=calcStrTimeSnake(strMTime);
-      var strMTimeFlooredSnake=calcStrTimeSnake(strMTimeFloored);
-      var objEntry={strName:flName, id,   strMTime, strMTimeFloored, strMTimeSnake, strMTimeFlooredSnake, mtime_ns64, mtime_ns64Floored}
+      var objEntry={strName:flName, id,   strMTime, strMTimeFloored, mtime_ns64, mtime_ns64Floored}
       if(!boDir){
         var sm=createSM64(size, mtime_ns64Floored)
         extend(objEntry, {size, sm})
@@ -183,19 +181,19 @@ class TreeParserJS{
     this.charTRes=charTRes
     this.arrTreef=[]; this.arrTreeF=[]
     this.arrRulef=[]; this.arrRuleF=[]
-    var [err]=await this.getBranch({"fsDir":fsDir, "flDir":""}, 0)  //strName, id, mtime, mtime_ns, size, keySM
+    var [err]=await this.getBranch({"fsDir":fsDir, "flDir":""}, 0)  
     if(err) {debugger; return [err];}
 
     // if(!boIncludeLeafDb){
-    //   removeLeafDbFromArrTreef(this.arrTreef)
+    //   removeLeafFileFromArrTreef(this.arrTreef)
     // }
     return [null, this.arrTreef, this.arrTreeF]
   }
 }
 
-var removeLeafDbFromArrTreef=function(arrTreef, leafDb){
+var removeLeafFileFromArrTreef=function(arrTreef, leafFile){
   for(var i in arrTreef){
-    if(arrTreef[i].strName==leafDb){ arrTreef.splice(i, 1); break } 
+    if(arrTreef[i].strName==leafFile){ arrTreef.splice(i, 1); break } 
   }
   //return arr
 }
@@ -205,7 +203,7 @@ var removeLeafDbFromArrTreef=function(arrTreef, leafDb){
 class TreeParserPython{
   constructor(){ }
   async parseTree(arg){
-    var {fsDir, charTRes, leafFilter=null, leafFilterFirst=null, strHost=null, boRemote, charFilterMethod}=arg
+    var {fsDir, charTRes, leafFilter=null, leafFilterFirst=null, strHost=null, charFilterMethod}=arg
     if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
 
     //setMess(`Parsing tree: ${fsDir}`, null, true)
@@ -239,7 +237,8 @@ class TreeParserPython{
     if(exitCode) {
       debugger; return [Error(stdErr)];
     }
-    var tStop=unixNow();   myConsole.printNL(`parseTree: time ${(tStop-tStart)}ms`)
+
+    var tStop=unixNow();   myConsole.printNL(`parseTree: time: ${(tStop-tStart)} s`)
 
     var buf = Buffer.concat(arrData), stdOut=buf.toString()
     //var StrGroup=stdOut.split('@\n');
@@ -274,14 +273,13 @@ class TreeParserPython{
         if(strMTime.length!=19) {debugger; throw Error(`strMTimeOrg.length!=19 (${strMTime} (${flName}))`);}
         
         var mtime_ns64=BigInt(strMTime)
-        var mtime_ns64Floored=floorMTime64(mtime_ns64, charTRes);
-        var strMTimeFloored=calcStrTime(mtime_ns64Floored)
-        var strMTimeSnake=calcStrTimeSnake(strMTime);
-        var strMTimeFlooredSnake=calcStrTimeSnake(strMTimeFloored);
-        var objTmp={strName:flName, id,   strMTime, strMTimeFloored, strMTimeSnake, strMTimeFlooredSnake, mtime_ns64, mtime_ns64Floored}
+        // var mtime_ns64Floored=floorMTime64(mtime_ns64, charTRes);
+        // var strMTimeFloored=calcStrTime(mtime_ns64Floored)
+        // var objTmp={strName:flName, id,   strMTime, mtime_ns64, strMTimeFloored, mtime_ns64Floored}
+        var objTmp={strName:flName, id,   strMTime, mtime_ns64} // , strMTimeFloored, mtime_ns64Floored
         if(j==0) {
-          var sm=createSM64(size, mtime_ns64Floored)
-          extend(objTmp, { strType, size, sm});
+          //var sm=createSM64(size, mtime_ns64Floored)
+          extend(objTmp, { strType, size}); //, sm
         }
         arrGroup[i]=objTmp
       }
@@ -293,120 +291,7 @@ class TreeParserPython{
 }
 
 
-/*****************************************************************
- * parseRelations
-*****************************************************************/
 
-// funCreateKey creates a key from the Matching-data-array
-// funSide returns 0 or 1, 0 and it is added to objA/arrA, 1 for objB/arrB
-// Usage example:
-// var [err, fsInpFile]=await myRealPath(fiInpFile); if(err) return [err]
-// var [err, strData]=await readStrFile(fsInpFile); if(err) return [err]
-// var [arrA, arrB]=parseRelations(strData)
-var parseRelations=function(strData, boAssignObj=false, funCreateKey=arr=>arr.join('_'), funSide=arr=>arr[0]=='T'){
-  strData=strData.trim();  if(strData.length==0) return [null,{},{},[],[]]
-  var arrInp=strData.split('\n'), n=arrInp.length;    
-  if(n<4) return [Error("n<4")]
-  var [strColTypeM, strColM, strColTypeU, strColU]=arrInp.slice(0, 4) // M=Matching, U=Unique
-  var StrColTypeM=strColTypeM.trim().split(' '), StrColM=strColM.trim().split(' ')
-  var StrColTypeU=strColTypeU.trim().split(' '), StrColU=strColU.trim().split(' ')
-
-  var funCast=function(strType, strVal){
-    if(strType=="int") return Number(strVal)
-    else if(strType=="int64") {
-      try{strVal=BigInt(strVal);}
-      catch{strVal=null;}
-    }
-    return strVal
-  }
-
-  arrInp=arrInp.slice(4); n=arrInp.length
-  var nColM=StrColM.length, nSplitM=nColM-1, nColU=StrColU.length, nSplitU=nColU-1
-  var objA={}, objB={}, arrA=[], arrB=[]
-  for(var strRow of arrInp){
-    strRow=strRow.trim()
-    if(strRow.length==0) continue
-    if(strRow.startsWith('#')) continue
-    var indSpace=strRow.indexOf(" ")
-    var strFirst=strRow.slice(0, indSpace)
-    var strPost=strRow.slice(indSpace).trim()
-
-    if(strFirst=="MatchingData"){
-      var arrPartM=mySplit(strPost, /\s+/g, nSplitM), nPartM=arrPartM.length
-      if(nPartM<nColM) {debugger; return [Error("nPartM<nColM")];}
-      var key=funCreateKey(arrPartM)
-      if(boAssignObj) {
-        if(!(key in objA)) objA[key]=[]
-        if(!(key in objB)) objB[key]=[]
-      }
-      continue
-    } else {
-      var arrPartU=mySplit(strRow, /\s+/g, nSplitU), nPartU=arrPartU.length;
-      if(nPartU<nColU) {debugger; return [Error("nPartU<nColU")];}
-      
-      var row={};
-      for(var i in StrColM) { var strCol=StrColM[i], strType=StrColTypeM[i], val=funCast(strType, arrPartM[i]); row[strCol]=val; }
-      for(var i in StrColU) { var strCol=StrColU[i], strType=StrColTypeU[i], val=funCast(strType, arrPartU[i]); row[strCol]=val; }
-
-      var intSide=funSide(arrPartU), arrTmp=intSide?arrB:arrA, objTmp=intSide?objB:objA;
-      arrTmp.push(row);
-      if(boAssignObj) objTmp[key].push(row);
-    }
-  }
-  
-  return [null, objA, objB, arrA, arrB]
-  //return [null, arrA, arrB, objA, objB]
-}
-
-
-
-  // parseMultSTFile: For parsing files with nTn relations, n>=0
-  // This should probably be replaced with "parseRelations" somehow.
-var parseMultSTFile=async function(fiInpFile){
-  var [err, fsInpFile]=await myRealPath(fiInpFile); if(err) {debugger; return [err]; }
-  var [err, strData]=await readStrFile(fsInpFile);
-  strData=strData.trim()
-  var arrS=[], arrT=[], objS={}, objT={}
-  var arrInp=strData.split('\n')
-  for(var i in arrInp){
-    var strRow=arrInp[i]
-    strRow=strRow.trim()
-    if(strRow.length==0) continue
-    if(strRow.startsWith('#')) continue
-    var indSpace=strRow.indexOf(" ")
-    var strFirst=strRow.slice(0, indSpace)
-    var strPost=strRow.slice(indSpace).trim()
-    if(strFirst.length==0) {debugger; return [Error("strFirst.length==0")];}
-    //var charType=strFirst[0]
-    if(strFirst=='MatchingData'){
-      //var arrPart=strPost.split(/\s+/)
-      var arrPartMatching=mySplit(strPost, /\s+/g, 2), nPartMatching=arrPartMatching.length
-      if(nPartMatching<3) {debugger; return [Error("nPartMatching<3")];}
-      var size=parseInt(arrPartMatching[0]), strMTimeFloored=arrPartMatching[1], mtime_ns64Floored=BigInt(strMTimeFloored)
-      var sm=createSM64(size, mtime_ns64Floored)
-      if(!(sm in objS)) objS[sm]=[]
-      if(!(sm in objT)) objT[sm]=[]
-        // Exact time
-      //var strMTime=nPartMatching==3?trim(arrPartMatching[2],'()'):arrPartMatching[1] 
-      //var mtime_ns64=BigInt(strMTime)
-      var strMTimeExact=arrPartMatching[2]
-    } else if(strFirst=='T' || strFirst=='S'){
-      var arrPartT=mySplit(strPost, /\s+/g, 3), nPartT=arrPartT.length
-      if(nPartT<4) {debugger; return [Error("nPartT<4")];}
-      //var strType=arrPartT[0], id=arrPartT[1], strName=arrPartT[3];  //id=parseInt(id)
-      var [strType, id, strMTimeTmp, strName]=arrPartT;
-      if(strMTimeTmp=='seeAbove'){ var strMTime=strMTimeExact=='seePrev'?strMTimeFloored:strMTimeExact; }  else  { var strMTime=strMTimeTmp; }
-      var mtime_ns64=BigInt(strMTime)
-      var row={strType, size, id, mtime_ns64, mtime_ns64Floored, strName, strMTime, strMTimeFloored}
-      
-      if(strFirst=='T') {objT[sm].push(row); arrT.push(row);} 
-      else {objS[sm].push(row); arrS.push(row);}
-    } 
-  }
-  return [null, objS, objT, arrS, arrT]
-  //return [null, arrS, arrT, objS, objT]
-}
-  
 
 // b=0, c=0, f=(flPath), i=">f+++++++++", l=4096, o="send", p=775452, t="2024/08/14 18:49:57"
 // B="rw-r--r--", C=00000000000000000000000000000000, G=DEFAULT, L="", M="2022/09/16-00:34:17", U=0
@@ -450,70 +335,4 @@ var getRsyncList=async function(arg){
   return [null, arrf, arrF]
 }
 
-//var parseDb=async function(fsDb, charTRes){
-var parseDb=function(strData, charTRes){
-  //var [err, strData]=await readStrFile(fsDb); if(err) return [err]
-  var arrDb=parseSSV(strData)
-  var nData=arrDb.length
-  //if(nData==0)  return [null, arrDb]
-  if(nData==0) return arrDb
-    // Cast some properties 
-  formatColumnData(arrDb, {"size":"number"}) //, "id":"number"
 
-  var strOSTypeDbFile=checkPathFormat(arrDb)
-  if(strOSTypeDbFile=='linux' && strOS=='win32'){
-    for(var obj of arrDb) obj["strName"]=obj["strName"].replaceAll('/','\\')
-  }
-  else if(strOSTypeDbFile=='win32' && (strOS=='linux' || strOS=='darwin')){
-    //var strE="strOSTypeDbFile=='win32' && (strOS=='linux' || strOS=='darwin')"
-    //return [Error(strE)]
-    for(var obj of arrDb) obj["strName"]=obj["strName"].replaceAll('\\','/')
-  }
-
-    // If any mtime is longer than 10 char, then assume ns
-  var boNs=false
-  for(obj of arrDb){
-    if(obj.mtime.length>10) {boNs=true; break;}
-  }
-  if(boNs){
-    for(obj of arrDb){
-      obj.mtime_ns64=BigInt(obj.mtime)
-    }
-  } else{
-    for(obj of arrDb){
-      obj.mtime_ns64=BigInt(obj.mtime)*BigInt(1e9)
-    }
-  }
-
-    // Create sm
-  for(obj of arrDb){
-    var {size, mtime_ns64}=obj
-    var strMTime=calcStrTime(mtime_ns64)
-    var mtime_ns64Floored=floorMTime64(mtime_ns64, charTRes);
-    var strMTimeFloored=calcStrTime(mtime_ns64Floored)
-    var sm=createSM64(size, mtime_ns64Floored)
-    var strMTimeSnake=calcStrTimeSnake(strMTime);
-    var strMTimeFlooredSnake=calcStrTimeSnake(strMTimeFloored);
-    //extend(obj,{strMTime, strMTimeFloored, mtime_ns64, mtime_ns64Floored, sm})
-    extend(obj, {strMTime, strMTimeFloored, mtime_ns64, mtime_ns64Floored, strMTimeSnake, strMTimeFlooredSnake, sm})
-  }
-  //return [null, arrDb]
-  return arrDb
-}
-
-/*******************************************************
- * parseHashFile
- *******************************************************/
-var parseHashFile=async function(fsHashFile){
-  var [err, strData]=await readStrFile(fsHashFile); if(err) return [err]
-  strData=strData.trim()
-  var arrOut=[],   arrInp=strData.split('\n')
-  for(var strRow of arrInp){
-    strRow=strRow.trim()
-    if(strRow.length==0) continue
-    if(strRow.startsWith('#')) continue
-    var arrPart=mySplit(strRow, /\s+/g, 3)
-    arrOut.push({"strHash":arrPart[0], "mtime":Number(arrPart[1]), "size":Number(arrPart[2]), "strName":arrPart[3]})
-  }
-  return [null, arrOut]
-}

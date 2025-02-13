@@ -29,8 +29,9 @@
   --bg-input:#fff;
   --text-red:red;
   --text-green:green;
-  --text-grey:grey
-
+  --text-blue:blue;
+  --text-grey:grey;
+  --link-input:green
 }
 
 /* @media (prefers-color-scheme:dark) */ 
@@ -41,7 +42,7 @@
   --bg-colorEmp2:#606060;
   --bg-colorImg:#005470;
   --bg-green:#007300;
-  --bg-red:#c00020;
+  --bg-red:#a0041e;
   --bg-blue:#005470;
   --bg-yellow:#353500;
   --bg-orange:#b17300;
@@ -51,7 +52,7 @@
   --link-external:#88b1f7;
   --link-external-visited:#b477b4;
   --color-link:#368cff;
-  --color-link-visited:#de41ff;
+  --color-link-visited:#e777ff;
   --bg-seller:#1e8aad;
   --bg-buyer:#d8566b;
   --invert:1;
@@ -62,8 +63,10 @@
   background:var(--bg-colorRoot);
   color:var(--text-color);
   --text-red:#ff7f7f;
-  --text-green:green;
-  --text-grey:#a0a0a0
+  --text-green:lightgreen;
+  --text-blue:lightblue;
+  --text-grey:#a0a0a0;
+  --link-input:lightgreen
 }
 
 .boxShadowOn {box-shadow:0 0 0 0.2em lightgreen inset; background-color:#eee; color:limegreen}
@@ -82,7 +85,7 @@ a:visited{color:var(--color-link-visited)}
 .invertOnDark {filter:invert(var(--invert))}
 .invertOnDarkBright {filter:invert(var(--invert)) brightness(calc(1 + var(--invert) * 0.4))}
 
-
+dd {margin-inline-start:10px;}
 
 html {height:100%; font-family: sans-serif;}
 body  {height:100%; margin:0px;}
@@ -127,6 +130,15 @@ a.disabled {
   text-decoration:none
 }
 
+
+a.input {
+  color:var(--link-input)
+}
+/* a.input:visited {color:var(--link-input-visited)} */
+td:has(a[title]:only-child) {
+  background-color: var(--bg-red);
+}
+
 button {white-space:nowrap; width:intrinsic}
 
 button.smallBut {padding: 0em 0.3em;
@@ -143,7 +155,7 @@ th{background-color: var(--bg-colorEmp);}
 table td.crossed{
    background-image: linear-gradient(to bottom right,  transparent calc(50% - 1px), var(--text-color), transparent calc(50% + 1px)); 
 }
-table.main td[colspan="2"] {
+table.main td {
   text-align:center
 }
 table th.backcrossed{
@@ -203,6 +215,7 @@ div.section {background:lightgray; margin-top:3px}
   background-color:var(--bg-color);
   border:1px solid;
   transform: translate(-50%,-50%);
+  max-height: 100%;
 }
 /* .popupErrorConsole{
   position:fixed;
@@ -292,3 +305,11 @@ span.labMatch{
   width:2.5em;
   display:inline-block;
 }
+
+
+dt	{font-weight:bold;}
+
+.Settings>label:nth-child(even) {
+  background: var(--bg-colorEpm);
+}
+

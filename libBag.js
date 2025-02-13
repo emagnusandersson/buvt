@@ -35,25 +35,7 @@ function funInt(a,b){
  *   The extractMatchingF-function compares the elements in arrA with elements in arrB and puts matching pairs in arrAMatching and arrBMatching (which will be of equal length). The remaining elements are equally put in containers arrARem and arrBRem
  ***************************************************************************************/
 
-
-
-/***************************************************************************************
- * extractMatching: (Wrapper for extractMatchingF)
- *   Works as extractMatchingF although each element is an object and the comparission is made using the object-properties given in KeyA and KeyB (which should be of equal length):
- *   Notation: X ∈ [A, B]
- *   Uniqueness: Object within arrX must be unique (with respect to they proprties in KeyX) (See example below).
- *   Sorted strictly ascendingly: The first key (within KeyX) that is different must be larger in the preceding element.
- *     So in other words, the elements of KeyX have falling priority.
- *   If KeyB is omitted, KeyA will be used in its place. 
- *   Ex: Assume KeyA=['m','n'] then
- *     arrA=[{m:0,n:0}, {m:0,n:0}] is NOT OK (Elements are not unique (nor strictly ascending))
- *     arrA=[{m:0,n:0}, {m:0,n:1}] is OK
- *     arrA=[{m:1,n:0}, {m:0,n:1}] is NOT OK (Elements are not ascending, because m has higher priority)
- *     arrA=[{m:0,n:1}, {m:1,n:0}] is OK
- *       
- ***************************************************************************************/
-
-gThis.extractMatchingF=function(arrA, arrB, funM101){ 
+gThis.extractMatchingF=function(arrA, arrB, funM101){ // F means function
   var iA=0, iB=0
   var lenA=arrA.length, lenB=arrB.length
   var arrAMatching=[], arrBMatching=[]
@@ -73,7 +55,24 @@ gThis.extractMatchingF=function(arrA, arrB, funM101){
   return [arrAMatching, arrBMatching, arrARem, arrBRem]
 }
 
-gThis.extractMatching=function(arrA, arrB, KeyA, KeyB=null){
+
+/***************************************************************************************
+ * extractMatching: (Wrapper for extractMatchingF)
+ *   Works as extractMatchingF although each element is an object and the comparission is made using the object-properties given in KeyA and KeyB (which should be of equal length):
+ *   Notation: X ∈ [A, B]
+ *   Uniqueness: Object within arrX must be unique (with respect to they proprties in KeyX) (See example below).
+ *   Sorted strictly ascendingly: The first key (within KeyX) that is different must be larger in the preceding element.
+ *     So in other words, the elements of KeyX have falling priority.
+ *   If KeyB is omitted, KeyA will be used in its place. 
+ *   Ex: Assume KeyA=['m','n'] then
+ *     arrA=[{m:0,n:0}, {m:0,n:0}] is NOT OK (Elements are not unique (nor strictly ascending))
+ *     arrA=[{m:0,n:0}, {m:0,n:1}] is OK
+ *     arrA=[{m:1,n:0}, {m:0,n:1}] is NOT OK (Elements are not ascending, because m has higher priority)
+ *     arrA=[{m:0,n:1}, {m:1,n:0}] is OK
+ *       
+ ***************************************************************************************/
+
+gThis.extractMatching=function(arrA, arrB, KeyA, KeyB=null){ // Wrapper of extractMatchingF
   if(KeyB==null) KeyB=KeyA
   var lenKeyA=KeyA.length,  lenKeyB=KeyB.length;  
   if(lenKeyA!=lenKeyB) {debugger; return [Error("lenKeyA!=lenKeyB")]} 
@@ -181,21 +180,23 @@ var extractMatchingOneToManyF=function(arrA, arrB, fun){
  * categorizeByProp
  ***********************************************************/
   // Inputs:
-  // arrA and arrB are arrays of objects (dicts). Ex: arrA=[{a:1,b:1}, {a:1,b:1}] 
-  // arrA and arrB must both be sorted: meaning when calling "funVal" on each element gives an increasing (although not necessarily strictly increasing (the result can be equal)) order.
-  // funVal takes an element as input and outputs a (sortable) value.
-  // What does categorizeByProp do: 
-  // Elements that gives the same value when passed through the funVal, are collected in arrays and stored in objAMatching resp objBMatching using the funVal-result as key.
-  // That is each property key (of objAMatching and objBMatching) are the output of funVal. The corresponding value is an array of the elements that outputted that key. 
-  // That array may be empty, then that property key (funVal-value) only exist in the opposite arrA/arrB.
+  //   arrA and arrB are arrays of objects. Ex: arrA=[{a:1,b:1}, {a:1,b:1}] 
+  //   arrA and arrB must both be sorted non-decreasingly: meaning when calling "funVal" on each array-element, you get non-decreasing values (two consecutive elments may be equal, but not decrease).
+  //   funVal takes an element as input and outputs a (sortable) value.
+  // Output:
+  //   objMatching:
+  //     Elements from arrA resp. arrB that gets the value v when passed through the funVal, are collected in objMatching[v].arrA resp. objMatching[v].arrB.
 
-  // Ex:
-  // var arrA=[{"a":1,"b":1}, {"a":1,"b":2}, {"a":2}];
-  // var arrB=[{"a":1,"b":1}, {"a":1,"b":3}, {"a":3}];
-  // var funVal=row=>row["a"]
-  // var [objAMatching, objBMatching]=categorizeByProp(arrA, arrB, funVal)
-  // objAMatching={"1":[{"a":1,"b":1}, {"a":1,"b":2}], "2":[{"a":2}], "3":[]}
-  // objBMatching={"1":[{"a":1,"b":1}, {"a":1,"b":3}], "2":[], "3":[{"a":3}]}
+  // Ex: Assume two arrays of objects, the object must have the property "a" (as funVal requires it)
+  // var arrA=[{a:1,b:1}, {a:1,b:2}, {a:2}];
+  // var arrB=[{a:1,b:1}, {a:1,b:3}, {a:3}];
+  // var funVal=obj=>obj.a
+  // var objMatching=categorizeByProp(arrA, arrB, funVal)
+  // objAMatching={
+  //   "1":{arrA:[{a:1,b:1}, {a:1,b:2}], arrB:[{a:1,b:1}, {a:1,b:3}]}, 
+  //   "2":{arrA:[{a:2}], arrB:[]}, 
+  //   "3":{arrA:[], arrB:[{a:3}]}
+  // }
 
 var categorizeByProp=function(arrA, arrB, funVal){
   var objMatching={};
@@ -203,31 +204,14 @@ var categorizeByProp=function(arrA, arrB, funVal){
   for(var j=0;j<2;j++){
     var arr=Arr[j], len=arr.length, strTmp=Str[j]
     for(var i=0;i<len;i++){
-      var row=arr[i]
-      var val=funVal(row)
+      var obj=arr[i]
+      var val=funVal(obj)
       if(!(val in objMatching)) objMatching[val]={arrA:[],arrB:[]}
-      objMatching[val][strTmp].push(row)
+      objMatching[val][strTmp].push(obj)
     }
   }
-  return [objMatching]
+  return objMatching
 }
-var convertObjMatchingSingleToDouble=function(objMatching){
-  var objAMatching={}, objBMatching={}
-  for(var key in objMatching){
-    var objTmp=objMatching[key]
-    objAMatching[key]=objTmp.arrA
-    objBMatching[key]=objTmp.arrB
-  }
-  return [objAMatching, objBMatching]
-}
-
-var categorizeByPropOld=function(arrA, arrB, funVal){
-  var [objMatching]=categorizeByProp(arrA, arrB, funVal)
-  var [objAMatching, objBMatching]=convertObjMatchingSingleToDouble(objMatching)
-  return [objAMatching, objBMatching]
-}
-// var [objMatching]=categorizeByProp(arrA, arrB, funVal)
-// var [objAMatching, objBMatching]=convertObjMatchingSingleToDouble(objMatching)
 
 // debugger
 // var a=categorizeByProp([3,6,9], [2,3,8], x=>x)
@@ -237,100 +221,42 @@ var categorizeByPropOld=function(arrA, arrB, funVal){
 
 
 
-/***************************************************************************************
- * [arrUniq, objMult, arrUniqified]=extractUniques(arr, Key)
- *   extract uniques (as measured by the properties named in Key) within a single array arr.
- *   Inputs:
- *     arr: array of elements
- *     Key: the keys of each element that is evaluted
- *   Output:
- *     arrUniq: all the unique entries
- *     objMult: Object where each property contains an array of multiples.
- *     arrUniqified: Like arrUniq plus one entry for each of the multiples.
- *   NOTE!!! arr is expected to be sorted (equal entries (with respect to Key) next to each other)
- ***************************************************************************************/
-var extractUniques=function(arr, Key){
-  if(!(Key instanceof Array)) Key=[Key]
-  var objMult={},  arrUniq=[],  arrUniqified=[];
+// var BundA= bundleOnProperty([{a:1}, {a:1}, {a:2}, {a:3}], "a")
+//   BundA: {"1":[{a:1},{a:1}], "2":[{a:2}], "3":[{a:3}]}
+var bundleOnProperty=function(arr, arg){
+  var boFun=typeof arg=='function'
+  if(boFun){ var fun=arg;}
+  else{ var Key=arg instanceof Array?arg:[arg] }
+  var Bund={}
   var lenArr=arr.length
-  //if(lenArr==0) return [arrUniq, objMult, arrUniqified]
-  for(var i=0;i<lenArr;i++){
-    var row=arr[i], iNext=i+1
-    var boMatch=true
-    if(iNext!=lenArr){
-      var rowNext=arr[iNext]
-      for(var key of Key){
-        var attr=row[key], attrNext=rowNext[key]
-        if(attrNext!=attr) boMatch=false
-      }
-    } else boMatch=false
-      // Create strAttr (key in objMult)
-    var strAttr=""
-    for(var key of Key){
-      var attr=row[key];
-      strAttr+=attr.toString();
-    }
-
-    if(boMatch){
-      if(strAttr in objMult) objMult[strAttr].push(row)
-      else objMult[strAttr]=[row]
-    }
-    else{
-      //arrUniqified.push(extend({},row))
-      arrUniqified.push(row)
-      if(strAttr in objMult) objMult[strAttr].push(row)
-      else arrUniq.push(row)
-    }
-  }
-  return [arrUniq, objMult, arrUniqified]
-}
-
-// var [arrUniq, objMult, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}], "a")
-// var [arrUniq, objMult, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}, {"a":2}], "a")
-// var [arrUniq, objMult, arrUniqified]= extractUniques([{"a":1}, {"a":1}, {"a":2}, {"a":3}], "a")
-
-
-var bucketifyByKey=function(arr, Key){
-  if(!(Key instanceof Array)) Key=[Key]
-  var objByKey={}
-  var lenArr=arr.length
-  //if(lenArr==0) return [arrUniq, objByKey, arrUniqified]
   for(var i=0;i<lenArr;i++){
     var row=arr[i];
-      // Create strAttr (key in objByKey)
-    var strAttr=""
-    for(var key of Key){
-      var attr=row[key];
-      strAttr+=attr.toString();
+      // Create strKey
+    if(boFun) var strKey=fun(row);
+    else{
+      var strKey=""
+      for(var k of Key){
+        var attr=row[k];
+        strKey+=attr.toString();
+      }
     }
-
-    if(strAttr in objByKey) objByKey[strAttr].push(row)
-    else objByKey[strAttr]=[row];
+    if(strKey in Bund) Bund[strKey].push(row);  else Bund[strKey]=[row];
   }
-  return objByKey
+  return Bund
 }
-// var objByKey= bucketifyByKey([{"a":1}, {"a":1}, {"a":2}], "a")
-// var objByKey= bucketifyByKey([{"a":1}, {"a":1}, {"a":2}, {"a":2}], "a")
-// var objByKey= bucketifyByKey([{"a":1}, {"a":1}, {"a":2}, {"a":3}], "a")
-//   objByKey: {"1":[{"a":1},{"a":1}], "2":[{"a":2}], "3":[{"a":3}]}
 
-
-// var bucketifyByKeyMultSum=function(arrA, Key){ // bucketifyByKey Multple Summary
-//   var objMult={}, nMult=0
-//   var objEntryByKey=bucketifyByKey(arrA, Key);
-//   var nPat=Object.keys(objEntryByKey).length
-//   for(var k in objEntryByKey) { var arr=objEntryByKey[k]; if(arr.length>1) {objMult[k]=arr; nMult+=arr.length;} }
-//   var nPatMult=Object.keys(objMult).length;
-//   return [nPat, nPatMult, nMult, objMult]
-// }
-
-var extractBucketsWMultiples=function(objEntryByKey){ // bucketifyByKey Multple Summary
-  var objMult={}, nMult=0
-  for(var k in objEntryByKey) { var arr=objEntryByKey[k]; if(arr.length>1) {objMult[k]=arr; nMult+=arr.length;} }
-  return [nMult, objMult]
+var extractBundlesWMultiples=function(Bund){ // bundleOnProperty Multple Summary
+  var BundMult={}, nMult=0, arrSingle=[]
+  for(var k in Bund) {
+    var arr=Bund[k], l=arr.length;
+    if(l>1) {BundMult[k]=arr; nMult+=l;} 
+    else if(l==1){arrSingle.push(arr[0])} 
+    else {throw Error(`l==${l}`)}
+  }
+  return [BundMult, nMult, arrSingle]
 }
-// var objEntryByKey=bucketifyByKey(arrA, Key),  nPat=Object.keys(objEntryByKey).length
-// var [nMult, objMult]=extractBucketsWMultiples(objEntryByKey),  nPatMult=Object.keys(objMult).length;
+// var Bund=bundleOnProperty(arrA, Key),  nPat=Object.keys(Bund).length
+// var [BundMult, nMult]=extractBundlesWMultiples(Bund),  nPatMult=Object.keys(BundMult).length;
 
 
 var objManyToManyRemoveEmpty=function(objA, objB){  // Modifies objA and objB
@@ -357,8 +283,8 @@ class MatNxN{
     var arrB=[[[],[],[]],[[],[],[]],[[],[],[]]]
     extend(this, {ArrA, ArrB, arrA, arrB})
   }
-  assignFromObjManyToMany(objA, objB){
-    var boSingle=typeof objB=='undefined'
+  assignFromObjManyToMany(objA){
+    //var boSingle=typeof objB=='undefined'
     this.nKTmp=Object.keys(objA).length
     var {ArrA, ArrB, arrA, arrB}=this
 
@@ -378,8 +304,8 @@ class MatNxN{
 
 
     for(var key in objA){
-      if(boSingle){ var arA=objA[key].arrA, arB=objA[key].arrB; }
-      else{ var arA=objA[key], arB=objB[key];}
+      var arA=objA[key].arrA, arB=objA[key].arrB;
+      //if(boSingle){ var arA=objA[key].arrA, arB=objA[key].arrB; }else{ var arA=objA[key], arB=objB[key];}
       
       var nA=arA.length, nB=arB.length
       if(nA==0){
@@ -508,12 +434,12 @@ class MatNxN{
 
 // Test code:
 // var funVal=row=>row.a
-// var arrA=[{"a":1,"b":1}, {"a":1,"b":2}, {"a":2}, {"a":2}, {"a":3}]
-// var arrB=[{"a":1,"b":1}, {"a":1,"b":3}, {"a":2}, {"a":2}, {"a":4}]
-// var [objA, objB]=categorizeByProp(arrA, arrB, funVal)
+// var arrA=[{a:1,b:1}, {a:1,b:2}, {a:2}, {a:2}, {a:3}]
+// var arrB=[{a:1,b:1}, {a:1,b:3}, {a:2}, {a:2}, {a:4}]
+// var Relation=categorizeByProp(arrA, arrB, funVal)
 
 // var MatTmp=new MatNxN()
-// MatTmp.assignFromObjManyToMany(objA, objB);
+// MatTmp.assignFromObjManyToMany(Relation);
 // var [objAOut, objBOut]=MatTmp.toObjManyToMany(funVal)
 // debugger
 
@@ -657,7 +583,7 @@ var setBestNameMatchFirst=function(ArrA, ArrB){
       for(var k in arrB){
         var elB=arrB[k], strNameB=elB.strName
         //var rat=similarity(strNameA, strNameB)
-        var rat=stringSimilarity(strNameA, strNameB, 2, true) 
+        var rat=stringSimilarity.stringSimilarity(strNameA, strNameB, 2, true) 
         if(rat>fitBest) {fitBest=rat; jBest=j; kBest=k}
       }
     }
@@ -671,7 +597,7 @@ var setBestNameMatchFirst=function(ArrA, ArrB){
 
 
 var rearrangeByBestNameMatch=function(relation){ 
-  var funSort=(a,b)=>{ var aa=a.rat, bb=b.rat; return (aa < bb) ? 1 : ((aa > bb) ? -1 : 0) } 
+  var funSortDec=(a,b)=>{ var aa=a.rat, bb=b.rat; return (aa < bb) ? 1 : ((aa > bb) ? -1 : 0) } // (decreasing)
   var {arrA,arrB}=relation
   var lenA=arrA.length, lenB=arrB.length
   if(lenA==0 || lenB==0) return 0;
@@ -680,39 +606,38 @@ var rearrangeByBestNameMatch=function(relation){
     var elA=arrA[i], strNameA=elA.strName
     for(var j=0;j<lenB;j++){
       var elB=arrB[j], strNameB=elB.strName
-      var rat=similarity(strNameA, strNameB)
+      //var rat=similarity(strNameA, strNameB)
+      var rat=stringSimilarity.stringSimilarity(strNameA, strNameB, 2, true) 
       FitVal[i*lenB+j]={i,j,rat}
       if(rat===1) nExactName++
     }
   }
 
-  FitVal.sort(funSort);
+  FitVal.sort(funSortDec);
   var BoTakenA=Array(lenA), BoTakenB=Array(lenB)
-  var cA=0, cB=0
-  var arrAN=Array(lenA), arrBN=Array(lenB)
-  //var IndAN=[],IndBN=[];
-  for(var k in FitVal){
+  //var cA=0, cB=0
+  //var arrAN=Array(lenA), arrBN=Array(lenB)
+  var arrAN=[], arrBN=[], lMin=Math.min(lenA,lenB)
+    // Add first lMin elements (those for which a pair can be accomplished)
+  for(var k=0; k<lMin; k++){
     var {i,j,rat}=FitVal[k];
     if(BoTakenA[i] || BoTakenB[j]) {continue}
     BoTakenA[i]=true;  BoTakenB[j]=true
-    //arrAN.push(arrA[i]); arrBN.push(arrB[j]);
-    arrAN[cA]=arrA[i]; arrBN[cB]=arrB[j];
-    cA++; cB++
-    if(cA==lenA || cB==lenB) {
-      if(cA<lenA){
-        for(var kk=0;kk<lenA;kk++) {
-          if(!BoTakenA[kk]) {arrAN[cA]=arrA[kk]; cA++; if(cA==lenA) break;}
-        }
-      }
-      if(cB<lenB){
-        for(var kk=0;kk<lenB;kk++) {
-          if(!BoTakenB[kk]) {arrBN[cB]=arrB[kk]; cB++; if(cB==lenB) break;}
-        }
-      }
-      break
-    }
-    //IndAN.push(i); IndBN.push(j);
+    arrAN.push(arrA[i]); arrBN.push(arrB[j]);
   }
+    // Add the remainders
+  if(arrAN.length<lenA){
+    for(var kk=0;kk<lenA;kk++) {
+      if(!BoTakenA[kk]) {arrAN.push(arrA[kk]); if(arrAN.length==lenA) break;}
+    }
+  }
+  if(arrBN.length<lenB){
+    for(var kk=0;kk<lenB;kk++) {
+      if(!BoTakenB[kk]) {arrBN.push(arrB[kk]); if(arrBN.length==lenB) break;}
+    }
+  }
+
+    // Replace arrA, arrB with arrAN, arrBN, they reference the same elements, just in an other order.
   for(var i in arrA){ arrA[i]=arrAN[i];}
   for(var j in arrB){ arrB[j]=arrBN[j];}
   // arrA.length=0; arrB.length=0
@@ -721,27 +646,27 @@ var rearrangeByBestNameMatch=function(relation){
 }
 // var arrA=[{strName:'abc'}, {strName:'abcd'}, {strName:'abce'}, {strName:'0abcf'}]
 // var arrB=[{strName:'abcg'}, {strName:'abcd'}, {strName:'abce'}, {strName:'abcfo'}, {strName:'abcf'}]
-// var nExactName=rearrangeByBestNameMatch(arrA, arrB)
+// var nExactName=rearrangeByBestNameMatch({arrA, arrB})
 // debugger
 
 var rearrangeByBestNameMatchArr=function(Relation){ // Note this function adds the properties nExactName and nExactNameNMTime to each relation
   for(var k in Relation){
     var relation=Relation[k]
     var nExactName=rearrangeByBestNameMatch(relation)
-    var nExactNameNMTime=rearrangeByMatchintMTime(relation, nExactName)
+    var nExactNameNMTime=rearrangeByMatchingMTime(relation, nExactName)
     extend(relation,{nExactName, nExactNameNMTime})
   }
 }
 
 // [...arrAExactNameNMTime, ...arrAExactNameButNotMTime, ...arrARename]
 
-var rearrangeByMatchintMTime=function(relation, nExactName){
+var rearrangeByMatchingMTime=function(relation, nExactName){
   var {arrA,arrB}=relation
   if(nExactName==0) return 0;
 
   var arrAExactTime=[], arrANonExactTime=[], arrBExactTime=[], arrBNonExactTime=[]
   for(var i=0;i<nExactName;i++){
-    var rowA=arrA[i], rowB=arrB[i], strNameA=rowA.strName, strNameB=rowB.strName
+    var rowA=arrA[i], rowB=arrB[i];
     if(rowA.mtime_ns64Floored==rowB.mtime_ns64Floored) {arrAExactTime.push(rowA); arrBExactTime.push(rowB);}
     else{arrANonExactTime.push(rowA); arrBNonExactTime.push(rowB);}
   }
@@ -775,9 +700,10 @@ var rearrangeByMatchintMTime=function(relation, nExactName){
 var seperateOutCaseCollisions=function(arr){
   var l=arr.length, obj={}, nCollision=0;
   for(var i=0;i<l;i++){
-    var row=arr[i], strNameLC=row.strName.toLowerCase()
+    var row=arr[i], {strName}=row, strNameLC=strName.toLowerCase()
     if(strNameLC in obj) {obj[strNameLC].push(row); nCollision++;}
     else {obj[strNameLC]=[row];}
   }
-  return nCollision
+  var arr=Object.values(obj)
+  return arr
 }

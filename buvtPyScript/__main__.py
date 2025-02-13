@@ -288,8 +288,8 @@ class TreeParser:
 
       objStat=os.lstat(fsName)
       id=objStat.st_ino; mtime_ns64=objStat.st_mtime_ns; #mtime=objStat.st_mtime
-      #mtime_ns64Round, tCalc=roundMTime(mtime_ns64, self.charTRes)
-      objEntry={"strName":flName, "id":id, "mtime_ns64":mtime_ns64} #, "mtime":mtime  , "mtime_ns64Round":mtime_ns64Round
+      #mtime_ns64Floored, tCalc=floorMTime64(mtime_ns64, self.charTRes)
+      objEntry={"strName":flName, "id":id, "mtime_ns64":mtime_ns64} #, "mtime":mtime  , "mtime_ns64Floored":mtime_ns64Floored
       if(not boDir):
         mode=objStat.st_mode;size=objStat.st_size
         #sm=str(rowA["size"])+str(rowA["mtime"])
@@ -310,7 +310,7 @@ class TreeParser:
   
   # def calcKey(self, charTRes):
   #   for row in self.arrTreef:
-  #     mtime_ns64Round, tCalc=roundMTime(mtime_ns64, charTRes)
+  #     mtime_ns64Floored, tCalc=floorMTime64(mtime_ns64, charTRes)
   #     row["sm"]=KeySM(row["size"], tCalc)
     
 
@@ -500,14 +500,6 @@ def parseFormatedPairList(strData, strStart='MatchingData'):
   if(n<2): return {"strTrace":myErrorStack("n<2")},[],[]
   [strColType, strCol]=arrInp[0:2] # M=Matching, U=Unique
   StrColType=strColType.strip().split(' '); StrCol=strCol.strip().split(' ')
-
-  def funCast(strType, strVal):
-    if(strType=="int" or strType=="int64"): return int(strVal)
-    elif(strType=="int64"):
-      breakpoint()
-      try: strVal=int(strVal);
-      except: strVal=None;
-    return strVal
   
   arrInp=arrInp[2:]; n=len(arrInp); nCol=len(StrCol); nSplit=nCol-1
   arrA=[]; arrB=[]
@@ -553,32 +545,30 @@ def parseFormatedPairList(strData, strStart='MatchingData'):
 
 
 
-# funCreateKey creates a key from the Matching-data-array
-# funSide determines if the "row" is added to A or B. If it returns 0 then A, 1 then B
+
+# funKey creates a key from the Matching-data-array
+# funKeySub creates a subkey from the unique data-array
 # Usage example:
 # var [err, fsInpFile]=await myRealPath(fiInpFile); if(err) return [err]
 # var [err, strData]=await readStrFile(fsInpFile); if(err) return [err]
-# var [arrA, arrB]=parseRelations(strData)
-def parseRelations(strData, boAssignObj=False, funCreateKey=lambda arr: '_'.join(arr), funSide=lambda arr: arr[0]=='T'):
+# var [err, obj, Arr]=parseRelations(strData)
+
+# obj={key0:{subKey0:[row, ...], ...}, ...}
+# Arr={subKey0:[row, ...], ...}
+
+def parseRelations(strData, boAssignObj=False, funKey=lambda arr: '_'.join(arr), funKeySub=lambda arr: arr[0]=='T'):
   strData=strData.strip();
-  if(len(strData)==0): return None,{},{},[],[]
+  if(len(strData)==0): return None,{},{}
   arrInp=strData.split('\n'); n=len(arrInp);    
-  if(n<4): return {"strTrace":myErrorStack("n<4")},{},{},[],[]
+  if(n<4): return {"strTrace":myErrorStack("n<4")},{},{}
   [strColTypeM, strColM, strColTypeU, strColU]=arrInp[0:4] # M=Matching, U=Unique
   StrColTypeM=strColTypeM.strip().split(' '); StrColM=strColM.strip().split(' ')
   StrColTypeU=strColTypeU.strip().split(' '); StrColU=strColU.strip().split(' ')
 
-  def funCast(strType, strVal):
-    if(strType=="int"): return int(strVal)
-    elif(strType=="int64"):
-      breakpoint()
-      try: strVal=int(strVal);
-      except: strVal=None;
-    return strVal
   
   arrInp=arrInp[4:]; n=len(arrInp)
   nColM=len(StrColM); nSplitM=nColM-1; nColU=len(StrColU); nSplitU=nColU-1;
-  objA={}; objB={}; arrA=[]; arrB=[];
+  obj={}; Arr={}
   for strRow in arrInp:
     strRow=strRow.strip()
     if(len(strRow)==0): continue
@@ -589,10 +579,9 @@ def parseRelations(strData, boAssignObj=False, funCreateKey=lambda arr: '_'.join
 
     if(strFirst=="MatchingData"):
       #arrPartM=mySplit(strPost, /\s+/g, nSplitM)
-      arrPartM=strPost.split(None, nSplitM); #split on space
-      nPartM=len(arrPartM)
-      if(nPartM<nColM): return {"strTrace":myErrorStack("nPartM<nColM")},{},{},[],[];
-      key=funCreateKey(arrPartM)
+      arrPartM=strPost.split(None, nSplitM); nPartM=len(arrPartM)  #split on space
+      if(nPartM<nColM): return {"strTrace":myErrorStack("nPartM<nColM")},{},{}
+      key=funKey(arrPartM)
       if(boAssignObj):
         if(key not in objA): objA[key]=[]
         if(key not in objB): objB[key]=[]
@@ -600,20 +589,26 @@ def parseRelations(strData, boAssignObj=False, funCreateKey=lambda arr: '_'.join
     else:
       #arrPartU=mySplit(strRow, /\s+/g, nSplitU)
       arrPartU=strRow.split(None, nSplitU); nPartU=len(arrPartU);
-      if(nPartU<nColU): return {"strTrace":myErrorStack("nPartU<nColU")},{},{},[],[];
+      if(nPartU<nColU): return {"strTrace":myErrorStack("nPartU<nColU")},{},{};
       
       row={};
       for i, strCol in enumerate(StrColM): strType=StrColTypeM[i]; val=funCast(strType, arrPartM[i]); row[strCol]=val; 
       for i, strCol in enumerate(StrColU): strType=StrColTypeU[i]; val=funCast(strType, arrPartU[i]); row[strCol]=val; 
 
-      intSide=funSide(arrPartU);
-      arrTmp=arrB if intSide else arrA;
-      objTmp=objB if intSide else objA;
-      arrTmp.append(row);
-      if(boAssignObj): objTmp[key].append(row);
+      keySub=funKeySub(arrPartU);
+      if(keySub not in Arr): Arr[keySub]=[]
+      Arr[keySub].append(row);
+      if(boAssignObj):
+        if(keySub not in obj[key]): obj[key][keySub]=[];  
+        obj[key][keySub].append(row);
+      
     
-  return None, objA, objB, arrA, arrB
-  #return None, arrA, arrB, objA, objB
+  #return None, objA, objB, arrA, arrB
+  return None, obj, Arr
+
+
+
+
 
 
 def renameFiles(**arg):
@@ -761,8 +756,10 @@ def setMTime(**arg): # fsFile contains MatchingData
     try:
       os.utime(fsPath, ns=(mtimeNs, mtimeNs), follow_symlinks=False)
     except FileNotFoundError as e:
-      print(f'no such file {strName}')
-      return e
+      strMess=f'no such file {strName}'
+      #print(strMess)
+      sys.exit(strMess)
+      #return e
 
 
   return None
@@ -852,18 +849,18 @@ def main():
     setMTime(**argsD)
   elif(modeMain=='check'):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', "--fiDir", default='.')
+    parser.add_argument('-d', "--fiDbDir", default='.')
     parser.add_argument("--fiDb",)
     parser.add_argument( "--iStart", default=0)
     parser.add_argument( "--charTRes", default=settings.charTRes)
     args = parser.parse_args(argv)
     argsD=vars(args)
-    if(argsD["fiDb"]==None): argsD["fiDb"]=argsD["fiDir"]+charF+'buvtDb.txt'
+    if(argsD["fiDb"]==None): argsD["fiDb"]=argsD["fiDbDir"]+charF+'buvtDb.txt'
     check(**argsD)
 
-    #varCmd="check(fiDir='~', fiDb='~/buvtDb.txt', iStart='22000', charTRes='9')"
-    #varCmd="check(fiDir='~/progPython/buvt-SourceFs/Source', fiDb='~/progPython/buvt-SourceFs/Source/buvtDb.txt', iStart='0', charTRes='9')"
-    #varCmd="check(fiDir='/run/media/magnus/myPassport', fiDb='/run/media/magnus/myPassport/buvtDb.txt', iStart='120000', charTRes='9')"
+    #varCmd="check(fiDbDir='~', fiDb='~/buvtDb.txt', iStart='22000', charTRes='9')"
+    #varCmd="check(fiDbDir='~/progPython/buvt-SourceFs/Source', fiDb='~/progPython/buvt-SourceFs/Source/buvtDb.txt', iStart='0', charTRes='9')"
+    #varCmd="check(fiDbDir='/run/media/magnus/myPassport', fiDb='/run/media/magnus/myPassport/buvtDb.txt', iStart='120000', charTRes='9')"
 
     # cProfile.run(varCmd, "my_func_stats")
     # p = pstats.Stats("my_func_stats")

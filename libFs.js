@@ -88,10 +88,7 @@ class MyStorage{
   }
   async readFrFile(){
     var [err, strData]=await readStrFile(this.fsFile);
-    if(err){
-      if(err.code==STR_ENOENT) { strData="" }  //return [null, {}]
-      else{ debugger; return [err];}
-    }
+    if(err){    if(err.code==STR_ENOENT){err=null; strData=""} else{ debugger; return [err]}    }
     strData=strData.trim()
     var objData
     if(strData.length) objData=JSON.parse(strData)
@@ -158,6 +155,21 @@ const STR_ENOENT="ENOENT"
 
 
 
+gThis.myTouch=async function(fiPath, strHost=null){
+  if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
+  if(boRemote){
+    //var arrCommand=[`ssh`, strHost, `stat`, fiPath]
+    var arrCommand=[`ssh`, strHost, `touch`, `${fiPath}`]
+    var [exitCode, stdErr, stdOut]=await execMy(arrCommand); 
+    if(stdErr || exitCode) { debugger; return [Error(stdErr)];}
+    return [null]
+  }else{
+    var arrCommand=[`touch`, `${fiPath}`]
+    var [exitCode, stdErr, stdOut]=await execMy(arrCommand); 
+    if(stdErr || exitCode) { debugger; return [Error(stdErr)];}
+    return [null]
+  }
+}
 
 gThis.fileExist=async function(fiPath, strHost=null){
   if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
@@ -176,6 +188,16 @@ gThis.fileExist=async function(fiPath, strHost=null){
     }
     return [null, true]
   }
+}
+
+gThis.fileExistArr=async function(FiPath, strHost=null){
+  if(typeof FiPath=='string') FiPath=[FiPath]; // Allowing for string entries too
+  var l=FiPath.length, BoExist=Array(l)
+  for(var i=0;i<l;i++){
+    var [err, boExist]=await fileExist(FiPath[i]); if(err) {debugger; return [err];}
+    BoExist[i]=boExist;
+  }
+  return [null, BoExist]
 }
 gThis.getModtime_remote=async function(fiPath, strHost=null){
   if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
@@ -201,7 +223,7 @@ gThis.writeFile=async function(path, data){
   var [err]=await fs.promises.writeFile(path, data).toNBP();
   return [err]
 }
-gThis.getStats=async function(path){
+gThis.getStats=async function(path){ // never used
   var [err, stats]=await fs.promises.lstat(path).toNBP(); if(err) {debugger; return [err];}  // Only millisecond resolution
   return [err, stats]
 }
@@ -218,37 +240,33 @@ gThis.mkdir=async function(){
 //   return [err, files]
 // }
 
-var readStrFileWHost=async function(fsFileRemote, strHost='localhost'){
+var readStrFileWHost=async function(fsFile, strHost='localhost'){
   if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
-  var boFileRemoteExist=true;
 
-    // Assign fsFileLoc
   if(boRemote){
       // Fetch remote file
     var fsFileTmp=PathLoose.remoteFileLocally.fsName;
-    var arrCommand=['scp', strHost+':'+fsFileRemote, fsFileTmp]
+    var arrCommand=['scp', strHost+':'+fsFile, fsFileTmp]
     var [exitCode, stdErr, stdOut]=await execMy(arrCommand);
     if(stdErr) { 
-      if(stdErr.indexOf('No such file or directory') ){boFileRemoteExist=false}
+      if(stdErr.indexOf('No such file or directory') ){ return [null, "", false]; }
       else {debugger; return [stdErr];}
     }
     else if(exitCode) { debugger; return [Error(stdErr)]; };
-    var fsFileLoc=fsFileTmp;
-  }else{var fsFileLoc=fsFileRemote;}
 
-  setMess(`Reading file`, null, true)
+    setMess(`Reading file`, null, true)
+    var [err, strData]=await readStrFile(fsFileTmp);
+    if(err){    if(err.code==STR_ENOENT){ return [null, "", false]}
+    else{ debugger; return [err]}    }
 
-    // Assign strData
-  var strData=""
-  if(boFileRemoteExist || !boRemote){
-      // Read file
-    var [err, strData]=await readStrFile(fsFileLoc);
-    if(err){
-      if(err.code==STR_ENOENT){err=null; strData=""}  //STR_NE_FS_FILRDER
-      else{ debugger; return [err]}
-    }
-  }else {strData=""}
-  return [null, strData]
+  }else{
+    setMess(`Reading file`, null, true)
+    var [err, strData]=await readStrFile(fsFile);
+    if(err){    if(err.code==STR_ENOENT){ return [null, "", false]}
+    else{ debugger; return [err]}    }
+  }
+
+  return [null, strData, true]; // [err, strData, boFileExist]
 }
 
   // Note! Only 6-decimal resolution (the least significant figures of fs.promises.lstat can not be trusted)
@@ -262,11 +280,6 @@ var readStrFileWHost=async function(fsFileRemote, strHost='localhost'){
 // }
   // Note! Only 6-decimal resolution (the least significant figures of fs.promises.lstat can not be trusted)
 gThis.myGetStats_js=async function(fsFile){
-  // var [err, stats]=await fs.promises.lstat(fsFile).toNBP(); if(err) {debugger; return [err];}
-  // var {mtime, mtimeMs, size, ino:id}=stats
-  // var mtimeMsInt=Math.floor(mtimeMs), mtimeMsFracTmp=mtimeMs-mtimeMsInt; mtimeMsFracTmp=mtimeMsFracTmp*1000; mtimeMsFracTmp=Math.floor(mtimeMsFracTmp)
-  // var mtime_ns64=BigInt(mtimeMsInt.toString()+mtimeMsFracTmp.myPad0(3)+'000')
-
   var [err, stats]=await fs.promises.lstat(fsFile, {bigint:true}).toNBP(); if(err) {return [err];} //debugger; 
   var {mtimeNs:mtime_ns64, size, ino:id}=stats
 
@@ -310,7 +323,6 @@ gThis.myGetStats=async function(fsFile){
     if(StrTime.length==1) StrTime=strTime.split(",")
     var strMTimeS=StrTime[0], strMTimeNS=StrTime[1].padEnd('0',9)
     var mtime_ns64=BigInt(strMTimeS+strMTimeNS)
-    //mtime=Number(mtime); mtime_ns=Number(mtime_ns); debugger // mtime_ns (the string) should be right padded with zeros to the length of 9 before converting to a number.
     var boDir=Boolean(mode&S_IFDIR), boSym=Boolean(mode&S_IFLNK&~S_IFREG), boFile=Boolean(mode&S_IFREG) && !boSym
     var objOut={boDir, boFile, boSym, id, mtime_ns64, mode, size}
   }
@@ -417,7 +429,6 @@ var myStatsOfDirContent_ls=async function(strPar='.'){  // Not used
       //var name=strNameWQ.slice(1,-1);
       var name=JSON.parse(strNameWQ);
     }
-    //mtime=Number(mtime); mtime_ns=Number(mtime_ns); debugger// mtime_ns (the string) should be right padded with zeros to the length of 9 before converting to a number.
     ObjRow[i]={boDir, boFile, boSym, name, id, mtime_ns64, size}
   }
   return [null, ObjRow];
@@ -498,6 +509,16 @@ var myRealPath=async function(fiIn, strHost=null){
   return [null, fsOut];
 }
 
+var myRealPathArr=async function(FiEntry, strHost=null){ // Not used
+  if(typeof FiEntry=='string') FiEntry=[FiEntry]; // Allowing for string entries too
+  var l=FiEntry.length, FsEntry=Array(l)
+  for(var i=0;i<l;i++){
+    var [err, fsT]=await myRealPath(FiEntry[i], strHost); if(err) {debugger; return [err];}
+    FsEntry[i]=fsT;
+  }
+  return [null, FsEntry]
+}
+
 ////////////////////////////////////////////////////////////
 // Higher level fs interfaces
 ////////////////////////////////////////////////////////////
@@ -520,58 +541,6 @@ var fsMoveWrapper=async function(fsSource, fsDest, strHost=null){
 
 
 
-var copyLocallyOld=async function(fsDir, Relation, strHost=null, boViaTmpName=false){
-  if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
-  var Str=[]
-  for(var key in Relation){
-    //var objRel=Relation[key], {FiS, FiT}=objRel, lS=FiS.length, lT=FiT.length
-    var objRel=Relation[key], {arrS, arrT}=objRel, lS=arrS.length, lT=arrT.length
-    Str.push(`MatchingData ${key}`);
-    //var fiS=FiS[0], fsS=fsDir+charF+fiS;   Str.push(`  S ${fsS}`);
-    var {strName, mtime_ns64}=arrS[0], fsS=fsDir+charF+strName;   Str.push(`  S ${mtime_ns64} ${fsS}`);
-    for(var i=0;i<lT;i++) {
-      //var fiT=FiT[i], fsT=fsDir+charF+fiT;
-      var rowT=arrT[i], {strName, mtime_ns64}=rowT, fsT=fsDir+charF+strName;
-      Str.push(`  T ${mtime_ns64} ${fsT}`);
-    }
-  }
-
-  if(Str.length==0) return [null, []];
-  var strHeadMT=`string`, strHeadM=`trash`,   strHeadUT=`string string string`, strHeadU=`side mtimeNs strName`;
-  Str.unshift(strHeadUT, strHeadU); //strHeadMT, strHeadM, 
-
-  var {fsScriptRemote, fsArgRemote}=interfacePython
-  var [err]=await writeFileRemote(fsArgRemote, Str.join('\n'), strHost); if(err) {debugger; return [err];}
-
-  // const fsArg=FsResultFile['arg']
-  // var [err]=await writeFile(fsArg, Str.join('\n')); if(err) {debugger; return [err];}
-  
-  // var arrCommand=['scp', '-p', fsArg, strHost+':'+fsArgRemote]
-  // var [exitCode, stdErr, stdOut]=await execMy(arrCommand);   if(stdErr) { debugger; return [stdErr];}
-  // if(exitCode) { debugger; return [Error(stdErr)]; };
-
-
-  var arrData=[], nReceivedTot=0;
-  var cbData=function(data){
-    data=data.toString(); // This should be fine since no multibyte data is expected
-    var n=data.split('\n').length-1;  nReceivedTot+=n
-    arrData.push(data);
-    //term.write(data);
-    term.writeln(`${nReceivedTot}/${nTot}`)
-  }
-
-  var arrCommand=['ssh', strHost, 'python', fsScriptRemote, 'copyLocally', "--fiDir", fsDir, "--fiFile", fsArgRemote]
-  var [exitCode, stdErr, stdOut]=await execMy(arrCommand, undefined, cbData);   if(stdErr) { debugger; return [stdErr];}
-  if(exitCode) { debugger; return [Error(stdErr)]; }; 
-
-  var stdOut=arrData.join('').trim()
-  if(stdOut.length==0) return [null, []];
-  var StrO=stdOut.split('\n');
-
-  return [null, StrO]
-}
-
-
 
 //var copyLocally=async function(fsDir, arrS, arrT, strHost=null, boViaTmpName=false){
 var copyLocally=async function(fsDir, arrPair, strHost=null, boViaTmpName=false){
@@ -585,7 +554,7 @@ var copyLocally=async function(fsDir, arrPair, strHost=null, boViaTmpName=false)
     var {strName, mtime_ns64}=rowT, fsT=fsDir+charF+strName;   Str.push(`  T ${mtime_ns64} ${fsT}`);
   }
 
-  var strHeadT=`string string string`, strHead=`side mtimeNs strName`;   Str.unshift(strHeadT, strHead);
+  var strHeadT=`string string string`, strHead=`strSide mtimeNs strName`;   Str.unshift(strHeadT, strHead);
 
   var {fsScriptRemote, fsArgRemote}=interfacePython
   var [err]=await writeFileRemote(fsArgRemote, Str.join('\n'), strHost); if(err) {debugger; return [err];}
@@ -663,7 +632,6 @@ var renameFiles=async function(arrRename, strHost=null, boViaTmpName=false){
     var row=arrRename[i], {fsNew, fsOld}=row; FsNew[i]=fsNew;
   }
   var FsDir=extractDirToBeCreated(FsNew)
-  // var FsDir=FlDir.map(flDir=>fsDir+charF+strName)
   // FsDir.sort()
 
 
@@ -674,7 +642,6 @@ var renameFiles=async function(arrRename, strHost=null, boViaTmpName=false){
     var Str=Array(3*n)
     for(var i=0;i<n;i++){
       var {fsNew, fsOld}=arrRename[i];
-      //var fsOld=fsDir+charF+strOld, fsNew=fsDir+charF+strNew
       Str[3*i]="MatchingData"
       Str[3*i+1]=fsOld
       Str[3*i+2]=fsNew
@@ -724,13 +691,14 @@ var renameFiles=async function(arrRename, strHost=null, boViaTmpName=false){
  *****************************************************************/
 var setMTime=async function(arrFile, fsDir, strHost=null){
   if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
-  var n=arrFile.length;
 
   var StrData=arrFile.map(row=>`${row.mtime_ns64} ${row.strName}`)
   StrData.unshift('mtimeNs strName')
 
+    // Write argumets to fsArg
   const fsArg=PathLoose.arg.fsName
   var [err]=await writeFile(fsArg, StrData.join('\n')); if(err) {debugger; return [err];}
+
   var {fsScriptLocal, fsScriptRemote, fsArgRemote}=interfacePython
 
   if(boRemote) { 
@@ -739,11 +707,12 @@ var setMTime=async function(arrFile, fsDir, strHost=null){
     if(exitCode) { debugger; return [Error(stdErr)]; };
 
     //var arrCommand=['ssh', strHost, 'python', fsScriptRemote, 'setMTime', "--fiFile", fsArgRemote];
+    var fsScriptTmp=fsScriptRemote, fsArgTmp=fsArgRemote
   }else{  
     //var arrCommand=['python', fsScriptLocal, 'setMTime', "--fiFile", fsArg];
+    var fsScriptTmp=fsScriptLocal, fsArgTmp=fsArg
   }
 
-  var fsScriptTmp=boRemote?fsScriptRemote:fsScriptLocal,     fsArgTmp=boRemote?fsArgRemote:fsArg
   var arrCommand=['python', fsScriptTmp, 'setMTime', "--fiFile", fsArgTmp];
   if(boRemote) {arrCommand.unshift('ssh', strHost);}
   arrCommand.push("--fiDir", fsDir)
@@ -773,7 +742,7 @@ var writeFileRemote=async function(fsName, strData, strHost=null){
 }
 
 
-var myRmFiles=async function(FsName, strHost=null){ //, fsDir
+var myRmFiles=async function(FsName, strHost=null){
   if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
   // Todo: possibly use fs.promises.unlink instead.
   if(FsName.length==0) return [null]
@@ -850,8 +819,8 @@ var myRmFolders=async function(FsName, strHost=null){
 
 
 
-var myMkFolders=async function(FsName, strHost=null){ //, fsDir
-  if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
+var myMkFolders=async function(FsName, strHost=null){
+  if(!strHost) strHost='localhost';     var boRemote=strHost!='localhost';
   // Todo: possibly use node.js-api instead.
   if(FsName.length==0) return [null]
   if(strOS=='win32' && boRemote) {debugger; return [Error('On windows only local access is allowed')];}
@@ -885,13 +854,13 @@ var myMkFolders=async function(FsName, strHost=null){ //, fsDir
 }
 
 //const copySymlink = require('copy-symlink');
-var myCopyEntries=async function(arrEntry, fsSourceDir, fsTargetDir, strHost=null){
+var myCopyEntries=async function(arrEntry, fsSourceDir, fsTargetDataDir, strHost=null){ // Not used
   debugger // Not used since switching to SyncT2TUsingHash
   if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
   myConsole.makeSpaceNSave()
   if(strOS=='win32' && boRemote){debugger; return [Error('On windows only local access is allowed')];}
   if(strOS!='win32' && boRemote){
-    var [err, result]=await myCopyEntriesWHost(arrEntry, fsSourceDir, fsTargetDir, strHost); if(err) {debugger; return [err];}
+    var [err, result]=await myCopyEntriesWHost(arrEntry, fsSourceDir, fsTargetDataDir, strHost); if(err) {debugger; return [err];}
     return [null]
   }
   var len=arrEntry.length;  if(len==0) return [null]
@@ -900,7 +869,7 @@ var myCopyEntries=async function(arrEntry, fsSourceDir, fsTargetDir, strHost=nul
     var entry=arrEntry[i]
     var {strType, strName}=entry
     var fsSouceName=fsSourceDir+charF+strName
-    var fsTargetName=fsTargetDir+charF+strName
+    var fsTargetName=fsTargetDataDir+charF+strName
     var fsPar=dirname(fsTargetName);
     myConsole.myReset();
     myConsole.printNL(`${i}/${len}, ${strName}`)
@@ -968,7 +937,7 @@ var myCopyEntries=async function(arrEntry, fsSourceDir, fsTargetDir, strHost=nul
   return [null]
 }
 
-var myCopyEntriesWHost=async function(arrEntry, fsSourceDir, fsTargetDir, strHost=null){
+var myCopyEntriesWHost=async function(arrEntry, fsSourceDir, fsTargetDataDir, strHost=null){
   if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
   myConsole.makeSpaceNSave()
   if(strOS=='win32' && boRemote) {debugger; return [Error('On windows only local access is allowed')];}
@@ -983,7 +952,7 @@ var myCopyEntriesWHost=async function(arrEntry, fsSourceDir, fsTargetDir, strHos
   if(Str.length) Str.push('') // End the last line with a newline
   var [err]=await writeFile(fsList, Str.join('\n')); if(err) {debugger; return [err];}
   
-  var target=fsTargetDir;  if(boRemote) target=strHost+':'+target
+  var target=fsTargetDataDir;  if(boRemote) target=strHost+':'+target
   var arrCommand=[`rsync`, `-rtzil`, `--delete`]
   if(boRemote) arrCommand.push(`-e`, `ssh`)
   arrCommand.push(`--files-from=${fsList}`, fsSourceDir, target); //Pv
@@ -1102,21 +1071,7 @@ var calcHashes=async function(arrEntry, fsDir, strHost=null){
 }
 
 
-var formatDb=function(arrDb){
-  var nPadId=strOS=='linux'?10:20
-  var StrOut=Array(arrDb.length)
-    // Write fsDb
-  for(var i in arrDb){
-    var row=arrDb[i], {strType, id, strHash, strMTime, size, strName}=row;
-    if(typeof strMTime=='undefined') strMTime=row.mtime_ns64.toString()
-    StrOut[i]=`${strType} ${id.padStart(nPadId)} ${strHash.padStart(32)} ${strMTime} ${size.myPadStart(10)} ${strName}`
-  }
-  StrOut.unshift('strType id strHash mtime size strName')  //uuid 
-  var strOut=StrOut.join('\n')
-  return strOut;
-
-}
-var writeDbFile=async function(arrDb, fsDb){
+var writeDbFile=async function(strData, fsDb){
     // If fsDb exist then rename it
   var boExist=true
   var [err, objStats]=await myGetStats_js(fsDb);
@@ -1130,63 +1085,82 @@ var writeDbFile=async function(arrDb, fsDb){
     var [err, result]=await fsMoveWrapper(fsDb, fsDbWithCounter); if(err) {debugger; return [err];}
   }
 
-  var strData=formatDb(arrDb)
   var [err]=await writeFile(fsDb, strData); if(err) {debugger; return [err];}
   return [null]
 }
+var writeDbWrapper=async function(arrData, fsDb, strHost=null){
+  if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
+  var strData=formatDb(arrData)
 
-  // Not really used
-var writeHashFile=async function(arrDb, fsHash){
-    // If fsHash exist then rename it
-  var [err, objStats]=await myGetStats_js(fsHash);
-  if(err) {
-    if(err.message=='noSuch') objStats={}
-    else {debugger; return [err];}
-  }
-  var boExist=Boolean(objStats),  {boDir=false, boFile=false}=objStats;
-  if(boFile){
-    var [err, fsHashWithCounter]=await calcFileNameWithCounter(fsHash); if(err) {debugger; return [err];}
-    var [err, result]=await fsMoveWrapper(fsHash, fsHashWithCounter); if(err) {debugger; return [err];}
+  if(boRemote){
+    var fsTmp=PathLoose.remoteFileLocally.fsName
+    var [err]=await writeDbFile(strData, fsTmp); if(err) { return [err];}
+    var arrCommand=['scp', fsTmp, strHost+':'+fsDb]
+    var [exitCode, stdErr, stdOut]=await execMy(arrCommand);
+    if(stdErr) { 
+      if(stdErr.indexOf('No such file or directory') ){boDbRemoteExist=false} else {debugger; return [stdErr];}
+    }
+    else if(exitCode) { debugger; return [Error(stdErr)]; };
+  }else{
+    var [err]=await writeDbFile(strData, fsDb); if(err) { return [err];}
   }
 
-  var StrOut=Array(arrDb.length)
-    // Write fsHash
-  //var fo=open(fsHash,'w')
-  //fo.write('strHash mtime size strName\n')
-  for(var i in arrDb){
-    var row=arrDb[i]
-    //fo.write('%32s %10s %10s %s\n' %(row.strHash, Math.floor(row.mtime), row.size, row.strName))
-    StrOut[i]=`${row.strHash.padStart(32)} ${Math.floor(row.mtime_ns64).myPadStart(10)} ${row.size.myPadStart(10)} ${row.strName}`
-  }
-  var strOut=StrOut.join('\n')
-  var [err]=await writeFile(fsHash, strOut); if(err) {debugger; return [err];}
-  //fo.close()
   return [null]
 }
 
 
-  // Extract files that starts with flPrepend, remove the flPrepend part and return in arrDbRelevant.
-  // Remaining files are returned in arrDbNonRelevant
-  // arrDbRelevant elements are (shallowly) copied from the elements in arrDb (so the can be changed)
-  // arrDbNonRelevant elements are NOT copies (So if they are changed, the elements in arrDb are also changed)
-var selectFrArrDb=function(arrDb, flPrepend){
-  var arrDbNonRelevant=[],  arrDbRelevant=[]
-  var nPrepend=flPrepend.length
-  for(var row of arrDb){
-    //var rowCopy=copy.copy(row)
-    var rowCopy=extend({},row)
-    
-    if(row.strName.slice(0,nPrepend)!=flPrepend) arrDbNonRelevant.push(rowCopy)
-    else{
-      rowCopy.strName=rowCopy.strName.slice(nPrepend)
-      //strNameCrop=rowCopy.strName.slice(nPrepend)
-      //extend(rowCopy, {"strName":strNameCrop})
-      arrDbRelevant.push(rowCopy)
+var ArrDb={
+    // Extract files that starts with strPrefix.
+    // Remaining files are returned in arrRem
+    // arrSelected elements are (shallowly) copied from the elements in arrDb (so the can be changed)
+    // arrRem elements are NOT copies (So if they are changed, the elements in arrDb are also changed)
+  selectWPrefix:function(arrDb, strPrefix=""){
+    var arrRem=[],  arrSelected=[], nPrepend=strPrefix.length
+    for(var i=0;i<arrDb.length;i++){
+      var row=arrDb[i]
+      if(row.strName.slice(0,nPrepend)==strPrefix) arrSelected.push(row);
+      else{ arrRem.push(row); }
     }
+    return [arrSelected, arrRem]
+  },
+  selectWPrefixArr(arrDb, StrPrefix){ // Select those entries that start by anything in StrPrefix
+    var arrRem=arrDb, arrSel=[];
+    for(var i=0;i<StrPrefix.length;i++){
+      var strPrefix=StrPrefix[i]
+      var [arrSel1, arrRem] =ArrDb.selectWPrefix(arrRem, strPrefix)
+      arrSel=arrSel.concat(arrSel1)
+    }
+    return [arrSel, arrRem]
+  },
+  makeCopy:function(arrDb){
+    var arrCopy=[]
+    for(var i=0;i<arrDb.length;i++){
+      var row=arrDb[i]
+      var rowCopy=extend({},row)
+      arrCopy.push(rowCopy)
+    }
+    return arrCopy
+  },
+  removePrefix:function(arrDb, strPrefix){
+    var arrCopy=[], nPrefix=strPrefix.length
+    for(var i=0;i<arrDb.length;i++){
+      var row=arrDb[i]
+      //var rowCopy=copy.copy(row)
+      var rowCopy=extend({},row)
+      rowCopy.strName=rowCopy.strName.slice(nPrefix)
+      arrCopy.push(rowCopy)
+    }
+    return arrCopy
+  },
+  selectFrArrDbOld:function(arrDb, strPrefix){  // It might be better if the user uses a boilerplate instead
+    var [arrSelected, arrRem] =ArrDb.selectWPrefix(arrDb, strPrefix)
+    var arrCopy=ArrDb.makeCopy(arrSelected), arrCopy=ArrDb.removePrefix(arrSelected, strPrefix)
+    return [arrCopy, arrRem]
   }
-  return [arrDbNonRelevant, arrDbRelevant]
 }
-// var [arrDbNonRelevant, arrDbRelevant] =selectFrArrDb(arrDb, flPrepend)
+// var [arrSelected, arrDbRem] =ArrDb.selectWPrefix(arrDb, flePattern)
+// var arrCopy=ArrDb.makeCopy(arrSelected), arrCopy=ArrDb.removePrefix(arrSelected, strPrefix)
+
 
 
 class MyWriter{
@@ -1210,6 +1184,24 @@ class MyWriter{
       //var strOut=Str.length?Str.join('\n')+'\n': ""
       var [err]=await writeFile(fsName, strOut); if(err) {debugger; return [err];}
     }
+    return [null]
+  }
+}
+class MyWriterSingle{
+  constructor(pathFile){
+    this.pathFile=pathFile
+    this.myInit()
+  }
+  myInit(){
+    if('Str' in this) this.Str.length=0; else this.Str=[]
+  }
+  async writeToFile(){
+    var {leaf, fsName}=this.pathFile
+    let Str=this.Str
+    if(Str.length) Str.push('') // End the last line with a newline
+    var strOut=Str.join('\n')
+    //var strOut=Str.length?Str.join('\n')+'\n': ""
+    var [err]=await writeFile(fsName, strOut); if(err) {debugger; return [err];}
     return [null]
   }
 }
@@ -1284,7 +1276,7 @@ class InterfacePython{
     var {mtimeMs_latest}=this
     //var [err, stdOut]=await getModtime_remote(this.fsScriptRemote, strHost);   if(err) { debugger; return [err];}
 
-      // Get mTime of remote script
+      // Get mtime of remote script
     var arrCommand=[`ssh`, strHost, `date +%s.%N -r`, this.fsScriptRemote]
     var [exitCode, stdErr, stdOut]=await execMy(arrCommand); 
     if(stdErr || exitCode) {
@@ -1304,3 +1296,6 @@ class InterfacePython{
     return [null, boUpload]
   }
 }
+
+
+
