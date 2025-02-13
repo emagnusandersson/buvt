@@ -138,7 +138,8 @@ var funLoad=async function(){
     elTerminal.css('height', hNew+'px');
     viewFront.setBottomMargin(hNew)
     viewCheck.setBottomMargin(hNew)
-    viewExperiment.setBottomMargin(hNew)
+    //viewCollision.setBottomMargin(hNew)
+    viewExtra.setBottomMargin(hNew)
     argumentTab.setBottomMargin(hNew)
     fitAddon.fit();
   }
@@ -146,10 +147,15 @@ var funLoad=async function(){
     viewFront.removeClass('unselectable')
     fitAddon.fit();
   }
+
+  var funSetUIBasedOnSetting=async function(){
+    await divTop.setUIBasedOnSetting()
+    await viewFront.setUIBasedOnSetting()
+  }
   gThis.dragHR=dragHRExtend(createElement('hr'), funDragHRStartWHeight, funDragHR, funDragHREnd); dragHR.css({height:'0.3em',background:'var(--bg-colorEmp)',margin:0});
   gThis.butClear=createElement('button').myAppend('C').prop({title:'Clear output console and tables.'}).css({}).on('click',  function(){
     myConsole.clear();
-    viewFront.clearColumnDivsResult()
+    viewFront.clearUI()
   }); //position: 'absolute', right: '0px', bottom:'18px', 'z-index':1
 
   gThis.elConsoleContainerTop=createElement('div')
@@ -164,22 +170,26 @@ var funLoad=async function(){
 
   gThis.viewFront=viewFrontCreator(createElement('div')).addClass('viewDiv');
   gThis.viewCheck=viewCheckCreator(createElement('div')).addClass('viewDiv');
-  gThis.viewExperiment=viewExperimentCreator(createElement('div')).addClass('viewDiv');
+  //gThis.viewCollision=viewCollisionCreator(createElement('div')).addClass('viewDiv');
+  gThis.viewExtra=viewExtraCreator(createElement('div')).addClass('viewDiv');
   gThis.argumentSetPop=argumentSetPopExtend(createElement('div'));
   gThis.argumentDeletePop=argumentDeletePopExtend(createElement('div'));
   gThis.argumentTab=argumentTabExtend(createElement('div')).addClass('viewDiv');
-  argumentTab.on('myupdate', async function(){await divTop.mySetLinkNLabel()});
+  argumentTab.on('eventObjOptNonStatisticsChanged', async function(){
+    viewFront.clearUI();
+    await funSetUIBasedOnSetting();
+  });
   var [err]=await argumentTab.constructorPart2();
   if(err){
     console.error()
     if(err.message=='no-argument-selected') { console.log(err.message); }
     else {debugger; console.error(err); return}
   }
-  await divTop.mySetLinkNLabel();
+  await funSetUIBasedOnSetting();
 
   gThis.blanket=createElement('div').addClass("blanket").hide();
 
-  gThis.MainDiv=[viewFront, viewCheck, viewExperiment, argumentTab, argumentSetPop, argumentDeletePop]; //viewT2D, viewT2T , editDiv, adminDiv
+  gThis.MainDiv=[viewFront, viewCheck, viewExtra, argumentTab, argumentSetPop, argumentDeletePop]; //viewT2D, viewT2T , editDiv, adminDiv, viewCollision
   gThis.StrMainDiv=MainDiv.map(obj=>obj.toString());
   gThis.StrMainDivFlip=array_flip(StrMainDiv);
 
@@ -209,7 +219,13 @@ var funLoad=async function(){
     divTop.setButTab(this.toString())
     return true;
   }
-  viewExperiment.setVis=async function(){
+  // viewCollision.setVis=async function(){
+  //   MainDiv.forEach(ele=>ele.hide()); this.show();
+  //   await this.setUp();
+  //   divTop.setButTab(this.toString())
+  //   return true;
+  // }
+  viewExtra.setVis=async function(){
     MainDiv.forEach(ele=>ele.hide()); this.show();
     await this.setUp();
     divTop.setButTab(this.toString())

@@ -91,11 +91,11 @@ def check(**args):
   myConsole.makeSpaceNSave()
   
   myConsole.print('parsing db...')
-  err, arrDB=parseDb(fsDb, charTRes)
+  err, arrDb=parseDbWType(fsDb, charTRes)
   if(err): print(err["strTrace"], file=sys.stderr); return
   #if(err): myConsole.error(err["strTrace"]); return
 
-  lenDB=len(arrDB)
+  lenDb=len(arrDb)
   leafFileDbOld= os.path.basename(fsDb)
 
 
@@ -107,10 +107,10 @@ def check(**args):
   
   nHour=0; nMin=0; nSec=0
   
-  #for iRowCount, row in enumerate(arrDB):
-  for iRowCount in range(iStart,lenDB):
-    row=arrDB[iRowCount]
-    strHashOld=row["strHash"]; intSizeOld=row["size"]; intTimeOld=row["mtime_ns64Round"]; strName=row["strName"]
+  #for iRowCount, row in enumerate(arrDb):
+  for iRowCount in range(iStart,lenDb):
+    row=arrDb[iRowCount]
+    strHashOld=row["strHash"]; intSizeOld=row["size"]; intTimeOld=row["mtime_ns64Floored"]; strName=row["strName"]
 
     fsFile=fsDir+charF+strName;   
     charMissing, strPar, flChild=categorizeFile(fsDir, strName)
@@ -233,7 +233,7 @@ def check(**args):
   strSum=', '.join(StrSum)
 
   myConsole.myReset()
-  myConsole.printNL(("Time: %d:%02d:%02d, Done ("+strSum+")") %(nHour,nMin,nSec, lenDB-iStart, lenDB, nNotFound, nMisMatchTimeSize, nMisMatchHash, nOK))
+  myConsole.printNL(("Time: %d:%02d:%02d, Done ("+strSum+")") %(nHour,nMin,nSec, lenDb-iStart, lenDb, nNotFound, nMisMatchTimeSize, nMisMatchHash, nOK))
   if(nMisMatchTimeSize):
     #strLab=ANSI_FONT_BOLD+"META (SIZE/MTIME) MISMATCHES!!!"+ANSI_FONT_CLEAR+" (on "+str(nMisMatchTimeSize)+" files) This happens when the db-file hasn't been SYNC-ed before checking"
     strLab=str(nMisMatchTimeSize)+" cases where meta-data (size/mtime) mismatches. This happens when the db hasn't been SYNC-ed before checking."

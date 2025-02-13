@@ -223,7 +223,7 @@ var checkSummarizeMissing=async function(arg){
 
   setMess("Parse db...",null,true)
   var [err, strData]=await readStrFile(fsDb); if(err) return [err]
-  var arrDb=parseDb(strData, charTRes);
+  var [err, arrDb]=parseDb(strData, charTRes); if(err) {debugger; return [err];}
   setMess("summarizeMissing...",null,true)
   var [err, strSum]=await summarizeMissing(arrDb, fsDir); if(err) {debugger; return [err];}
   myConsole.log(strSum)
@@ -257,7 +257,7 @@ var check=async function(arg){
   var nNotFound=0, nMisMatchTimeSize=0, nMisMatchHash=0, nOK=0
 
   var [err, strData]=await readStrFile(fsDb); if(err) return [err]
-  var arrDb=parseDb(strData, charTRes);
+  var [err, arrDb]=parseDb(strData, charTRes); if(err) {debugger; return [err];}
 
   var lenDb=arrDb.length
   var leafFileDbOld= basename(fsDb)
@@ -278,7 +278,6 @@ var check=async function(arg){
     //if(viewCheck.boCheckCancel) {setMess('Canceled'); viewCheck.boCheckCancel=false; viewCheck.butCheckCancel.hide(); return [null]}
     if(viewCheck.boCheckCancel) { return [null, "cancelled"]}
     var row=arrDb[iRowCount]
-    //var {strHash:strHashOld, size:intSizeOld, mtime:intTimeOld, strName}=row;
     var {strHash:strHashOld, size:intSizeOld, mtime_ns64:intTimeOld, strName}=row;
 
     var fsFile=fsDir+charF+strName;   
@@ -338,7 +337,6 @@ var check=async function(arg){
     if(strHash!=strHashOld){ // If hashes mismatches
         // Check modTime and size (perhaps the user forgott to run sync before running check
       var [err, objT]=await myGetStats(fsFile); if(err) {debugger; return [err];}
-      //var {size:intSizeNew, mtime:intTimeNew}=objT;
       var {size:intSizeNew, mtime_ns64:intTimeNew}=objT;
       var boTMatch=intTimeNew==intTimeOld,    boSizeMatch=intSizeNew==intSizeOld
       myConsole.myReset()
