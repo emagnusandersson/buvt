@@ -77,7 +77,7 @@ def categorizeFile(fsDir, strName):
 
   # Go through the db-file, for each row (file), check if the hashcode matches the actual files hashcode  
 def check(**args):
-  fsDir=myRealPathf(args["fiDir"])
+  fiDbDir=myRealPathf(args["fiDbDir"])
   fiDb=args["fiDb"]
   fsDb=myRealPathf(fiDb) 
   iStart=int(args["iStart"])
@@ -91,11 +91,11 @@ def check(**args):
   myConsole.makeSpaceNSave()
   
   myConsole.print('parsing db...')
-  err, arrDB=parseDb(fsDb, charTRes)
+  err, arrDb=parseDbWType(fsDb, charTRes)
   if(err): print(err["strTrace"], file=sys.stderr); return
   #if(err): myConsole.error(err["strTrace"]); return
 
-  lenDB=len(arrDB)
+  lenDb=len(arrDb)
   leafFileDbOld= os.path.basename(fsDb)
 
 
@@ -107,13 +107,13 @@ def check(**args):
   
   nHour=0; nMin=0; nSec=0
   
-  #for iRowCount, row in enumerate(arrDB):
-  for iRowCount in range(iStart,lenDB):
-    row=arrDB[iRowCount]
-    strHashOld=row["strHash"]; intSizeOld=row["size"]; intTimeOld=row["mtime_ns64Round"]; strName=row["strName"]
+  #for iRowCount, row in enumerate(arrDb):
+  for iRowCount in range(iStart,lenDb):
+    row=arrDb[iRowCount]
+    strHashOld=row["strHash"]; intSizeOld=row["size"]; intTimeOld=row["mtime_ns64Floored"]; strName=row["strName"]
 
-    fsFile=fsDir+charF+strName;   
-    charMissing, strPar, flChild=categorizeFile(fsDir, strName)
+    fsFile=fiDbDir+charF+strName;   
+    charMissing, strPar, flChild=categorizeFile(fiDbDir, strName)
 
     #myConsole.print(MY_RESET)
     myConsole.myReset()
@@ -165,7 +165,7 @@ def check(**args):
 
       # Calculate hash
     #strHash=myMD5(fsFile).decode("utf-8")
-    strHash=myMD5W(row, fsDir)
+    strHash=myMD5W(row, fiDbDir)
     if(strHash!=strHashOld):  # If hashes mismatches
         # Check modTime and size (perhaps the user forgott to run sync before running check
       st = os.lstat(fsFile); st_size=st.st_size; st_mtime=st.st_mtime; st_mtime_ns=st.st_mtime_ns
@@ -233,7 +233,7 @@ def check(**args):
   strSum=', '.join(StrSum)
 
   myConsole.myReset()
-  myConsole.printNL(("Time: %d:%02d:%02d, Done ("+strSum+")") %(nHour,nMin,nSec, lenDB-iStart, lenDB, nNotFound, nMisMatchTimeSize, nMisMatchHash, nOK))
+  myConsole.printNL(("Time: %d:%02d:%02d, Done ("+strSum+")") %(nHour,nMin,nSec, lenDb-iStart, lenDb, nNotFound, nMisMatchTimeSize, nMisMatchHash, nOK))
   if(nMisMatchTimeSize):
     #strLab=ANSI_FONT_BOLD+"META (SIZE/MTIME) MISMATCHES!!!"+ANSI_FONT_CLEAR+" (on "+str(nMisMatchTimeSize)+" files) This happens when the db-file hasn't been SYNC-ed before checking"
     strLab=str(nMisMatchTimeSize)+" cases where meta-data (size/mtime) mismatches. This happens when the db hasn't been SYNC-ed before checking."

@@ -122,10 +122,10 @@ var checkHighestMissingArr=async function(arrDb, fsDir){
 
 
 
-var summarizeMissing=async function(arrDb, fsDir){
+var summarizeMissing=async function(arrDb, fsDbDir){
   //arrDb=arrDb.slice(0,8)
   //tStop=time.time();    myConsole.printNL('checkHighestMissingArr starts, elapsed time '+str(round((tStop-tStart)*1000))+'ms')
-  var [err, ObjMissing]=await checkHighestMissingArr(arrDb, fsDir); if(err) {debugger; return [err];}
+  var [err, ObjMissing]=await checkHighestMissingArr(arrDb, fsDbDir); if(err) {debugger; return [err];}
   //tStop=time.time();   myConsole.printNL('checkHighestMissingArr: Done, elapsed time '+str(round((tStop-tStart)*1000))+'ms')
 
   // For debugging:
@@ -216,16 +216,17 @@ var summarizeMissing=async function(arrDb, fsDir){
 
 
   // Go through the db-file, for each row (file), check if the file exist, and report those in a summaristic way.
-var checkSummarizeMissing=async function(arg){
-  var {fiDir, charTRes, myConsole}=arg
-  var [err, fsDir]=await myRealPath(fiDir); if(err) {debugger; return [err];}
-  var fsDb=fsDir+charF+settings.leafDb
+var checkSummarizeMissing=async function(arg){ // Never used
+  var {fiDbDir, charTRes, myConsole}=arg
+  var [err, fsDbDir]=await myRealPath(fiDbDir); if(err) {debugger; return [err];}
+  var fsDb=fsDbDir+charF+settings.leafDb
 
   setMess("Parse db...",null,true)
   var [err, strData]=await readStrFile(fsDb); if(err) return [err]
-  var arrDb=parseDb(strData, charTRes);
+  var [err, arrDb]=parseDb(strData); if(err) {debugger; return [err];}
+  funSetMTimeArr(arrDb, charTRes);
   setMess("summarizeMissing...",null,true)
-  var [err, strSum]=await summarizeMissing(arrDb, fsDir); if(err) {debugger; return [err];}
+  var [err, strSum]=await summarizeMissing(arrDb, fsDbDir); if(err) {debugger; return [err];}
   myConsole.log(strSum)
   setMess("Summarize missing: Done")
   return [null]
@@ -249,15 +250,16 @@ var categorizeFile=async function(fsDir, strName){
 }
 
   // Go through the db-file, for each row (file), check if the hashcode matches the actual files hashcode  
-var check=async function(arg){
-  var {fiDir='.', charTRes, iStart=0, myConsole}=arg
-  var [err, fsDir]=await myRealPath(fiDir); if(err) {debugger; return [err];}
-  var fsDb=fsDir+charF+settings.leafDb
+var check=async function(arg){ // Not used ?!?
+  var {fiDbDir='.', charTRes, iStart=0, myConsole}=arg
+  var [err, fsDbDir]=await myRealPath(fiDbDir); if(err) {debugger; return [err];}
+  var fsDb=fsDbDir+charF+settings.leafDb
   var tStart=unixNow()
   var nNotFound=0, nMisMatchTimeSize=0, nMisMatchHash=0, nOK=0
 
   var [err, strData]=await readStrFile(fsDb); if(err) return [err]
-  var arrDb=parseDb(strData, charTRes);
+  var [err, arrDb]=parseDb(strData); if(err) {debugger; return [err];}
+  funSetMTimeArr(arrDb, charTRes);
 
   var lenDb=arrDb.length
   var leafFileDbOld= basename(fsDb)
@@ -278,11 +280,10 @@ var check=async function(arg){
     //if(viewCheck.boCheckCancel) {setMess('Canceled'); viewCheck.boCheckCancel=false; viewCheck.butCheckCancel.hide(); return [null]}
     if(viewCheck.boCheckCancel) { return [null, "cancelled"]}
     var row=arrDb[iRowCount]
-    //var {strHash:strHashOld, size:intSizeOld, mtime:intTimeOld, strName}=row;
     var {strHash:strHashOld, size:intSizeOld, mtime_ns64:intTimeOld, strName}=row;
 
-    var fsFile=fsDir+charF+strName;   
-    var [err, charMissing, strPar, flChild]=await categorizeFile(fsDir, strName); if(err) {debugger; return [err];}
+    var fsFile=fsDbDir+charF+strName;   
+    var [err, charMissing, strPar, flChild]=await categorizeFile(fsDbDir, strName); if(err) {debugger; return [err];}
 
     //printNoNL(MY_RESET)
     myConsole.myReset()
@@ -334,11 +335,10 @@ var check=async function(arg){
 
 
       // Calculate hash
-    var [err, strHash]=await myMD5(row, fsDir, false); //.decode("utf-8")   
+    var [err, strHash]=await myMD5(row, fsDbDir, false); //.decode("utf-8")   
     if(strHash!=strHashOld){ // If hashes mismatches
         // Check modTime and size (perhaps the user forgott to run sync before running check
       var [err, objT]=await myGetStats(fsFile); if(err) {debugger; return [err];}
-      //var {size:intSizeNew, mtime:intTimeNew}=objT;
       var {size:intSizeNew, mtime_ns64:intTimeNew}=objT;
       var boTMatch=intTimeNew==intTimeOld,    boSizeMatch=intSizeNew==intSizeOld
       myConsole.myReset()

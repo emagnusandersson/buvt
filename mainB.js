@@ -14,7 +14,7 @@
 
 // md5sum
 // echo -n strData | md5sum
-// realpath --relative-to fsDir strFilename
+// realpath --relative-to fsDataDir strFilename
 
 
 // Note!!! max file size is 999999999999 bytes (So 1 TB is too big) (createSM64 should be rewritten if one needs bigger sizes)
@@ -44,11 +44,7 @@ var intConsoleHDefault=70
 
 var funLoad=async function(){
   const argv=await ipcRenderer.invoke('getArgv')
-  //gThis.boAllowRemoteTarget=(argv.indexOf('--allowRemoteTarget')!=-1) 
   //gThis.boExperiment=(argv.indexOf('--experiment')!=-1) 
-  //gThis.boWSeparateTargetDb=(argv.indexOf('--wSeparateTargetDb')!=-1) 
-  gThis.boWNonSeparateTargetDb=(argv.indexOf('--wNonSeparateTargetDb')!=-1)
-  //gThis.boWSeparateTargetDb=!boWNonSeparateTargetDb
   
   gThis.boDbg=(argv.indexOf('--dbg')!=-1) 
   ArgumentTabRow.extendClass()
@@ -62,7 +58,7 @@ var funLoad=async function(){
   // for(var i=0;i<StrOSType.length;i++){
   //   if(objT.name.indexOf(StrOSTypePat[i])!=-1) strOSType=StrOSType[i];
   // }
-  // if(err) { debugger; console.error(err);}
+  // if(err) { debugger; myConsole.error(err);}
   //gThis.charF=strOS=='win32'?'\\':'/'
   gThis.strExec=strOS=="win32"?"start":"xdg-open"
 
@@ -138,7 +134,8 @@ var funLoad=async function(){
     elTerminal.css('height', hNew+'px');
     viewFront.setBottomMargin(hNew)
     viewCheck.setBottomMargin(hNew)
-    viewExperiment.setBottomMargin(hNew)
+    //viewCollision.setBottomMargin(hNew)
+    viewExtra.setBottomMargin(hNew)
     argumentTab.setBottomMargin(hNew)
     fitAddon.fit();
   }
@@ -146,10 +143,15 @@ var funLoad=async function(){
     viewFront.removeClass('unselectable')
     fitAddon.fit();
   }
+
+  var funSetUIBasedOnSetting=async function(){
+    await divTop.setUIBasedOnSetting()
+    //await viewFront.setUIBasedOnSetting()
+  }
   gThis.dragHR=dragHRExtend(createElement('hr'), funDragHRStartWHeight, funDragHR, funDragHREnd); dragHR.css({height:'0.3em',background:'var(--bg-colorEmp)',margin:0});
   gThis.butClear=createElement('button').myAppend('C').prop({title:'Clear output console and tables.'}).css({}).on('click',  function(){
     myConsole.clear();
-    viewFront.clearColumnDivsResult()
+    viewFront.clearUI()
   }); //position: 'absolute', right: '0px', bottom:'18px', 'z-index':1
 
   gThis.elConsoleContainerTop=createElement('div')
@@ -164,22 +166,27 @@ var funLoad=async function(){
 
   gThis.viewFront=viewFrontCreator(createElement('div')).addClass('viewDiv');
   gThis.viewCheck=viewCheckCreator(createElement('div')).addClass('viewDiv');
-  gThis.viewExperiment=viewExperimentCreator(createElement('div')).addClass('viewDiv');
+  //gThis.viewCollision=viewCollisionCreator(createElement('div')).addClass('viewDiv');
+  gThis.viewExtra=viewExtraCreator(createElement('div')).addClass('viewDiv');
   gThis.argumentSetPop=argumentSetPopExtend(createElement('div'));
   gThis.argumentDeletePop=argumentDeletePopExtend(createElement('div'));
   gThis.argumentTab=argumentTabExtend(createElement('div')).addClass('viewDiv');
-  argumentTab.on('myupdate', async function(){await divTop.mySetLinkNLabel()});
+  //gThis.argumentTab=ArgumentTab.factory().addClass('viewDiv');
+  argumentTab.on('eventObjOptNonStatisticsChanged', async function(){
+    viewFront.clearUI();
+    await funSetUIBasedOnSetting();
+  });
   var [err]=await argumentTab.constructorPart2();
   if(err){
-    console.error()
+    myConsole.error()
     if(err.message=='no-argument-selected') { console.log(err.message); }
-    else {debugger; console.error(err); return}
+    else {debugger; myConsole.error(err); return}
   }
-  await divTop.mySetLinkNLabel();
+  await funSetUIBasedOnSetting();
 
   gThis.blanket=createElement('div').addClass("blanket").hide();
 
-  gThis.MainDiv=[viewFront, viewCheck, viewExperiment, argumentTab, argumentSetPop, argumentDeletePop]; //viewT2D, viewT2T , editDiv, adminDiv
+  gThis.MainDiv=[viewFront, viewCheck, viewExtra, argumentTab, argumentSetPop, argumentDeletePop]; //viewT2D, viewT2T , editDiv, adminDiv, viewCollision
   gThis.StrMainDiv=MainDiv.map(obj=>obj.toString());
   gThis.StrMainDivFlip=array_flip(StrMainDiv);
 
@@ -209,7 +216,13 @@ var funLoad=async function(){
     divTop.setButTab(this.toString())
     return true;
   }
-  viewExperiment.setVis=async function(){
+  // viewCollision.setVis=async function(){
+  //   MainDiv.forEach(ele=>ele.hide()); this.show();
+  //   await this.setUp();
+  //   divTop.setButTab(this.toString())
+  //   return true;
+  // }
+  viewExtra.setVis=async function(){
     MainDiv.forEach(ele=>ele.hide()); this.show();
     await this.setUp();
     divTop.setButTab(this.toString())
@@ -225,12 +238,14 @@ var funLoad=async function(){
   //var MainNonDefault=AMinusB(MainDiv, [viewT2D]); MainNonDefault.forEach(ele=>ele.hide());
   MainDiv.forEach(ele=>ele.hide());
   elBody.append(...MainDiv, blanket, myConfirmer, elConsoleContainer);
-  viewFront.setVis()
-
+  viewFront.setVis();
+  return [null]
 }
 
-
-funLoad()
+var funLoadW=async function(){
+  var [err]=await funLoad(); if(err){myConsole.error(err); }
+}
+funLoadW();
 
 
 

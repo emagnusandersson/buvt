@@ -2,8 +2,8 @@
 "use strict"
 
 
-gThis.makeFunInc=function(strProp){ return (a,b)=>{var aa=a[strProp], bb=b[strProp]; return (aa < bb) ? -1 : ((aa > bb) ? 1 : 0) } }
-gThis.makeFunDec=function(strProp){ return (a,b)=>{var aa=a[[strProp]], bb=b[[strProp]]; return (aa < bb) ? 1 : ((aa > bb) ? -1 : 0) } }
+gThis.makeFunInc=function(strProp){ return (A,B)=>{var a=A[strProp], b=B[strProp]; return (a<b) ? -1 : ((a>b)?1:0) } }
+gThis.makeFunDec=function(strProp){ return (A,B)=>{var a=A[[strProp]], b=B[[strProp]]; return (a<b) ? 1 : ((a>b)?-1:0) } }
 var strTmp='strName'; gThis.funIncStrName=makeFunInc(strTmp); gThis.funDecStrName=makeFunDec(strTmp)
 var strTmp='id'; gThis.funIncId=makeFunInc(strTmp); gThis.funDecId=makeFunDec(strTmp)
 var strTmp='sm'; gThis.funIncSM=makeFunInc(strTmp); gThis.funDecSM=makeFunDec(strTmp)
@@ -99,23 +99,6 @@ var convertObjAncestorOnlyRenamedToArr=function(objAncestorOnlyRenamed){
   }
   return arrAncestorOnlyRenamed
 }
-  // arrAncestorOnlyRenamed is the output of convertObjAncestorOnlyRenamedToArr
-var formatAncestorOnlyRenamed=function(arrAncestorOnlyRenamed, fiDb){
-  var arrDisp=[], arrMv=[], arrSed=[]
-  for(var row of arrAncestorOnlyRenamed){
-    var n=row.n;
-    //var strSource=row[StrOrder[1]],  strTarget=row[StrOrder[0]]
-    var strSource=row.Key[0],  strTarget=row.Key[1]
-    arrDisp.push(`RelevantAncestor (${n} file${pluralS(n)}):`) 
-    arrDisp.push(`  ${strTarget}`)
-    arrDisp.push(`  ${strSource}`)
-    //boUseQuote=' ' in strTmp
-    arrMv.push(`  # ${n} file${pluralS(n)}:`) 
-    arrMv.push(`mv  "${strTarget}" "${strSource}"`)
-    arrSed.push(`sed -E 's/^( *[0-9]+ +[0-9a-f]+ +[0-9]+ +[0-9]+ +)${strTarget}(.*)/\\1${strSource}\\2/' ${fiDb} > ${fiDb}`)
-  }
-  return [arrDisp, arrMv, arrSed]
-}
 
   // Moves "rows" (entries) from objAByM and objBByM to either (objAByMAfterExtraIDing, objBByMAfterExtraIDing) or (arrAIdd, arrBIdd)
   // Ex of input:
@@ -170,130 +153,6 @@ var extract1To1=function(objAByM, objBByM){
     }
   } 
   return [arrA1To1, arrB1To1, objAOut, objBOut]
-}
-
-
-
-  // ArrS, ArrT are two-dimensional arrays
-  // Each row contains an array of elements who matches
-var formatMatchingDataWMult=function(ArrS, ArrT){
-  var arrOut=[]
-  for(var i in ArrS){
-    var arrS=ArrS[i], arrT=ArrT[i]
-    const nT=arrT.length, nS=arrS.length
-    arrS.sort(funIncMTime);   arrT.sort(funIncMTime);
-
-    var rowTmp
-    if(nS) {var s0=arrS[0], sE=arrS[nS-1], boSEq=s0.mtime_ns64==sE.mtime_ns64, rowTmp=s0;} else var boSEq=true
-    if(nT) {var t0=arrT[0], tE=arrT[nT-1], boTEq=t0.mtime_ns64==tE.mtime_ns64, rowTmp=t0;} else var boTEq=true
-    if(nS && nT) var bo0Eq=s0.mtime_ns64==t0.mtime_ns64; else var bo0Eq=true
-    var boAllEq=boSEq && boTEq && bo0Eq
-
-    var strMTimeExact=(boAllEq && rowTmp.mtime_ns64!=rowTmp.mtime_ns64Floored)?` ${rowTmp.strMTime.padStart(19)}`:'seePrev'
-    var strLab=`MatchingData ${rowTmp.size.myPadStart(10)} ${rowTmp.strMTimeFloored.padStart(19)} ${strMTimeExact}`
-    arrOut.push(strLab);
-
-    //var strId="seeAbove".padStart(lStrId); 
-    for(var row of arrS){
-      var {strType, mtime_ns64, id}=row;
-      //var strId=id.toString(); //.padStart(lStrId);
-      var strM=boAllEq?"seeAbove":mtime_ns64.toString()
-      arrOut.push(`  S ${strType} ${id} ${strM.padStart(19)} ${row.strName}`)
-    }
-    for(var row of arrT){
-      var {strType, mtime_ns64, id}=row
-      //var strId=id.toString(); //.padStart(lStrId);
-      var strM=boAllEq?"seeAbove":mtime_ns64.toString()
-      arrOut.push(`  T ${strType} ${id} ${strM.padStart(19)} ${row.strName}`)
-    }
-  }
-  return arrOut
-}
-
-
-  // Arr are two-dimensional arrays
-  // Each row contains an array of elements who matches
-var formatMatchingDataWMultSingleDataSetST=function(Arr, strSide){
-  var arrOut=[]
-  for(var i in Arr){
-    var arr=Arr[i], n=arr.length; arr.sort(funIncMTime);
-
-    var r0=arr[0], rE=arr[n-1], boAllEq=r0.mtime_ns64==rE.mtime_ns64;
-
-    var rowTmp=r0
-    var strMTimeExact=(boAllEq && rowTmp.mtime_ns64!=rowTmp.mtime_ns64Floored)?` ${rowTmp.strMTime.padStart(19)}`:'seePrev'
-    var strLab=`MatchingData ${rowTmp.size.myPadStart(10)} ${rowTmp.strMTimeFloored.padStart(19)} ${strMTimeExact}`
-    arrOut.push(strLab);
-
-    //var strId="seeAbove".padStart(lStrId); 
-    for(var row of arr){
-      var {strType, mtime_ns64, id}=row;
-      //var strId=id.toString(); //.padStart(lStrId);
-      var strM=boAllEq?"seeAbove":mtime_ns64.toString()
-      arrOut.push(`  ${strSide} ${strType} ${id} ${strM.padStart(19)} ${row.strName}`)
-    }
-  }
-  return arrOut
-}
-
-
-
-  // ObjA is an object where each "key", is the matching data, and each "val" is an array of the elements that measures to that data.
-var formatMatchingDataWMultSingleDataSet=function(ObjA, funMatch, funUnique){
-  var arrOut=[]
-  for(var key in ObjA){
-    var arr=ObjA[key]
-    var strTmp=funMatch(arr[0])
-    arrOut.push(strTmp)
-    for(var row of arr){
-      var strTmp=funUnique(row)
-      arrOut.push(strTmp)
-    }
-  }
-  return arrOut
-}
-
-  
-
-
-
-var formatMatchingData=function(arrS, arrT, funMatch, funUniqueS, funUniqueT=null){
-  if(funUniqueT==null) funUniqueT=funUniqueS
-  var arrOut=[]
-  for(var i=0;i<arrS.length;i++){
-    var rowS=arrS[i], rowT=arrT[i]
-    arrOut.push(funMatch(rowS,rowT))
-    arrOut.push(funUniqueS(rowS), funUniqueT(rowT))
-  }
-  return arrOut
-}
-
-
-var formatRename1T1=function(arrA11, arrB11){
-  const len=arrA11.length
-  arrA11.forEach((el, i)=>el.ind=i)
-  var arrStmp=arrA11.toSorted(funIncStrName)
-
-    // Create Ind
-  var Ind=arrStmp.map(entry=>entry.ind)
-  const arrTtmp=eInd(arrB11, Ind)
-
-  var funMatch=(s,t)=>{
-    return `MatchingData ${s.id} ${s.size.myPadStart(10)} ${s.strMTimeFloored.padStart(19)}`;
-  }
-  var funUniqueS=s=>{
-    var d=s.mtime_ns64-s.mtime_ns64Floored, strD=d?`${s.strMTime}`:'seeAbove';
-    return `  S ${s.strType} ${strD} ${s.strName}`
-  }
-  var funUniqueT=s=>{
-    var d=s.mtime_ns64-s.mtime_ns64Floored, strD=d?`${s.strMTime}`:'seeAbove';
-    return `  T ${s.strType} ${strD} ${s.strName}`
-  }
-  var arrData=formatMatchingData(arrStmp, arrTtmp, funMatch, funUniqueS, funUniqueT)
-  var strHeadMT=`string int string`, strHeadM=`id size strMTimeFloored`;
-  var strHeadUT=`string string string string`, strHeadU=`side strType strMTime strName`;
-  if(arrData.length) arrData.unshift(strHeadMT, strHeadM, strHeadUT, strHeadU)
-  return arrData
 }
 
 

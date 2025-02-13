@@ -69,6 +69,9 @@ gThis.createObjFrKNV=function(K,V){
 // Array
 //
 
+//Array.prototype.mySort=function(f){   this.sort(f); this.reverse(); return this;  }
+//Array.prototype.myToSorted=function(f){   var arrT=this.toSorted(f); return arrT.reverse();   }
+
 gThis.arr_max=function(arr){return Math.max.apply(null, arr);}
 gThis.arr_min=function(arr){return Math.min.apply(null, arr);}
 gThis.indexOfMax=function(arr) {
@@ -239,6 +242,7 @@ gThis.pluralS=function(n, s='',p='s') {return (n==1)?s:p}
 Number.prototype.myPad0 = function(){ return this.toString().padStart(...arguments, '0'); }
 //Number.prototype.myPad2 = function(){ return this.toString().padStart(2, '0'); }
 Number.prototype.myPadStart = function(){ return this.toString().padStart(...arguments); }
+BigInt.prototype.myPadStart = function(){ return this.toString().padStart(...arguments); }
 
 /////////////////////////////////////////////////////////////////////
 
@@ -267,7 +271,7 @@ gThis.bound=function(value, opt_min=null, opt_max=null){
   if(opt_max != null) value = Math.min(value, opt_max);
   return value;
 }
-
+gThis.boundPos=function(value){ value=bound(value,0); return value; }
 gThis.closest2Val=function(v, val){
   var bestFit=Number.MAX_VALUE, curFit, len=v.length, best_i;
   for(var i=0;i<len;i++){
@@ -418,6 +422,7 @@ gThis.UTC2Readable=function(utcTime){ var tmp=new Date(Number(utcTime)*1000);   
 //unixNowMS=function(){var tmp=new Date(); return Number(tmp);}
 //unixNow=function(){return Math.round(unixNowMS()/1000);}
 gThis.unixNow=function(){return (new Date()).toUnix();}
+//gThis.unixNow=function(){return Math.round(Date.now()/1000);}
 
 // gThis.getSuitableTimeUnit=function(t, objMax={s:120,m:120,h:48,d:730}){ // t in seconds
 //   var tAbs=Math.abs(t), tSign=t>=0?1:-1, objConv={s:60,m:60,h:24,d:365}, arrK=['s','m','h','d'], strU='y'
@@ -656,8 +661,6 @@ gThis.mySplit=function(str, sep, n=Infinity) {
   //   The remaining rows are expected to have at least as many space-separations as the first line.
   //   Last column contains all remaining data of the row (so it may contain spaces (but not newlines))
 var parseSSV=function(strData, StrCol){
-//var parseSSV=async function(fsFile, StrCol){
-  //var [err, strData]=await readStrFile(fsFile); if(err) return [err]
   strData=strData.trim()
   if(strData.length==0) return [];
   var arrOut=[]
@@ -668,8 +671,7 @@ var parseSSV=function(strData, StrCol){
     StrCol=strHead.split(' ')
     arrInp=arrInp.slice(1)
   }
-  var nCol=StrCol.length
-  var nSplit=nCol-1
+  var nCol=StrCol.length, nSplit=nCol-1
 
   for(var strRow of arrInp){
     var strRow=strRow.trim()
@@ -688,8 +690,45 @@ var parseSSV=function(strData, StrCol){
   //return [null, arrOut]
   return arrOut
 }
+var funCast=function(strType, strVal){
+  if(strType=="int") return Number(strVal)
+  else if(strType=="bool") return strVal==='true'
+  else if(strType=="int64") {
+    try{strVal=BigInt(strVal);}
+    catch{strVal=null;}
+  }
+  return strVal
+}
+var parseSSVWType=function(strData){
+  strData=strData.trim()
+  if(strData.length==0) return [null,[]]
+  var arrInp=strData.split('\n'), n=arrInp.length;
+  
+  if(n<2) return [Error("n<2")]
 
+  var [strColType, strCol]=arrInp.slice(0, 2) 
+  var StrColType=strColType.trim().split(' '), StrCol=strCol.trim().split(' ')
+  arrInp=arrInp.slice(2); n=arrInp.length
 
+  var nCol=StrCol.length, nSplit=nCol-1
+  var arrOut=[]
+
+  for(var strRow of arrInp){
+    var strRow=strRow.trim()
+    if(strRow.length==0) continue
+    if(strRow.startsWith('#')) continue
+    //var arrPart=strRow.split(null, nSplit)
+    var arrPart=mySplit(strRow, /\s+/g, nSplit), nPart=arrPart.length
+    if(nPart<nCol) {debugger; return [Error("nPart<nCol")];}
+    var row={}
+    for(var i in StrCol) { var strCol=StrCol[i], strType=StrColType[i], val=funCast(strType, arrPart[i]); row[strCol]=val; }
+    //for(var i in StrCol) { var strCol=StrCol[i]; row[strCol]=arrPart[i]; }
+    arrOut.push(row)
+
+  }
+  
+  return [null, arrOut]
+}
 
 
 /*******************************************************
@@ -707,8 +746,8 @@ var parseSSV=function(strData, StrCol){
 var floorMTime64=function(t, charTRes){
   const intDiv=IntTDiv[charTRes]
   if(typeof intDiv=='undefined') throw Error('unrecognized charTRes')
-  var tR=(t/intDiv)*intDiv
-  return tR
+  var tRound=(t/intDiv)*intDiv
+  return tRound
 }
 //var createSM64=function(size, mtime_ns64){ return size.myPad0(12)+'_'+mtime_ns64.toString(); }
 var createSM64=function(size, mtime_ns64){ return size.myPad0(12)+'_'+mtime_ns64.toString().padStart(19,0); }
