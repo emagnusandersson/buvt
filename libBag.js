@@ -181,21 +181,23 @@ var extractMatchingOneToManyF=function(arrA, arrB, fun){
  * categorizeByProp
  ***********************************************************/
   // Inputs:
-  // arrA and arrB are arrays of objects (dicts). Ex: arrA=[{a:1,b:1}, {a:1,b:1}] 
-  // arrA and arrB must both be sorted: meaning when calling "funVal" on each element gives an increasing (although not necessarily strictly increasing (the result can be equal)) order.
-  // funVal takes an element as input and outputs a (sortable) value.
-  // What does categorizeByProp do: 
-  // Elements that gives the same value when passed through the funVal, are collected in arrays and stored in objAMatching resp objBMatching using the funVal-result as key.
-  // That is each property key (of objAMatching and objBMatching) are the output of funVal. The corresponding value is an array of the elements that outputted that key. 
-  // That array may be empty, then that property key (funVal-value) only exist in the opposite arrA/arrB.
+  //   arrA and arrB are arrays of objects. Ex: arrA=[{a:1,b:1}, {a:1,b:1}] 
+  //   arrA and arrB must both be sorted increasingly: meaning when calling "funVal" on each array-element, you get non-decreasing values (two consecutive elments may be equal, but not decrease).
+  //   funVal takes an element as input and outputs a (sortable) value.
+  // Output:
+  //   objMatching:
+  //     Elements from arrA resp. arrB that gets the value v when passed through the funVal, are collected in objMatching[v].arrA resp. objMatching[v].arrB.
 
   // Ex:
   // var arrA=[{"a":1,"b":1}, {"a":1,"b":2}, {"a":2}];
   // var arrB=[{"a":1,"b":1}, {"a":1,"b":3}, {"a":3}];
   // var funVal=row=>row["a"]
-  // var [objAMatching, objBMatching]=categorizeByProp(arrA, arrB, funVal)
-  // objAMatching={"1":[{"a":1,"b":1}, {"a":1,"b":2}], "2":[{"a":2}], "3":[]}
-  // objBMatching={"1":[{"a":1,"b":1}, {"a":1,"b":3}], "2":[], "3":[{"a":3}]}
+  // var [objMatching]=categorizeByProp(arrA, arrB, funVal)
+  // objAMatching={
+  //   "1":{arrA:[{"a":1,"b":1}, {"a":1,"b":2}], arrB:[{"a":1,"b":1}, {"a":1,"b":3}]}, 
+  //   "2":{arrA:[{"a":2}], arrB:[]}, 
+  //   "3":{arrA:[], arrB:[{"a":3}]}
+  // }
 
 var categorizeByProp=function(arrA, arrB, funVal){
   var objMatching={};
@@ -211,30 +213,12 @@ var categorizeByProp=function(arrA, arrB, funVal){
   }
   return [objMatching]
 }
-var convertObjMatchingSingleToDouble=function(objMatching){
-  var objAMatching={}, objBMatching={}
-  for(var key in objMatching){
-    var objTmp=objMatching[key]
-    objAMatching[key]=objTmp.arrA
-    objBMatching[key]=objTmp.arrB
-  }
-  return [objAMatching, objBMatching]
-}
-
-var categorizeByPropOld=function(arrA, arrB, funVal){
-  var [objMatching]=categorizeByProp(arrA, arrB, funVal)
-  var [objAMatching, objBMatching]=convertObjMatchingSingleToDouble(objMatching)
-  return [objAMatching, objBMatching]
-}
-// var [objMatching]=categorizeByProp(arrA, arrB, funVal)
-// var [objAMatching, objBMatching]=convertObjMatchingSingleToDouble(objMatching)
 
 // debugger
 // var a=categorizeByProp([3,6,9], [2,3,8], x=>x)
 // var a=categorizeByProp([3,6,9], [2,3,3,8], x=>x)
 // var a=categorizeByProp([1,3,3,6,9], [2,3,3], x=>x)
 // var a=categorizeByProp(["aa","progC","qrs"], ["abc", "progC/abc", "progC/def", "progC/ghi", "ss"], x=>x)
-
 
 
 /***************************************************************************************
@@ -657,7 +641,7 @@ var setBestNameMatchFirst=function(ArrA, ArrB){
       for(var k in arrB){
         var elB=arrB[k], strNameB=elB.strName
         //var rat=similarity(strNameA, strNameB)
-        var rat=stringSimilarity(strNameA, strNameB, 2, true) 
+        var rat=stringSimilarity.stringSimilarity(strNameA, strNameB, 2, true) 
         if(rat>fitBest) {fitBest=rat; jBest=j; kBest=k}
       }
     }

@@ -20,7 +20,7 @@
       "program": "./__main__.py",
 
       //"args": ["parseTreeNDump", "--charFilterMethod", "b", "--leafFilter", ".buvt-filter", "--leafFilterFirst", ".buvt-filter", "--fiDir", "/home/magnus/progPython/buvt-SourceFs/Source"],
-      "args": ["parseTreeNDump", "--charFilterMethod", "b", "--leafFilter", ".buvt-filter", "--leafFilterFirst", ".buvt-filter", "--fiDir", "/run/media/magnus/40exfat/t"],
+      "args": ["parseTreeNDump", "--charFilterMethod", "R", "--leafFilter", ".buvt-filter", "--leafFilterFirst", ".buvt-filter-2G", "--fiDir", "/run/media/magnus/myPassport"],
       //"args": ["parseTreeNDump", "--charFilterMethod", "R", "--leafFilter", ".rsync-filter", "--leafFilterFirst", ".rsync-filter", "--fiDir", "~/progPython/buvt-SourceFs/Source"],
       //"args": ["parseTreeNDump", "--charFilterMethod", "R", "--leafFilter", ".rsync-filter", "--leafFilterFirst", ".rsync-filter", "--fiDir", "~/progPython/buvt-SourceFs/Source"],
       //"args": ["parseTreeNDump", "--charFilterMethod", "r", "--leafFilter", ".rsync-filter", "--leafFilterFirst", ".rsync-filter", "--fiDir", "~"],

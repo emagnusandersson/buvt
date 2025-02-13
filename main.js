@@ -34,46 +34,18 @@
 
 // rsync -rtvzPi --files-from="/home/magnus/progPython/buvt-SourceFs/list.txt" --delete /home/magnus/progPython/buvt-SourceFs/Source/ /home/magnus/progPython/buvt-SourceFs/Target/
 
-// Trying to find a bug in rsync:
-// 2Gb of data, about 32000 files (no links, no files with case-collisions)
-//   fat32
-//     c660:
-//       rsync via buvt: BUG: kernel NULL pointer dereference,  address: 0000000000000137
-//       rsync with textfileinput: OK
-//       rsync running normally: OK
-//     r50:
-//       rsync via buvt: general protection fault, probably for non-canonical address 0xffac1343feb908ff: 0000 [#1] PREEMPT SMP PTI
-//       rsync with textfileinput: OK
-//     sleek15:
-//       rsync via buvt: error (forgot to write down error message)
-//       rsync with textfileinput: OK
-//   exfat
-//     c660: (Also tested OK with 16G (although I don't remember the conditions.))
-//       rsync via buvt: general protection fault, probably for non-canonical address 0xff9ee6950916c0de: 0000 [#1] PREEMPT SMP PTI
-//       rsync with textfileinput: OK
-//     r50: (Once OK (although I don't remember the conditions.))
-//       rsync via buvt: BUG: kernel NULL pointer dereference,  address: 0000000000000030
-//       rsync with textfileinput: general protection fault, probably for non-canonical address 0xff9c758324d6c0de: 0000 [#1] PREEMPT SMP PTI
-//       rsync running normally: Kernel panic
-//     sleek15:
-//       rsync via buvt: OK
-//     l750: Segmentation fault
-//     cq61: Segmentation fault
-//     easynote: Segmentation fault
-// linktest, 2 files (one normal file and one link):
-//   exfat:
-//     r50: Killed, rsync: [generator] write error: Broken pipe (23), rsync error: error in socked IO (code 10) at io.c(848) [generator=3.3.0]
-//     l750: (error (exact message not recorded, (but like above sort of)))
-//     cq61: not tested
-//     easynote: not tested
+// rsync -nrl --filter "dir-merge /.buvt-filter" --filter ! --filter "merge /run/media/magnus/myPassport/.rsync-filter-linkTest" --out-format='%n' /run/media/magnus/myPassport/ trash
+
+
+
 
 // ^([fl] +[0-9]+ +[0-9a-f]+ +[0-9]+ +[0-9]+) (.+)$
 // \1 sync/\2
 
+// create new db first, then run rsync
 // boIncludeLinks
 // boAbortIfEntryNamesOnlyDifferingInCaseAreFound, boCheckCaseCollision
 // "do action"-button should be disabled after it is clicked
-// T2T "deleted" should be first 
 // Elegantly skipp links when target doesn't support them
 // List/count soft links
 // boIncLinks in settings
@@ -93,7 +65,7 @@
 // Selectable Result-folder in settings
 // T2D compare(target)-to-its-db-file (using sm only (not id))
 
-// In SyncDb one could refer to "Source" as "Tree" instead. Although it would break conformity with SyncT2T.
+// In SyncDbI one could refer to "Source" as "Tree" instead. Although it would break conformity with SyncT2T.
 
 // Windows softlinks points back to the source
 

@@ -537,7 +537,7 @@ var copyLocallyOld=async function(fsDir, Relation, strHost=null, boViaTmpName=fa
   }
 
   if(Str.length==0) return [null, []];
-  var strHeadMT=`string`, strHeadM=`trash`,   strHeadUT=`string string string`, strHeadU=`side mtimeNs strName`;
+  var strHeadMT=`string`, strHeadM=`trash`,   strHeadUT=`string string string`, strHeadU=`strSide mtimeNs strName`;
   Str.unshift(strHeadUT, strHeadU); //strHeadMT, strHeadM, 
 
   var {fsScriptRemote, fsArgRemote}=interfacePython
@@ -585,7 +585,7 @@ var copyLocally=async function(fsDir, arrPair, strHost=null, boViaTmpName=false)
     var {strName, mtime_ns64}=rowT, fsT=fsDir+charF+strName;   Str.push(`  T ${mtime_ns64} ${fsT}`);
   }
 
-  var strHeadT=`string string string`, strHead=`side mtimeNs strName`;   Str.unshift(strHeadT, strHead);
+  var strHeadT=`string string string`, strHead=`strSide mtimeNs strName`;   Str.unshift(strHeadT, strHead);
 
   var {fsScriptRemote, fsArgRemote}=interfacePython
   var [err]=await writeFileRemote(fsArgRemote, Str.join('\n'), strHost); if(err) {debugger; return [err];}
@@ -1111,12 +1111,13 @@ var formatDb=function(arrDb){
     if(typeof strMTime=='undefined') strMTime=row.mtime_ns64.toString()
     StrOut[i]=`${strType} ${id.padStart(nPadId)} ${strHash.padStart(32)} ${strMTime} ${size.myPadStart(10)} ${strName}`
   }
+  //StrOut.unshift('string string string int64 int string', 'strType id strHash mtime size strName')
   StrOut.unshift('strType id strHash mtime size strName')  //uuid 
   var strOut=StrOut.join('\n')
   return strOut;
 
 }
-var writeDbFile=async function(arrDb, fsDb){
+var writeDbFile=async function(strData, fsDb){
     // If fsDb exist then rename it
   var boExist=true
   var [err, objStats]=await myGetStats_js(fsDb);
@@ -1130,7 +1131,6 @@ var writeDbFile=async function(arrDb, fsDb){
     var [err, result]=await fsMoveWrapper(fsDb, fsDbWithCounter); if(err) {debugger; return [err];}
   }
 
-  var strData=formatDb(arrDb)
   var [err]=await writeFile(fsDb, strData); if(err) {debugger; return [err];}
   return [null]
 }
@@ -1172,7 +1172,8 @@ var writeHashFile=async function(arrDb, fsHash){
 var selectFrArrDb=function(arrDb, flPrepend){
   var arrDbNonRelevant=[],  arrDbRelevant=[]
   var nPrepend=flPrepend.length
-  for(var row of arrDb){
+  for(var i=0;i<arrDb.length;i++){
+    var row=arrDb[i]
     //var rowCopy=copy.copy(row)
     var rowCopy=extend({},row)
     
