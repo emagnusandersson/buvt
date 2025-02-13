@@ -278,7 +278,6 @@ var check=async function(arg){
     //if(viewCheck.boCheckCancel) {setMess('Canceled'); viewCheck.boCheckCancel=false; viewCheck.butCheckCancel.hide(); return [null]}
     if(viewCheck.boCheckCancel) { return [null, "cancelled"]}
     var row=arrDb[iRowCount]
-    //var {strHash:strHashOld, size:intSizeOld, mtime:intTimeOld, strName}=row;
     var {strHash:strHashOld, size:intSizeOld, mtime_ns64:intTimeOld, strName}=row;
 
     var fsFile=fsDir+charF+strName;   
@@ -338,7 +337,6 @@ var check=async function(arg){
     if(strHash!=strHashOld){ // If hashes mismatches
         // Check modTime and size (perhaps the user forgott to run sync before running check
       var [err, objT]=await myGetStats(fsFile); if(err) {debugger; return [err];}
-      //var {size:intSizeNew, mtime:intTimeNew}=objT;
       var {size:intSizeNew, mtime_ns64:intTimeNew}=objT;
       var boTMatch=intTimeNew==intTimeOld,    boSizeMatch=intSizeNew==intSizeOld
       myConsole.myReset()

@@ -553,13 +553,15 @@ def parseFormatedPairList(strData, strStart='MatchingData'):
 
 
 
-# funCreateKey creates a key from the Matching-data-array
+# funKey creates a key from the Matching-data-array
 # funSide determines if the "row" is added to A or B. If it returns 0 then A, 1 then B
 # Usage example:
 # var [err, fsInpFile]=await myRealPath(fiInpFile); if(err) return [err]
 # var [err, strData]=await readStrFile(fsInpFile); if(err) return [err]
 # var [arrA, arrB]=parseRelations(strData)
-def parseRelations(strData, boAssignObj=False, funCreateKey=lambda arr: '_'.join(arr), funSide=lambda arr: arr[0]=='T'):
+
+# This function should be rewritten the way the js-version is written
+def parseRelations(strData, boAssignObj=False, funKey=lambda arr: '_'.join(arr), funSide=lambda arr: arr[0]=='T'):
   strData=strData.strip();
   if(len(strData)==0): return None,{},{},[],[]
   arrInp=strData.split('\n'); n=len(arrInp);    
@@ -592,7 +594,7 @@ def parseRelations(strData, boAssignObj=False, funCreateKey=lambda arr: '_'.join
       arrPartM=strPost.split(None, nSplitM); #split on space
       nPartM=len(arrPartM)
       if(nPartM<nColM): return {"strTrace":myErrorStack("nPartM<nColM")},{},{},[],[];
-      key=funCreateKey(arrPartM)
+      key=funKey(arrPartM)
       if(boAssignObj):
         if(key not in objA): objA[key]=[]
         if(key not in objB): objB[key]=[]
