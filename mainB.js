@@ -138,7 +138,8 @@ var funLoad=async function(){
     elTerminal.css('height', hNew+'px');
     viewFront.setBottomMargin(hNew)
     viewCheck.setBottomMargin(hNew)
-    viewExperiment.setBottomMargin(hNew)
+    viewCollision.setBottomMargin(hNew)
+    viewExtra.setBottomMargin(hNew)
     argumentTab.setBottomMargin(hNew)
     fitAddon.fit();
   }
@@ -164,7 +165,8 @@ var funLoad=async function(){
 
   gThis.viewFront=viewFrontCreator(createElement('div')).addClass('viewDiv');
   gThis.viewCheck=viewCheckCreator(createElement('div')).addClass('viewDiv');
-  gThis.viewExperiment=viewExperimentCreator(createElement('div')).addClass('viewDiv');
+  gThis.viewCollision=viewCollisionCreator(createElement('div')).addClass('viewDiv');
+  gThis.viewExtra=viewExtraCreator(createElement('div')).addClass('viewDiv');
   gThis.argumentSetPop=argumentSetPopExtend(createElement('div'));
   gThis.argumentDeletePop=argumentDeletePopExtend(createElement('div'));
   gThis.argumentTab=argumentTabExtend(createElement('div')).addClass('viewDiv');
@@ -179,7 +181,7 @@ var funLoad=async function(){
 
   gThis.blanket=createElement('div').addClass("blanket").hide();
 
-  gThis.MainDiv=[viewFront, viewCheck, viewExperiment, argumentTab, argumentSetPop, argumentDeletePop]; //viewT2D, viewT2T , editDiv, adminDiv
+  gThis.MainDiv=[viewFront, viewCheck, viewCollision, viewExtra, argumentTab, argumentSetPop, argumentDeletePop]; //viewT2D, viewT2T , editDiv, adminDiv
   gThis.StrMainDiv=MainDiv.map(obj=>obj.toString());
   gThis.StrMainDivFlip=array_flip(StrMainDiv);
 
@@ -209,7 +211,13 @@ var funLoad=async function(){
     divTop.setButTab(this.toString())
     return true;
   }
-  viewExperiment.setVis=async function(){
+  viewCollision.setVis=async function(){
+    MainDiv.forEach(ele=>ele.hide()); this.show();
+    await this.setUp();
+    divTop.setButTab(this.toString())
+    return true;
+  }
+  viewExtra.setVis=async function(){
     MainDiv.forEach(ele=>ele.hide()); this.show();
     await this.setUp();
     divTop.setButTab(this.toString())
