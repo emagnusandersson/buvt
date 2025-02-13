@@ -38,7 +38,9 @@ gThis.LeafFilter={b:".buvt-filter", r:".rsync-filter", R:".rsync-filter"};
 var KeyD=[
   "hl", 
   "hash", 
-  "untouchedWOExactMTime",
+  "allS",
+  "allT",
+  "untouched",
   "renamed",
   "defragmented",
   "changed",
@@ -46,13 +48,13 @@ var KeyD=[
   "reusedId",
   "created",
   "deleted",
-  "1T1NoName",
+  "M1T1",
   "STMatch1_02",
   "STMatch1_12",
   "STMatch1_20",
   "STMatch1_21",
   "STMatch1_22",
-  "STMatch2"]
+  "STMatch2",]
 
 var KeyT2T=[
 "changed",
@@ -80,44 +82,52 @@ var KeyT2T=[
 "moveOnTarget",
 "moveOnTargetNSetMTime",
 "categoryDelete",
-"categorySetMTime"] 
+"categorySetMTime",
+"link",
+"caseCollision",
+"reservedChar",
+"reservedCharF"] 
 
-
+class MyTextFile{
+  constructor(fsF, stem){
+    var leaf=stem+'.txt', fsName=fsF+charF+leaf; extend(this,{leaf,fsName})
+  }
+}
 
 var KeyParseNDump=[ "b", "r", "R"]
 
 
-var StemLoose=['rsyncTempFile', 'arg', 'emptyFolders', 'remoteFileLocally', 'tmp']
+var StemLoose=['rsyncTempFile', 'arg', 'emptyFolders', 'remoteFileLocally', 'tmp'];
+var StemHashMult=["hashMultSMUniform", "hashMultSMNonUniform"]
+var StemSMMult=["smMultHashUniform", "smMultHashNonUniform"]
 
 
-gThis.calcFs=function(fsDataHome){
-
-
+gThis.calcFs=function(fsF){
   gThis.PathS={}
   for(let i=0;i<KeyD.length;i++){
-    var key=KeyD[i], stem='S_'+key, leaf=stem+'.txt', fsName=fsDataHome+charF+leaf;   //stem=leaf.split('.')[0]
+    var key=KeyD[i], stem='S_'+key, leaf=stem+'.txt', fsName=fsF+charF+leaf;   //stem=leaf.split('.')[0]
     PathS[key]={fsName, leaf}
   }
   gThis.PathT={}
   for(let i=0;i<KeyD.length;i++){
-    var key=KeyD[i], stem='T_'+key, leaf=stem+'.txt', fsName=fsDataHome+charF+leaf;   //stem=leaf.split('.')[0]
+    var key=KeyD[i], stem='T_'+key, leaf=stem+'.txt', fsName=fsF+charF+leaf;   //stem=leaf.split('.')[0]
     PathT[key]={fsName, leaf}
   }
   gThis.PathT2T={}
   for(let i=0;i<KeyT2T.length;i++){
-    var key=KeyT2T[i], stem='T2T_'+key, leaf=stem+'.txt', fsName=fsDataHome+charF+leaf;   //stem=leaf.split('.')[0]
+    var key=KeyT2T[i], stem='T2T_'+key, leaf=stem+'.txt', fsName=fsF+charF+leaf;   //stem=leaf.split('.')[0]
     PathT2T[key]={fsName, leaf}
   }
   gThis.PathParseNDump={}
   for(let i=0;i<KeyParseNDump.length;i++){
-    var key=KeyParseNDump[i], stem='parseNDump_'+key, leaf=stem+'.txt', fsName=fsDataHome+charF+leaf;   //stem=leaf.split('.')[0]
+    var key=KeyParseNDump[i], stem='parseNDump_'+key, leaf=stem+'.txt', fsName=fsF+charF+leaf;   //stem=leaf.split('.')[0]
     PathParseNDump[key]={fsName, leaf}
   }
-  gThis.PathLoose={}
-  for(let i=0;i<StemLoose.length;i++){
-    var stem=StemLoose[i], leaf=stem+'.txt', fsName=fsDataHome+charF+leaf;   //stem=leaf.split('.')[0]
-    PathLoose[stem]={fsName, leaf}
-  }
+  gThis.PathLoose={};  for(let i=0;i<StemLoose.length;i++){ var stem=StemLoose[i];  PathLoose[stem]=new MyTextFile(fsF, stem); }
+  gThis.PathHashMult={};  for(let i=0;i<StemHashMult.length;i++){ var stem=StemHashMult[i];  PathHashMult[stem]=new MyTextFile(fsF, stem); }
+  gThis.PathSMMult={};  for(let i=0;i<StemSMMult.length;i++){ var stem=StemSMMult[i];  PathSMMult[stem]=new MyTextFile(fsF, stem); }
+  gThis.pathMTimeRewrite=new MyTextFile(fsF, 'mtimeRewrite');
+  gThis.pathSMReserved=new MyTextFile(fsF, 'smReserved');
 
 }
 

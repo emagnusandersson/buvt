@@ -158,6 +158,21 @@ const STR_ENOENT="ENOENT"
 
 
 
+gThis.myTouch=async function(fiPath, strHost=null){
+  if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
+  if(boRemote){
+    //var arrCommand=[`ssh`, strHost, `stat`, fiPath]
+    var arrCommand=[`ssh`, strHost, `touch`, `${fiPath}`]
+    var [exitCode, stdErr, stdOut]=await execMy(arrCommand); 
+    if(stdErr || exitCode) { debugger; return [Error(stdErr)];}
+    return [null]
+  }else{
+    var arrCommand=[`touch`, `${fiPath}`]
+    var [exitCode, stdErr, stdOut]=await execMy(arrCommand); 
+    if(stdErr || exitCode) { debugger; return [Error(stdErr)];}
+    return [null]
+  }
+}
 
 gThis.fileExist=async function(fiPath, strHost=null){
   if(!strHost) strHost='localhost';  var boRemote=strHost!='localhost';
@@ -262,11 +277,6 @@ var readStrFileWHost=async function(fsFileRemote, strHost='localhost'){
 // }
   // Note! Only 6-decimal resolution (the least significant figures of fs.promises.lstat can not be trusted)
 gThis.myGetStats_js=async function(fsFile){
-  // var [err, stats]=await fs.promises.lstat(fsFile).toNBP(); if(err) {debugger; return [err];}
-  // var {mtime, mtimeMs, size, ino:id}=stats
-  // var mtimeMsInt=Math.floor(mtimeMs), mtimeMsFracTmp=mtimeMs-mtimeMsInt; mtimeMsFracTmp=mtimeMsFracTmp*1000; mtimeMsFracTmp=Math.floor(mtimeMsFracTmp)
-  // var mtime_ns64=BigInt(mtimeMsInt.toString()+mtimeMsFracTmp.myPad0(3)+'000')
-
   var [err, stats]=await fs.promises.lstat(fsFile, {bigint:true}).toNBP(); if(err) {return [err];} //debugger; 
   var {mtimeNs:mtime_ns64, size, ino:id}=stats
 
@@ -310,7 +320,6 @@ gThis.myGetStats=async function(fsFile){
     if(StrTime.length==1) StrTime=strTime.split(",")
     var strMTimeS=StrTime[0], strMTimeNS=StrTime[1].padEnd('0',9)
     var mtime_ns64=BigInt(strMTimeS+strMTimeNS)
-    //mtime=Number(mtime); mtime_ns=Number(mtime_ns); debugger // mtime_ns (the string) should be right padded with zeros to the length of 9 before converting to a number.
     var boDir=Boolean(mode&S_IFDIR), boSym=Boolean(mode&S_IFLNK&~S_IFREG), boFile=Boolean(mode&S_IFREG) && !boSym
     var objOut={boDir, boFile, boSym, id, mtime_ns64, mode, size}
   }
@@ -417,7 +426,6 @@ var myStatsOfDirContent_ls=async function(strPar='.'){  // Not used
       //var name=strNameWQ.slice(1,-1);
       var name=JSON.parse(strNameWQ);
     }
-    //mtime=Number(mtime); mtime_ns=Number(mtime_ns); debugger// mtime_ns (the string) should be right padded with zeros to the length of 9 before converting to a number.
     ObjRow[i]={boDir, boFile, boSym, name, id, mtime_ns64, size}
   }
   return [null, ObjRow];
@@ -537,7 +545,7 @@ var copyLocallyOld=async function(fsDir, Relation, strHost=null, boViaTmpName=fa
   }
 
   if(Str.length==0) return [null, []];
-  var strHeadMT=`string`, strHeadM=`trash`,   strHeadUT=`string string string`, strHeadU=`side mtimeNs strName`;
+  var strHeadMT=`string`, strHeadM=`trash`,   strHeadUT=`string string string`, strHeadU=`strSide mtimeNs strName`;
   Str.unshift(strHeadUT, strHeadU); //strHeadMT, strHeadM, 
 
   var {fsScriptRemote, fsArgRemote}=interfacePython
@@ -585,7 +593,7 @@ var copyLocally=async function(fsDir, arrPair, strHost=null, boViaTmpName=false)
     var {strName, mtime_ns64}=rowT, fsT=fsDir+charF+strName;   Str.push(`  T ${mtime_ns64} ${fsT}`);
   }
 
-  var strHeadT=`string string string`, strHead=`side mtimeNs strName`;   Str.unshift(strHeadT, strHead);
+  var strHeadT=`string string string`, strHead=`strSide mtimeNs strName`;   Str.unshift(strHeadT, strHead);
 
   var {fsScriptRemote, fsArgRemote}=interfacePython
   var [err]=await writeFileRemote(fsArgRemote, Str.join('\n'), strHost); if(err) {debugger; return [err];}
@@ -1111,12 +1119,13 @@ var formatDb=function(arrDb){
     if(typeof strMTime=='undefined') strMTime=row.mtime_ns64.toString()
     StrOut[i]=`${strType} ${id.padStart(nPadId)} ${strHash.padStart(32)} ${strMTime} ${size.myPadStart(10)} ${strName}`
   }
-  StrOut.unshift('strType id strHash mtime size strName')  //uuid 
+  StrOut.unshift('string string string int64 int string', 'strType id strHash mtime_ns64 size strName')
+  //StrOut.unshift('strType id strHash mtime size strName')
   var strOut=StrOut.join('\n')
   return strOut;
 
 }
-var writeDbFile=async function(arrDb, fsDb){
+var writeDbFile=async function(strData, fsDb){
     // If fsDb exist then rename it
   var boExist=true
   var [err, objStats]=await myGetStats_js(fsDb);
@@ -1130,39 +1139,29 @@ var writeDbFile=async function(arrDb, fsDb){
     var [err, result]=await fsMoveWrapper(fsDb, fsDbWithCounter); if(err) {debugger; return [err];}
   }
 
-  var strData=formatDb(arrDb)
   var [err]=await writeFile(fsDb, strData); if(err) {debugger; return [err];}
   return [null]
 }
+var writeDbWrapper=async function(fsDb, strHost, boRemote, arrData){
+  var fsTmp=PathLoose.remoteFileLocally.fsName
+  var fsDbLoc=boRemote?fsTmp:fsDb
+  var strData=formatDb(arrData)
+  //var StrOut=formatListForFile(arrData, ...ObjKeyList['db']);
+  //var strData=StrOut.join('\n')
+  var [err]=await writeDbFile(strData, fsDbLoc); if(err) { return [err];}
 
-  // Not really used
-var writeHashFile=async function(arrDb, fsHash){
-    // If fsHash exist then rename it
-  var [err, objStats]=await myGetStats_js(fsHash);
-  if(err) {
-    if(err.message=='noSuch') objStats={}
-    else {debugger; return [err];}
-  }
-  var boExist=Boolean(objStats),  {boDir=false, boFile=false}=objStats;
-  if(boFile){
-    var [err, fsHashWithCounter]=await calcFileNameWithCounter(fsHash); if(err) {debugger; return [err];}
-    var [err, result]=await fsMoveWrapper(fsHash, fsHashWithCounter); if(err) {debugger; return [err];}
+  if(boRemote){
+    var arrCommand=['scp', fsDbLoc, strHost+':'+fsDb]
+    var [exitCode, stdErr, stdOut]=await execMy(arrCommand);
+    if(stdErr) { 
+      if(stdErr.indexOf('No such file or directory') ){boDbRemoteExist=false} else {debugger; return [stdErr];}
+    }
+    else if(exitCode) { debugger; return [Error(stdErr)]; };
   }
 
-  var StrOut=Array(arrDb.length)
-    // Write fsHash
-  //var fo=open(fsHash,'w')
-  //fo.write('strHash mtime size strName\n')
-  for(var i in arrDb){
-    var row=arrDb[i]
-    //fo.write('%32s %10s %10s %s\n' %(row.strHash, Math.floor(row.mtime), row.size, row.strName))
-    StrOut[i]=`${row.strHash.padStart(32)} ${Math.floor(row.mtime_ns64).myPadStart(10)} ${row.size.myPadStart(10)} ${row.strName}`
-  }
-  var strOut=StrOut.join('\n')
-  var [err]=await writeFile(fsHash, strOut); if(err) {debugger; return [err];}
-  //fo.close()
   return [null]
 }
+
 
 
   // Extract files that starts with flPrepend, remove the flPrepend part and return in arrDbRelevant.
@@ -1172,7 +1171,8 @@ var writeHashFile=async function(arrDb, fsHash){
 var selectFrArrDb=function(arrDb, flPrepend){
   var arrDbNonRelevant=[],  arrDbRelevant=[]
   var nPrepend=flPrepend.length
-  for(var row of arrDb){
+  for(var i=0;i<arrDb.length;i++){
+    var row=arrDb[i]
     //var rowCopy=copy.copy(row)
     var rowCopy=extend({},row)
     
@@ -1284,7 +1284,7 @@ class InterfacePython{
     var {mtimeMs_latest}=this
     //var [err, stdOut]=await getModtime_remote(this.fsScriptRemote, strHost);   if(err) { debugger; return [err];}
 
-      // Get mTime of remote script
+      // Get mtime of remote script
     var arrCommand=[`ssh`, strHost, `date +%s.%N -r`, this.fsScriptRemote]
     var [exitCode, stdErr, stdOut]=await execMy(arrCommand); 
     if(stdErr || exitCode) {
