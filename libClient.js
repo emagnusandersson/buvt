@@ -219,6 +219,7 @@ gThis.findPos=function(el) {
   gThis.isVisible=function(el) {  // Could be replaced with el.isVisible ?!?
     return !!( el.offsetWidth || el.offsetHeight || el.getClientRects().length );
   }
+  gThis.myArrMatches=function(arrI, strQ) {return arrI.filter(el=>el.matches(strQ)); }
   
 
 
