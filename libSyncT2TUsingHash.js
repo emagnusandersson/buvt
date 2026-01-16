@@ -70,8 +70,8 @@ var CopyToTarget={ // For dealing with all files that needs to be copied TO the 
   factory(arg){
     var that={}
     var {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}=arg;
-    //copySome(that, arg, ["strHostTarget"]); //"fiSourceDir", "fsTargetDataDir", "fiTargetDbDir", , "charFilterMethod"
-    extend(that, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //charTRes, leafFilter, leafFilterFirst
+    //copySome(that, arg, ["strHostTarget"]); //"fsTargetDataDir", , "charFilterMethod"
+    extend(that, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //leafFilterFirst
 
     var Fac=this, Key=Object.keys(Fac); Key=AMinusB(Key, ['factory']); copySome(that, Fac, Key)
     var Fac=CopyProt, Key=Object.keys(Fac); Key=AMinusB(Key, []); copySome(that, Fac, Key)
@@ -134,8 +134,8 @@ var CopyOnTarget2={
   factory(arg){
     var that={}
     var {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}=arg;
-    //copySome(that, arg, ["strHostTarget"]); //"fiSourceDir", "fsTargetDataDir", "fiTargetDbDir", , "charFilterMethod"
-    extend(that, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //charTRes, leafFilter, leafFilterFirst
+    //copySome(that, arg, ["strHostTarget"]); //"fsTargetDataDir", , "charFilterMethod"
+    extend(that, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //leafFilterFirst
 
     var Fac=this, Key=Object.keys(Fac); Key=AMinusB(Key, ['factory']); copySome(that, Fac, Key)
     var Fac=CopyProt, Key=Object.keys(Fac); Key=AMinusB(Key, []); copySome(that, Fac, Key)
@@ -176,8 +176,8 @@ var CopyOnTarget1={
   factory(arg){
     var that={}
     var {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}=arg;
-    //copySome(that, arg, ["strHostTarget"]); //"fiSourceDir", "fsTargetDataDir", "fiTargetDbDir", , "charFilterMethod"
-    extend(that, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //charTRes, leafFilter, leafFilterFirst
+    //copySome(that, arg, ["strHostTarget"]); //"fsTargetDataDir", , "charFilterMethod"
+    extend(that, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //leafFilterFirst
 
     var Fac=this, Key=Object.keys(Fac); Key=AMinusB(Key, ['factory']); copySome(that, Fac, Key)
     var Fac=CopyProt, Key=Object.keys(Fac); Key=AMinusB(Key, []); copySome(that, Fac, Key)
@@ -232,8 +232,8 @@ var CopyOnTarget1={
 class MoveOnTargetProt{
   constructor(arg, boWhenMTimeIsMatching){
     var {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}=arg;
-    //copySome(this, arg, ["RelationHash"]); //"fiSourceDir", "fsTargetDataDir", "fiTargetDbDir", , "charFilterMethod"
-    extend(this, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //charTRes, leafFilter, leafFilterFirst
+    //copySome(this, arg, ["RelationHash"]); //"fsTargetDataDir", , "charFilterMethod"
+    extend(this, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //leafFilterFirst
   }
   async renameToTemp(){
     var {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir, arrRename, FsOld, FsNew, FsTmp}=this
@@ -259,8 +259,8 @@ class MoveOnTarget extends MoveOnTargetProt{
   constructor(arg){
     super(arg)
     var {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}=arg;
-    //copySome(this, arg, ["RelationHash"]); //"fiSourceDir", "fsTargetDataDir", "fiTargetDbDir", , "charFilterMethod"
-    extend(this, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //charTRes, leafFilter, leafFilterFirst
+    //copySome(this, arg, ["RelationHash"]); //"fsTargetDataDir", , "charFilterMethod"
+    extend(this, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //leafFilterFirst
     var arrRename=[], FsOld=[], FsNew=[], FsTmp=[]; //, FiNew=[]
     for(var key in RelationHash){
       var objRel=RelationHash[key], {arrA, arrB, nExactName, lShortest}=objRel, lA=arrA.length, lB=arrB.length;
@@ -294,8 +294,8 @@ class MoveOnTargetNSetMTime extends MoveOnTargetProt{
   constructor(arg){
     super(arg)
     var {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}=arg;
-    //copySome(this, arg, ["RelationHash"]); //"fiSourceDir", "fsTargetDataDir", "fiTargetDbDir", , "charFilterMethod"
-    extend(this, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //charTRes, leafFilter, leafFilterFirst
+    //copySome(this, arg, ["RelationHash"]); //"fsTargetDataDir", , "charFilterMethod"
+    extend(this, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //leafFilterFirst
     var arrRename=[], FsOld=[], FsNew=[], FsTmp=[]; //, FiNew=[]
     for(var key in RelationHash){
       var objRel=RelationHash[key], {arrA, arrB, nExactName, lShortest}=objRel, lA=arrA.length, lB=arrB.length;
@@ -334,8 +334,8 @@ class MoveOnTargetNSetMTime extends MoveOnTargetProt{
 class CategorySetMTime{
   constructor(arg){
     var {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}=arg;
-    //copySome(this, arg, ["RelationHash"]); //"fiSourceDir", "fsTargetDataDir", "fiTargetDbDir", , "charFilterMethod"
-    extend(this, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //charTRes, leafFilter, leafFilterFirst
+    //copySome(this, arg, ["RelationHash"]); //"fsTargetDataDir", , "charFilterMethod"
+    extend(this, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //leafFilterFirst
 
     var arrMTimeDiff=[]
     for(var key in RelationHash){
@@ -370,8 +370,8 @@ class CategorySetMTime{
 class CategoryUntouched{
   constructor(arg){
     var {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}=arg;
-    //copySome(this, arg, ["RelationHash"]); //"fiSourceDir", "fiTargetDbDir", "fsTargetDataDir",  , "charFilterMethod"
-    extend(this, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //charTRes, leafFilter, leafFilterFirst
+    //copySome(this, arg, ["RelationHash"]); //"fsTargetDataDir",  , "charFilterMethod"
+    extend(this, {RelationHash, fsSourceDir, strHostTarget, fsTargetDataDir}); //leafFilterFirst
     var arrUntouched=[]
     for(var key in RelationHash){
       var objRel=RelationHash[key], {arrA, arrB, nExactName, nExactNameNMTime}=objRel, lA=arrA.length, lB=arrB.length;
@@ -401,14 +401,12 @@ class CategoryUntouched{
 
 class SyncT2TUsingHash{
   constructor(arg){
-    var {charTRes, leafFilter, leafFilterFirst, fsTargetDbDir, flTargetDataDir}=arg
-    copySome(this, arg, ["fsSourceDir", "strHostTarget", "charFilterMethod", "boAllowLinks", "boAllowCaseCollision", "strTargetCharSet"]);
-    var fsTargetDataDir=fsTargetDbDir; if(flTargetDataDir) fsTargetDataDir=fsTargetDbDir+charF+flTargetDataDir
-    extend(this, {charTRes, leafFilter, leafFilterFirst, fsTargetDbDir, flTargetDataDir, fsTargetDataDir})
+    copySome(this, arg, ["objOptSource", "objOptTarget", "leafFilterFirst", "fsSourceDir", "strHostTarget", "fsTargetDbDir", "flTargetDataDir", "fleTargetDataDir", "fsTargetDataDir"]);
   }
   
   async compare(){
-    var {charTRes, leafFilter, leafFilterFirst, fsSourceDir, strHostTarget, fsTargetDbDir, flTargetDataDir, fsTargetDataDir, charFilterMethod, boAllowLinks, boAllowCaseCollision, strTargetCharSet}=this
+    var {objOptSource, objOptTarget, leafFilterFirst, fsSourceDir, strHostTarget, fsTargetDbDir, flTargetDataDir, fleTargetDataDir, fsTargetDataDir}=this;
+    //var {boAllowsLinks, boAllowsCaseCollision, strCharSet}=objOptTarget
  
       // Quick return if target doesn't exists. (It would have been detected when parsing, but this way one doesn't have to wait.)
     var [err, boExist]=await fileExist(fsTargetDataDir, strHostTarget); if(err) {debugger; return [err]; }
@@ -422,23 +420,29 @@ class SyncT2TUsingHash{
     
     //var fleData=calcFleChild(fsTargetDbDir, fsTargetDataDir); extend(this, {fleData})
 
+    var {charTRes:charTResS}=objOptSource, {charTRes:charTResT}=objOptTarget
+    var charTResCommon=IntTDiv[charTResS]>IntTDiv[charTResT]?charTResS:charTResT
 
       // Parsing source tree
     var treeParser=new TreeParser()
     setMess(`Parsing source tree`, null, true)
-    var arg={charTRes, leafFilter, leafFilterFirst, fsDir:fsSourceDir, charFilterMethod}
+
+    var arg=copySome({leafFilterFirst}, objOptSource, ['charTRes', 'strHost', 'charFilterMethod', 'leafFilter', 'fsDir']);
     var [err, arrSourcef, arrSourceF] =await treeParser.parseTree(arg); if(err) {debugger; return [err];}
-    removeLeafFileFromArrTreef(arrSourcef, settings.leafDb); // Note this does not remove the .bak.txt files
-    removeLeafFileFromArrTreef(arrSourcef, settings.leafDbB)
+    removeFileFromArrTreef(arrSourcef, settings.leafDb);
+    removeFileFromArrTreef(arrSourcef, RegExp('buvtDb\\.bak[0-9]*\\.txt'))
     var tStop=unixNow();   //myConsole.log(`Source parsed, elapsed time ${(tStop-tStart)}ms`)
     //arrSourcef.sort(funIncId)
 
       // Parsing target tree
     setMess(`Parsing target tree`, null, true);  
-    var arg={charTRes, leafFilter, leafFilterFirst, strHost:strHostTarget, fsDir:fsTargetDataDir, charFilterMethod}
+    //var arg=copySome({leafFilterFirst}, objOptTarget, ['charTRes', 'strHost', 'charFilterMethod', 'leafFilter']);
+    var arg=copySome({leafFilterFirst:"", leafFilter:""}, objOptTarget, ['charTRes', 'strHost', 'charFilterMethod']);
+      // I guess one could have used the same leafFilterFirst as when the tree was synced to db. (that would be objOptTarget.leafFilter)
+    copySomeRename(arg, objOptTarget, ['fsDir'], ['fsDataDir']);
     var [err, arrTargetf, arrTargetF] =await treeParser.parseTree(arg); if(err) {debugger; return [err];}
-    //removeLeafFileFromArrTreef(arrTargetf, settings.leafDb); // Note! this arrTargetf is not used (so this line could be deleted)
-    //removeLeafFileFromArrTreef(arrTargetf, settings.leafDbB)
+    removeFileFromArrTreef(arrTargetf, settings.leafDb);
+    removeFileFromArrTreef(arrTargetf, RegExp('buvtDb\\.bak[0-9]*\\.txt'))
     //arrTargetf.sort(funIncId)
 
     arrSourceF.sort(funIncStrName);   arrTargetF.sort(funIncStrName)
@@ -454,7 +458,7 @@ class SyncT2TUsingHash{
     var [err, strData]=await readStrFileWHost(fsSourceDir+charF+settings.leafDb); if(err) return [err]
     setMess(`Parsing source db`, null, true); 
     var [err, arrDbS]=parseDb(strData); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrDbS, charTRes);
+    funSetMTimeArr(arrDbS, charTResCommon);
     arrDbS.sort(funIncStrName);   
 
       // Parsing target db
@@ -462,10 +466,10 @@ class SyncT2TUsingHash{
     var [err, strData]=await readStrFileWHost(fsTargetDbDir+charF+settings.leafDb, strHostTarget); if(err) return [err]
     setMess(`Parsing target db`, null, true);  
     var [err, arrDbT]=parseDb(strData); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrDbT, charTRes);
+    funSetMTimeArr(arrDbT, charTResCommon);
     arrDbT.sort(funIncStrName)
 
-    var fleTargetDataDir=flTargetDataDir.length?flTargetDataDir+charF:""
+    //var fleTargetDataDir=flTargetDataDir.length?flTargetDataDir+charF:""
     var [arrDbTRelevant, arrDbTNonRelevant]=ArrDb.selectFrArrDbOld(arrDbT, fleTargetDataDir)
     // var fleTargetDataDir=flTargetDataDir+charF
     // //var [arrDbRelevant, arrDbNonRelevant]=selectFrArrDb(arrDbT, fleTargetDataDir);
@@ -491,7 +495,7 @@ class SyncT2TUsingHash{
 
       // Links
     var arrLink=[]
-    if(!boAllowLinks){
+    if(!objOptTarget.boAllowsLinks){
       arrDbSM=arrDbSM.filter(entry=>{ var boLink=entry.strType=='l';  if(boLink) arrLink.push(entry);   return !boLink;   })
     }
     var Str=myResultWriter.Str.link=arrLink.map(row=>row.strName)
@@ -500,7 +504,7 @@ class SyncT2TUsingHash{
 
       // CaseCollisions
     var BundMult={}, nMultf=0
-    if(!boAllowCaseCollision){
+    if(!objOptTarget.boAllowsCaseCollision){
       var Bundf=bundleOnProperty(arrDbSM, r=>r.strName.toLowerCase())
       var [BundMult, nMultf, arrSingle]=extractBundlesWMultiples(Bundf),  nMultPatf=Object.keys(BundMult).length;
       arrDbSM=arrSingle;
@@ -520,7 +524,7 @@ class SyncT2TUsingHash{
     var RegReservedChar={ms:/["\*\/:<>\?\\\|]/, ext4:``}
     var RegReservedCharWOFwdSlash={ms:/["\*:<>\?\\\|]/, ext4:``}
     var arrReservedChar=[], arrReservedCharF=[];
-    if(strTargetCharSet=='ms'){
+    if(objOptTarget.strCharSet=='ms'){
       var reg=RegReservedCharWOFwdSlash.ms
       //var arrDbSM=arrDbSM.filter(r=>{var leaf=basename(r.strName), boRes=reg.test(leaf); if(boRes) arrReservedChar.push(r); return !boRes})
       var arrDbSM=arrDbSM.filter(r=>{var boRes=reg.test(r.strName); if(boRes) arrReservedChar.push(r); return !boRes})
@@ -625,7 +629,7 @@ CopyOnTarget: ${nT} file${pluralS(nT)}`
   }
 
   async makeChanges(){
-    var {charTRes, leafFilter, leafFilterFirst, categoryDelete, copyOnTarget1, moveOnTarget, moveOnTargetNSetMTime, categorySetMTime, copyToTarget, copyOnTarget2, arrDbS, arrDbTNonRelevant, fsSourceDir, strHostTarget, fsTargetDbDir, flTargetDataDir, fsTargetDataDir, arrSource, charFilterMethod}=this;
+    var {objOptSource, objOptTarget, categoryDelete, copyOnTarget1, moveOnTarget, moveOnTargetNSetMTime, categorySetMTime, copyToTarget, copyOnTarget2, arrDbS, arrDbTNonRelevant, fsSourceDir, strHostTarget, fsTargetDbDir, flTargetDataDir, fsTargetDataDir, arrSource}=this;
     var [err]=await this.createFolders(); if(err) {debugger; return [err];}
   
     var [err]=await categoryDelete.delete(); if(err) {debugger; return [err];}
@@ -668,8 +672,8 @@ CopyOnTarget: ${nT} file${pluralS(nT)}`
     // var treeParser=new TreeParser()
     // var arg={charTRes, leafFilter, leafFilterFirst, strHost:strHostTarget, fsDir:fsTargetDataDir, charFilterMethod}
     // var [err, arrTargetf, arrTargetF] =await treeParser.parseTree(arg); if(err) {debugger; return [err];}
-    // removeLeafFileFromArrTreef(arrTargetf, settings.leafDb)
-    // removeLeafFileFromArrTreef(arrTargetf, settings.leafDbB)
+    // removeFileFromArrTreef(arrTargetf, settings.leafDb)
+    // removeFileFromArrTreef(arrTargetf, RegExp('buvtDb\\.bak[0-9]*\\.txt'))
     // var arrTarget=arrTargetf
 
       // Categorize by strName

@@ -16,12 +16,6 @@ var funStrShortest=function(rowA,rowB){
   else if(strA==strB) return 0
   else {debugger; throw Error("Error not lt, not gt and not equal???")}
 }
-function funInt(a,b){
-  if(a<b) return 1
-  else if(a>b) return -1
-  else if(a==b) return 0
-  else {debugger; throw Error("Error not lt, not gt and not equal???")}
-}
 
 /***************************************************************************************
  * [arrAMatching, arrBMatching, arrARem, arrBRem]=extractMatchingF(arrA, arrB, funM101): Comparing two arrays
@@ -90,7 +84,7 @@ gThis.extractMatching=function(arrA, arrB, KeyA, KeyB=null){ // Wrapper of extra
   return [null, ...extractMatchingF(arrA, arrB, funM101)]
 }
 
-//extractMatchingF([3,6,9], [2,3,8], funInt)
+//extractMatchingF([3,6,9], [2,3,8], diffMy)
 
 
   // An arrA element may match multiple arrB elements (but not the other way around)
@@ -283,9 +277,8 @@ class MatNxN{
     var arrB=[[[],[],[]],[[],[],[]],[[],[],[]]]
     extend(this, {ArrA, ArrB, arrA, arrB})
   }
-  assignFromObjManyToMany(objA){
-    //var boSingle=typeof objB=='undefined'
-    this.nKTmp=Object.keys(objA).length
+  assignFromObjManyToMany(objIn){
+    this.nKTmp=Object.keys(objIn).length
     var {ArrA, ArrB, arrA, arrB}=this
 
     var [       ,ArrA01,ArrA02]=ArrA[0]
@@ -303,9 +296,8 @@ class MatNxN{
     var [arrB20,arrB21,arrB22]=arrB[2]
 
 
-    for(var key in objA){
-      var arA=objA[key].arrA, arB=objA[key].arrB;
-      //if(boSingle){ var arA=objA[key].arrA, arB=objA[key].arrB; }else{ var arA=objA[key], arB=objB[key];}
+    for(var key in objIn){
+      var {arrA:arA, arrB:arB}=objIn[key];
       
       var nA=arA.length, nB=arB.length
       if(nA==0){
@@ -706,4 +698,15 @@ var seperateOutCaseCollisions=function(arr){
   }
   var arr=Object.values(obj)
   return arr
+}
+
+
+
+var checkPropIsUniqueAmongArrayEntries=function(Obj, key){
+    //var funTmp=(e)=>{var boExist=e in objTargetByMTmp; if objTmp[e]
+    var objFound={}
+    for(var i=0;i<Obj.length;i++){ var v=Obj[i][key]; if(v in objFound) return [false, i, v];
+      objFound[v]=true;
+    }
+    return [true];
 }

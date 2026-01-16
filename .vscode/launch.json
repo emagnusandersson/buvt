@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Launch Program",
             "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "electron37",
+            "runtimeExecutable": "electron39",
             "windows": {
               "runtimeExecutable": "electron"
             },

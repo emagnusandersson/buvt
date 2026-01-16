@@ -169,9 +169,9 @@ gThis.menuSMCreator=function(el, ...Fun){
   }
   var htmlHead=`<tr><th class=backcrossed><span title=Tree>Tr</span> <span>Db</span></th> <th>0</th> <th>1</th> <th>Many</th> <td>∑</td></tr>`; //S⇣ \\ T⇾
   var htmlBody=
-  `<tr><th>0</th><td>(∞)</td><td><span>-</span></td> <td><span>-</span><a>-</a></td> <th><span>-</span></th> <th rowspan=3>Db: <span>-</span>(<span>-</span>)</th></tr>
-  <tr><th>1</th><td><span>-</span></td><td><span>-</span><a>-</a></td>  <td><span>-</span><a>-</a></td> <th><span>-</span></th></tr>
-  <tr><th>Many</th><td><span>-</span><a>-</a></td>  <td><span>-</span><a>-</a></td>  <td><span>-</span><a>-</a></td>  <th><span>-</span></th></tr>
+  `<tr><th>0</th><td><image/>(∞)</td><td><image/><span>-</span></td> <td><image/><span>-</span><a>-</a></td> <th><span>-</span></th> <th rowspan=3>Db: <span>-</span>(<span>-</span>)</th></tr>
+  <tr><th>1</th><td><image/><span>-</span></td><td><image/><span>-</span><a>-</a></td>  <td><image/><span>-</span><a>-</a></td> <th><span>-</span></th></tr>
+  <tr><th>Many</th><td><image/><span>-</span><a>-</a></td>  <td><image/><span>-</span><a>-</a></td>  <td><image/><span>-</span><a>-</a></td>  <th><span>-</span></th></tr>
   <tr><td>∑</td><th><span>-</span></th><th><span>-</span></th><th><span>-</span></th> <th rowspan=2 colspan=2>Tr⋂Db: <span title="Number of patterns that occur on both sides.">-</span><br/>Tr⋃Db: <span title="Total number of patterns">-</span></th></tr>
   <tr><td></td><th colspan=3>Tr: <span>-</span>(<span>-</span>)</th></tr>` //∪∩⋂⋃
   var tHead=createElement('thead').myHtml(htmlHead);
@@ -185,14 +185,24 @@ gThis.menuSMCreator=function(el, ...Fun){
   //var [,,,td22]=tr2.children; td22.cssExc({'border-top':'hidden!important', 'border-left':'hidden!important'})
   //var [tdTmp]=trSum.children; tdTmp.cssExc({'border-bottom':'hidden!important', 'border-left':'hidden!important', 'text-align':'end', background:'transparent'});  // Sum-sign in lower-left corner
 
+  var Img0=tr0.querySelectorAll('img');
   var arr0=tr0.querySelectorAll('span'), [span01,span02,span0XSum, spanSumPatT, spanSumT]=arr0
-  var But0=tr0.querySelectorAll('a'), [but02]=But0
+  var But0=tr0.querySelectorAll('a'), [but02]=But0;
+  var Img1=tr1.querySelectorAll('img');
   var arr1=tr1.querySelectorAll('span'), [span10,span11,span12, span1XSum]=arr1
   var But1=tr1.querySelectorAll('a'), [but11,but12]=But1
+  var Img2=tr2.querySelectorAll('img');
   var arr2=tr2.querySelectorAll('span'), [span20,span21,span22, span2XSum]=arr2
   var But2=tr2.querySelectorAll('a'), [but20,but21,but22]=But2
   var [spanX0Sum, spanX1Sum, spanX2Sum, spanTot, spanBoth]=trSum.querySelectorAll('span')
   var [spanSumPatS, spanSumS]=trSumS.querySelectorAll('span');
+
+  var flImgT="icons/SMMatchE/";
+  [...Img0].forEach((ele, i)=>ele.attr({src:`icons/SMMatchE/0T${i}.png`}));
+  [...Img1].forEach((ele, i)=>ele.attr({src:`icons/SMMatchE/1T${i}.png`}));
+  [...Img2].forEach((ele, i)=>ele.attr({src:`icons/SMMatchE/2T${i}.png`}));
+  [...Img0, ...Img1, ...Img2].forEach(ele=>ele.css({zoom:0.4, display:'block'}));
+
   [...arr0, ...arr1, ...arr2].forEach(ele=>ele.addClass('num'));
   [...But0, ...But1, ...But2].forEach(ele=>ele.addClass('smallBut').prop({href:""}));
   //tr2.css({'border-bottom':'solid'})

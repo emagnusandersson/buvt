@@ -91,7 +91,7 @@ gThis.divT2DTabCreator=function(el, charSide){
 //<button title='As per the result of running "Compare"'>Do actions<br/>(direct)</button>
   
   var tHead=createElement('thead').myHtml(htmlHead);
-  var tBody=createElement('tbody').myHtml(htmlBody);
+  var tBody=createElement('tbody').myHtml(htmlBody).addClass('redWTitle');
   var table=createElement('table').myAppend(tHead, tBody).addClass('main');
 
   var [tHeadRA,tHeadRB]=tHead.children
@@ -159,35 +159,39 @@ gThis.divT2DBothCreator=function(el){
 
   //el.clearUI=function(){ miniViewSMMatchS.clearUI(); miniViewSMMatchT.clearUI(); }
   el.setUIBasedOnSetting=function(arg){
-    var {label, fiSourceDir, strHostTarget, fiTargetDbDir, charFilterMethod, suffixFilterFirstT2T, boRemoteTarget, boAllowLinks, boAllowCaseCollision, strTargetCharSet}=arg;
+    var {objOptSource, objOptTarget, fiSourceDir, strHostTarget, fiTargetDbDir, suffixFilterFirstT2T, boRemoteTarget}=arg;
+    var {leafFilter}=objOptSource;
 
     var strTargetDbDir=boRemoteTarget?`${strHostTarget}:${fiTargetDbDir}`:fiTargetDbDir
     var {leafDb}=settings
-    var leafFilter=LeafFilter[charFilterMethod];
 
-    var title=fiSourceDir+charF+leafDb;   LinkDb[0].prop({title}).myText(leafDb)
+    LinkTree[0].prop({title:fiSourceDir})
+    LinkTree[1].prop({title:strTargetDbDir}).toggleClass('disabled', boRemoteTarget);
+
+    var title=fiSourceDir+charF+leafDb;   LinkDb[0].prop({title});//.myText(leafDb)
     var title=fiSourceDir+charF+leafFilter;   LinkFilterFirstT2D[0].prop({title}).myText(leafFilter)
 
-    var title=strTargetDbDir+charF+leafDb;   LinkDb[1].prop({title}).myText(leafDb).toggleClass('disabled', boRemoteTarget)
+    var title=strTargetDbDir+charF+leafDb;   LinkDb[1].prop({title}).toggleClass('disabled', boRemoteTarget); //.myText(leafDb)
     var title=strTargetDbDir+charF+leafFilter;   LinkFilterFirstT2D[1].prop({title}).myText(leafFilter).toggleClass('disabled', boRemoteTarget)
 
     MiniViewSMMatch[0].setUIBasedOnSetting(arg)
     MiniViewSMMatch[1].setUIBasedOnSetting(arg)
   }
-  el.clearVal=function(){
-    // DivIdMatch[0].clearVal(); DivIdMatch[1].clearVal();
-    // DivMat1[0].clearVal(); DivMat1[1].clearVal();
-    // DivTab[0].clearVal(); DivTab[1].clearVal();
-    // MiniViewSMMatch[0].clearUI(); MiniViewSMMatch[1].clearUI();
-    DivIdMatch.forEach(ele=>ele.clearVal())
-    DivMat1.forEach(ele=>ele.clearVal())
-    DivTab.forEach(ele=>ele.clearVal())
-    MiniViewSMMatch.forEach(ele=>ele.clearUI())
-    ButCalcHash.forEach(ele=>ele.disable())
-    butUniquifySM.disable();
-    butFinish.disable();
-    argGeneral=undefined; syncDbBoth=undefined; arrSyncDb=Array(2); BoHashDone=[false, false]
-    arrToChangeS=undefined; arrToChangeT=undefined; 
+  el.clearVal=function(charSide){
+    var ISide; if(charSide=='S') ISide=[0]; else if(charSide=='T') ISide=[1]; else ISide=[0,1];
+
+    for(var iSide of ISide){
+      var boTarget=Boolean(iSide), charSide=boTarget?'T':'S', strSide=boTarget?'target':'source';
+      DivIdMatch[iSide].clearVal();
+      DivMat1[iSide].clearVal();
+      DivTab[iSide].clearVal();
+      MiniViewSMMatch[iSide].clearUI();
+
+      EnumStat[iSide]=EnumStatT.none;
+      funSetSingleButton(iSide); funSetBothButtons();
+      arrSyncDb[iSide]=undefined; ArrToChange[iSide]=undefined;
+    }
+    argGeneral=undefined;
   }
   el.setVal=function(objFeedback, iSide){
     var {Mat1}=objFeedback
@@ -197,120 +201,165 @@ gThis.divT2DBothCreator=function(el){
     DivIdMatch[iSide].setVal(objHL);
   }
 
-  var funCompare_one=async function(){
-    var charSide=this.parentNode.getAttribute('data-side'), boTarget=charSide=='T', iSide=Number(boTarget)
-    var strSide=boTarget?'target':'source'
-    var strMess=`Compare tree-2-db on ${strSide}...`;
-    myConsole.clear(); //el.clearVal();
-    DivTab[iSide].clearVal();
-    setMess(strMess); blanket.show(); viewFront.divT2TUsingHash.clearVal();
-    
-    var [err, argGeneralT]=await argumentTab.getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
-    argGeneral=argGeneralT
-    var syncDbOne=arrSyncDb[iSide]=new SyncDbOne({divT2DBoth:el, charSide, argGeneral})
-    var [err]=await syncDbOne.fun1Prework(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;};
-    fun1_5CreateNewDb(charSide, argGeneral, arrSyncDb[iSide]);
-    var {boCreated}=syncDbOne;  ButCalcHash[iSide].enable(boCreated);
-    var boHashDone=!boCreated; BoHashDone[iSide]=boHashDone;
-    var boHashDoneBoth=BoHashDone.every(Boolean);  butUniquifySM.enable(boHashDoneBoth);
+  var funSetSingleButton=function(i){
+    ButCalcHash[i].enable(EnumStat[i]==EnumStatT.compared)
+    DivUniquify[i].querySelector(`button`).enable(EnumStat[i]==EnumStatT.hashed); 
+    DivFinish[i].querySelector(`button`).enable(EnumStat[i]==EnumStatT.unique)
 
-
-    var strMess=`Compare tree-2-db on ${strSide}: Done`;
-    setMess(strMess); blanket.hide();
   }
-  var funHash_one=async function(){
-    var charSide=this.parentNode.getAttribute('data-side'), boTarget=charSide=='T', iSide=Number(boTarget)
-    var strSide=boTarget?'target':'source'
-    //butDoAction.disable()
-    setMess(`Calculate hash for new files (on ${strSide})...`); blanket.show();
+  var funSetBothButtons=function(){
+    var boComparedBoth=EnumStat.every(enumT=>enumT>=EnumStatT.compared);  
+    var boHashDoneBoth=EnumStat.every(enumT=>enumT>=EnumStatT.hashed);
+    if(boHashDoneBoth) boComparedBoth=false;
+    butCalcHash.enable(boComparedBoth);
+    butUniquifySM.enable(boHashDoneBoth);
+    //var boUniquifiedBoth=EnumStat.every(enumT=>enumT>=EnumStatT.unique);  butFinish.enable(boUniquifiedBoth);
+  }
+  var funCompare=async function(){
+    var charSide=this.parentNode.getAttribute('data-side')
+    var ISide; if(charSide=='S') ISide=[0]; else if(charSide=='T') ISide=[1]; else ISide=[0,1];
+    myConsole.clear();  blanket.show(); viewFront.divT2TUsingHash.clearVal(); //el.clearVal();
+    for(var iSide of ISide){ DivTab[iSide].clearVal(); el.clearVal(iSide?'T':'S'); }
 
-    var [err]=await fun2AddHash(charSide, argGeneral, arrSyncDb[iSide]); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var boHashDone=true
-    BoHashDone[iSide]=boHashDone;   ButCalcHash[iSide].enable(!boHashDone);
-    var boHashDoneBoth=BoHashDone.every(Boolean);    butUniquifySM.enable(boHashDoneBoth);
+    var [err, argGeneralT]=await getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
+    argGeneral=argGeneralT
+    for(var iSide of ISide){
+      var boTarget=Boolean(iSide), charSide=boTarget?'T':'S', strSide=boTarget?'target':'source';
+      var strMess=`Compare tree-2-db on ${strSide}...`; setMess(strMess);
+
+      var arg={divT2DBoth:el, charSide, argGeneral}
+      var [err, syncDb]=await fun1Prework(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;};
+      arrSyncDb[iSide]=syncDb;
+      fun1_5CreateNewDb(arrSyncDb[iSide]);
+      var {boCreated}=arrSyncDb[iSide]; //BoCompared[iSide]=boCreated; BoHashDone[iSide]=!boCreated;
+      EnumStat[iSide]=EnumStatT.compared; if(!boCreated) EnumStat[iSide]=EnumStatT.hashed;
+      funSetSingleButton(iSide); funSetBothButtons()
+    }
+    resetMess(); blanket.hide();
+  }
+
+  var funCalcHash=async function(){
+    var charSide=this.parentNode.getAttribute('data-side')
+    var ISide; if(charSide=='S') ISide=[0]; else if(charSide=='T') ISide=[1]; else ISide=[0,1];
+    blanket.show();
+
+    for(var iSide of ISide){
+      var boTarget=Boolean(iSide), charSide=boTarget?'T':'S', strSide=boTarget?'target':'source';
+      setMess(`Calculate hash for new files (on ${strSide})...`);
+      var [err]=await fun2AddHash(charSide, argGeneral, arrSyncDb[iSide]); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+      //BoCompared[iSide]=false; BoHashDone[iSide]=true;
+      EnumStat[iSide]=EnumStatT.hashed;
+      funSetSingleButton(iSide); funSetBothButtons()
+    }
     setMess('CalcHash: Done'); blanket.hide();
   }
 
-  var funCompareNHash_both=async function(){
-    var strMess=`Compare both`;
-    myConsole.clear(); el.clearVal(); setMess(strMess); blanket.show(); viewFront.divT2TUsingHash.clearVal();
+  var funUniquifySM=async function(){
+    var charSide=this.parentNode.getAttribute('data-side')
+    var ISide; if(charSide=='S') ISide=[0]; else if(charSide=='T') ISide=[1]; else ISide=[0,1];
+    blanket.show();
 
-    var [err, argGeneralT]=await argumentTab.getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
-    argGeneral=argGeneralT
-    syncDbBoth=new SyncDbBoth({divT2DBoth:el, argGeneral})
-    var [err]=await syncDbBoth.fun1Prework(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    ({arrSyncDb}=syncDbBoth); var [syncDb_S, syncDb_T]=arrSyncDb
-    fun1_5CreateNewDb('S', argGeneral, syncDb_S);   fun1_5CreateNewDb('T', argGeneral, syncDb_T);
-    var [err]=await fun2AddHash('S', argGeneral, syncDb_S); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var [err]=await fun2AddHash('T', argGeneral, syncDb_T); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-
-    BoHashDone=[true, true]; butUniquifySM.enable();
-    resetMess(); blanket.hide();
+    for(var iSide of ISide){
+      var boTarget=Boolean(iSide), charSide=boTarget?'T':'S', strSide=boTarget?'target':'source';
+      setMess(`Uniquify SM (on ${strSide})...`);
+      var syncDb=arrSyncDb[iSide]
+      var [err, result]=await fun3GetMultSM({divT2DBoth:el}, argGeneral, syncDb, iSide); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+      ArrToChange[iSide]=result;
+      var boChanged=syncDb.boChanged || Boolean(ArrToChange[iSide].length)
+      //BoUniquified[iSide]=boChanged; BoHashDone[iSide]=false
+      EnumStat[iSide]=EnumStatT.unique; if(!boChanged) EnumStat[iSide]=EnumStatT.none;
+      funSetSingleButton(iSide); funSetBothButtons()
+    }
+    blanket.hide();
   }
+  var funWriteToDb=async function(){
+    var charSide=this.parentNode.getAttribute('data-side')
+    var ISide; if(charSide=='S') ISide=[0]; else if(charSide=='T') ISide=[1]; else ISide=[0,1];
+    blanket.show();
+
+    for(var iSide of ISide){
+      var boTarget=Boolean(iSide), charSide=boTarget?'T':'S', strSide=boTarget?'target':'source';
+      setMess(`WriteToDbs (on ${strSide})...`);
+      var [err]=await fun4WriteDb(ArrToChange[iSide], arrSyncDb[iSide], argGeneral, boTarget); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); EnumStat[iSide]=EnumStatT.none; funSetSingleButton(iSide); return;}  //butFinish.disable();
+      EnumStat[iSide]=EnumStatT.none;
+      funSetSingleButton(iSide); funSetBothButtons();
+      arrSyncDb[iSide]=undefined; ArrToChange[iSide]=undefined;
+    }
+    //argGeneral=undefined;
+    setMess('WriteToDbs: Done'); blanket.hide();
+  }
+
 
   var funCompareNHashNUniquify_both=async function(){
     var strMess=`Compare both`;
     myConsole.clear(); el.clearVal(); setMess(strMess); blanket.show(); viewFront.divT2TUsingHash.clearVal();
 
-    var [err, argGeneralT]=await argumentTab.getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
+    var [err, argGeneralT]=await getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
     argGeneral=argGeneralT
-    syncDbBoth=new SyncDbBoth({divT2DBoth:el, argGeneral})
-    var [err]=await syncDbBoth.fun1Prework(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    ({arrSyncDb}=syncDbBoth); var [syncDb_S, syncDb_T]=arrSyncDb
-    fun1_5CreateNewDb('S', argGeneral, syncDb_S);   fun1_5CreateNewDb('T', argGeneral, syncDb_T);
-    var [err]=await fun2AddHash('S', argGeneral, syncDb_S); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var [err]=await fun2AddHash('T', argGeneral, syncDb_T); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var ISide=[0,1];
+    for(var iSide of ISide){
+      var charSide=iSide?'T':'S'
+      var arg={divT2DBoth:el, charSide, argGeneral}
+      var [err, syncDb]=await fun1Prework(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;};
+      arrSyncDb[iSide]=syncDb;
+      fun1_5CreateNewDb(arrSyncDb[iSide]);
+    }
+
+    for(var iSide of ISide){
+      var charSide=iSide?'T':'S';
+      var [err]=await fun2AddHash(charSide, argGeneral, arrSyncDb[iSide]); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    }
     
-    var [err, result]=await fun3CalcMult({divT2DBoth:el, argGeneral, arrSyncDb}); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    ({arrToChangeS, arrToChangeT}=result)
-    var boChanged=syncDb_S.boChanged || syncDb_T.boChanged || Boolean(arrToChangeS.length) || Boolean(arrToChangeT.length);
-    butFinish.enable(boChanged);
+    for(var iSide of ISide){
+      var [err, result]=await fun3GetMultSM({divT2DBoth:el}, argGeneral, arrSyncDb[iSide], iSide); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+      ArrToChange[iSide]=result
+    }
+
+    for(var iSide of ISide){
+      var boChanged=arrSyncDb[iSide].boChanged || Boolean(ArrToChange[iSide].length);
+      EnumStat[iSide]=EnumStatT.unique; if(!boChanged) EnumStat[iSide]=EnumStatT.none;
+      funSetSingleButton(iSide);
+    }
+    funSetBothButtons();
+    //butFinish.enable(boChanged);
     resetMess(); blanket.hide();
   }
 
 
-  var funUniquifySM=async function(){
-    var [err, result]=await fun3CalcMult({divT2DBoth:el, argGeneral, arrSyncDb}); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;};
-    var [syncDb_S, syncDb_T]=arrSyncDb;
-    ({arrToChangeS, arrToChangeT}=result);
-    butUniquifySM.disable();
-    var boChanged=syncDb_S.boChanged || syncDb_T.boChanged || Boolean(arrToChangeS.length) || Boolean(arrToChangeT.length);
-    butFinish.enable(boChanged);
-  }
+  var argGeneral, arrSyncDb=Array(2), ArrToChange=Array(2);
+  var EnumStatT={none:0, compared:1, hashed:2, unique:3}
+  var EnumStat=[EnumStatT.none, EnumStatT.none];
 
-  var funWriteToDbBoth=async function(){
-    setMess('WriteToDbs ...'); blanket.show();
-    //var [err]=await syncDb.writeDb(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var [err]=await fun4WriteDbBoth({arrToChangeS, arrToChangeT, arrSyncDb, argGeneral}); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); butFinish.disable(); return;}
-    argGeneral=undefined; syncDbBoth=undefined; arrSyncDb[0]=undefined; arrSyncDb[1]=undefined; arrToChangeS=undefined; arrToChangeT=undefined
-    setMess('WriteToDbs: Done'); blanket.hide();
-    butUniquifySM.disable();
-    butFinish.disable();
-  }
-  var argGeneral, syncDbBoth, arrSyncDb=Array(2), BoHashDone=[false, false]
-  var arrToChangeS, arrToChangeT
 
-  var butGoA=createElement('button').myAppend('Both').on('click', funCompareNHash_both).prop({title:'Compare SM on both Source and Target.'});
-  var divGoA=createElement('div').myAppend(butGoA).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", position:'sticky', 'text-align':'center', 'grid-row':'span 5'}); //, 'grid-area':'1/1/span 1/span 2' , opacity:0.8
+  var CharSide=['S', 'T'], DivButton=[], LinkFilterFirstT2D=[], LinkTree=[], LinkDb=[], DivIdMatch=[], DivMat1=[], DivTab=[], DivTabW=[], ButCalcHash=[], DivCalcHash=[], DivUniquify=[], MiniViewSMMatch=[], DivFinish=[];  //, DivDbWrite=[]
 
-  var butGo=createElement('button').myAppend('Both').on('click', funCompareNHashNUniquify_both).prop({title:'Compare SM on both Source and Target.'});
-  var divGo=createElement('div').myAppend(butGo).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", position:'sticky', 'text-align':'center', 'grid-row':'span 7'}); //, opacity:0.8
-
-  var CharSide=['S', 'T'], DivButton=[], LinkFilterFirstT2D=[], LinkDb=[], DivIdMatch=[], DivMat1=[], DivTab=[], DivTabW=[], ButCalcHash=[], DivCalcHash=[], MiniViewSMMatch=[];  //, DivDbWrite=[]
-  extend(el, {MiniViewSMMatch})
+  extend(el, {LinkTree, MiniViewSMMatch}); //
   for(var i=0;i<2;i++){
-    var charSide= CharSide[i]
+    var boTarget=Boolean(i), charSide=boTarget?'T':'S', strSide=boTarget?'target':'source';
 
-    var hT2D=createElement('b').myText(`${charSide} (Tree to Db)`)
-    var butCompareT2D=createElement('button').myAppend('Compare SM').on('click', funCompare_one);
+    var headT2D=createElement('b').myText(`${ucfirst(strSide)}: sync own files to Db`).css({margin:'0 0.4em 0 0'}).prop({title:`"own" corresponds here to the green area in the image to the left.`})
+    var imgTree=createElement('img').prop({src:`icons/buvtTree${charSide}WOSub.png`}).css({zoom:'1', 'vertical-align':'middle'});
+    var linkTree=createElement('a').myAppend(imgTree).prop({href:'', title:''}).on('click', methGoToTitle);
+    //var spanDb=createElement('span').myAppend(`${charDb}`).css({'font-size':'1.6em', display:'inline-block', 'vertical-align':'middle'});
+    var linkDb=createElement('a').myText(`${charDb}`).prop({href:""}).css({'font-size':'1.6em', display:'inline-block', 'vertical-align':'middle'}).on('click', methGoToTitle);
+    var hT2D=createElement('span').myAppend(linkTree, ` ${charRightArrow} `, linkDb); //`${charSide} (Tree `, 
+    var butCompareT2D=createElement('button').myAppend('Match SM').on('click', funCompare);
     var linkFilterFirstT2D=createElement('a').myText('filterFirst').prop({ href:""}).on('click', methGoToTitle);
-    var linkDb=createElement('a').myText('db-file').prop({href:""}).on('click', methGoToTitle);
-    var divButton=createElement('div').myAppend(hT2D, ' ', butCompareT2D, ' ', linkFilterFirstT2D, ' | ' , linkDb).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", position:'sticky'}); //, opacity:0.8
+    var divButton=createElement('div').myAppend(hT2D, ' ', butCompareT2D, ' ', linkFilterFirstT2D).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", position:'sticky'}); //, opacity:0.8 headT2D, 
     divButton.setAttribute('data-side', charSide);
 
-    var butCalcHash=createElement('button').myAppend('Calc hash').css({margin:'auto'}).on('click', funHash_one).disable()
+    var butCalcHash=createElement('button').myAppend('Calc hash').css({margin:'auto'}).on('click', funCalcHash).disable()
     var divCalcHash=createElement('div').myAppend(butCalcHash);  divCalcHash.setAttribute('data-side', charSide);
-     
+
+    var miniViewSMMatch=miniViewSMMatchCreator(createElement('div'), charSide)
+
+    var butUniquify=createElement('button').myAppend('Uniquify SM-hashcode relations 1').prop({title:`Note! As shown in the picture below, a hashcode can still have multiple SM.\nIn other words: "Copies" (files with the same hashcode) may (or may not) have the same SM.`}).css({margin:'auto'}).on('click', funUniquifySM).disable()
+
+    var divUniquify=createElement('div').myAppend(butUniquify, miniViewSMMatch).css({background:"var(--bg-color)"});  divUniquify.setAttribute('data-side', charSide);
+    
+    var butFinish=createElement('button').myAppend('Write to db and update mtimes').css({margin:'auto'}).on('click', funWriteToDb).disable()
+    var divFinish=createElement('div').myAppend(butFinish);  divFinish.setAttribute('data-side', charSide);
+
     var PathCur=gThis[`Path${charSide}`]
     var divIdMatch=createElement('div'); divIdMatchCreator(divIdMatch, makeOpenExtCB(PathCur.hl))
 
@@ -320,20 +369,27 @@ gThis.divT2DBothCreator=function(el){
     var divTab=divT2DTabCreator(createElement('div'), charSide)
     var divTabW=createElement('div').myAppend(divTab)
 
-    var miniViewSMMatch=miniViewSMMatchCreator(createElement('div'), charSide)
 
-    DivButton[i]=divButton; LinkFilterFirstT2D[i]=linkFilterFirstT2D; LinkDb[i]=linkDb; DivIdMatch[i]=divIdMatch; DivMat1[i]=divMat1; DivTab[i]=divTab; DivTabW[i]=divTabW; ButCalcHash[i]=butCalcHash; DivCalcHash[i]=divCalcHash; MiniViewSMMatch[i]=miniViewSMMatch; //DivDbWrite[i]=divDbWrite;
-
+    DivButton[i]=divButton; LinkFilterFirstT2D[i]=linkFilterFirstT2D; LinkDb[i]=linkDb; DivIdMatch[i]=divIdMatch; DivMat1[i]=divMat1; DivTab[i]=divTab; DivTabW[i]=divTabW; ButCalcHash[i]=butCalcHash; DivCalcHash[i]=divCalcHash; DivUniquify[i]=divUniquify; MiniViewSMMatch[i]=miniViewSMMatch; DivFinish[i]=divFinish; LinkTree[i]=linkTree; //DivDbWrite[i]=divDbWrite; 
   }
 
+  var butCompareBoth=createElement('button').myAppend('Both').on('click', funCompare).prop({title:'Compare own SM on both Source and Target.'});
+  var divCompareBoth=createElement('div').myAppend(butCompareBoth).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", position:'sticky', 'text-align':'center', 'grid-row':'span 4'}); //, 'grid-area':'1/1/span 1/span 2' , opacity:0.8
 
-  var butUniquifySM=createElement('button').myAppend('Uniquify SM').on('click', funUniquifySM).disable();
-  var divUniquifySM=createElement('div').myAppend(butUniquifySM).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", 'text-align':'center', 'grid-column':'span 3'}); //, 'grid-area':'1/1/span 1/span 2'   title:'Uniquify SM', 
+  var butGo=createElement('button').myAppend('Both').on('click', funCompareNHashNUniquify_both).prop({title:'Compare own SM on both Source and Target.'});
+  var divGo=createElement('div').myAppend(butGo).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", position:'sticky', 'text-align':'center', 'grid-row':'span 6'}); //, opacity:0.8
 
-  var butFinish=createElement('button').myAppend('Write to db and update mtimes').on('click', funWriteToDbBoth).prop({title:'Write to db and update timestamps (on both Source and Target).'}).disable();
-  var divFinish=createElement('div').myAppend(butFinish).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", 'text-align':'center', 'grid-column':'span 4'}); //
 
-  el.myAppend(...DivButton, divGoA, divGo, ...DivIdMatch, ...DivMat1, ...DivTabW, ...DivCalcHash, divUniquifySM, ...MiniViewSMMatch, divFinish ); // , ...DivDbWrite
+  var butCalcHash=createElement('button').myAppend('Both').on('click', funCalcHash).disable();
+  var divCalcHash=createElement('div').myAppend(butCalcHash).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", 'text-align':'center'});
+
+  var butUniquifySM=createElement('button').myAppend('Both').on('click', funUniquifySM).disable();
+  var divUniquifySM=createElement('div').myAppend(butUniquifySM).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", 'text-align':'center', 'grid-row':'span 1'}); //, 'grid-column':'span 3', 'grid-area':'1/1/span 1/span 2'   title:'Uniquify SM', 
+
+  // var butFinish=createElement('button').myAppend('Both').on('click', funWriteToDb).prop({title:'Write to db and update timestamps (on both Source and Target).'}).disable();
+  // var divFinish=createElement('div').myAppend(butFinish).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", 'text-align':'center', 'grid-column':'span 2'}); //
+
+  el.myAppend(...DivButton, divCompareBoth, divGo, ...DivIdMatch, ...DivMat1, ...DivTabW, ...DivCalcHash, divCalcHash, ...DivUniquify, divUniquifySM, ...DivFinish); // , ...MiniViewSMMatch, divFinish, ...DivDbWrite
 
   el.css({'text-align':'left', display:'grid', 'grid-template-columns':'1fr 1fr auto auto', 'column-gap':'3px','margin-top':'0px', 'margin-bottom':'0px'}); //, flex:'0 0 auto', 'overflow-y':'auto'
 

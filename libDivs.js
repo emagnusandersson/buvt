@@ -257,7 +257,8 @@ var headExtend=function(elTr, tBody, nRowVisible){
       //var aN=Number(a); if(!isNaN(aN) && a!=='') {a=aN;} else {a=a?.toLowerCase(); boAStr=1;}
       //var bN=Number(b); if(!isNaN(bN) && b!=='') {b=bN;} else {b=b?.toLowerCase(); boBStr=1;}
       //if(boAStr!=boBStr) return ((boAStr<boBStr)?-1:1)*dire;
-      if(a==b) {return 0;} else return ((a<b)?-1:1)*dire;
+      //if(a==b) {return 0;} else return ((a<b)?-1:1)*dire;
+      return -diffMy(a,b)*dire
     }
     var arrToSortN=msort.call(arrToSort,comparator);
     tBody.append(...arrToSortN);

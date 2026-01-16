@@ -2,86 +2,6 @@
 "use strict"
 
 
-var hardLinkCheck=async function(arg){
-  var {charTRes=settings.charTRes, leafFilter, fiSourceDir, charFilterMethod, charSide='S'}=arg
-  var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; return [err];}
-  setMess(`Parsing tree`, null, true)
-  var treeParser=new TreeParser()
-  var arg={charTRes, leafFilter, leafFilterFirst:leafFilter, fsDir:fsSourceDir, charFilterMethod}
-  var [err, arrTreef, arrTreeF] =await treeParser.parseTree(arg); if(err) {debugger; return [err];}
-
-  //var myResultWriter=new MyResultWriter(StrStemT2D)
-  var PathCur=gThis[`Path${charSide}`]
-  var myResultWriter=new MyWriter(PathCur)
-
-  arrTreef.sort(funIncId);   arrTreeF.sort(funIncId);
-
-  var BundTreef=bundleOnProperty(arrTreef, 'id'),  nIdf=Object.keys(BundTreef).length
-  var [BundTreefMult, nMultf]=extractBundlesWMultiples(BundTreef),  nIdMultf=Object.keys(BundTreefMult).length;
-  var BundTreeF=bundleOnProperty(arrTreeF, 'id'),  nIdF=Object.keys(BundTreeF).length
-  var [BundTreeFMult, nMultF]=extractBundlesWMultiples(BundTreeF),  nIdMultF=Object.keys(BundTreeFMult).length;
-
-  var objArg={nMultf, nIdMultf, nIdf, nTreef:arrTreef.length,   nMultF, nIdMultF, nIdF, nTreeF:arrTreeF.length}
-
-  var funMatch=s=>`MatchingData ${s.id.padStart(20)}`,  funUnique=s=>`  ${s.strName}`;
-  var StrTmpf=formatListBundled(BundTreefMult, funMatch, funUnique)
-  var StrTmpF=formatListBundled(BundTreeFMult, funMatch, funUnique)
-  //myResultWriter.Str['T2D_HL'].push(...StrTmpF, ...StrTmpf)
-  myResultWriter.Str.hl=myResultWriter.Str.hl.concat(StrTmpF, StrTmpf)
-  var [err]=await myResultWriter.writeToFile();  if(err) {debugger; return [err];}
-  //var strSeeMore=myResultWriter.getSeeMoreMessage()
-  //myConsole.log(StrSum.concat(strSeeMore).join('\n'))
-  return [null]
-}
-
-
-
-
-
-
-// var readDbA=async function(arg){
-//   var {fsSourceDb, strHostTarget, fsTargetDb, charTResS, charTResT}=arg
-
-//   var [err, strData]=await readStrFile(fsSourceDb);
-//   if(err){    if(err.code==STR_ENOENT){err=null; strData=""} else{ debugger; return [err]}    }
-//   var [err, arrSourceDb]=parseDb(strData); if(err) {debugger; return [err];}
-//   funSetMTimeArr(arrSourceDb, charTResS);
-
-//   var [err, strData]=await readStrFileWHost(fsTargetDb, strHostTarget);
-//   if(err){    if(err.code==STR_ENOENT){err=null; strData=""} else{ debugger; return [err]}    }
-//   var [err, arrTargetDb]=parseDb(strData); if(err) {debugger; return [err];}
-//   funSetMTimeArr(arrTargetDb, charTResT);
-//   //extend(this, {arrSourceDb, arrTargetDb})
-//   return [null, arrSourceDb, arrTargetDb]
-// }
-
-
-  // Read dbB and make sure fleTargetDataDir exist in it.
-var readNSyncDbB=async function(arg){
-  var {strHostTarget, flTargetDataDir, fsTargetDbDir, fleTargetDataDir}=arg; //, fsTargetDataDir
-  var FleF=[], BoExist=[], indCur
-  if(flTargetDataDir){
-    var fsDbB=fsTargetDbDir+charF+settings.leafDbB
-    var [err, strData, boFileExist]=await readStrFileWHost(fsDbB, strHostTarget); if(err) return [err]
-    var strData=strData.trim(), FleF;
-    if(strData) FleF=strData.split('\n'); else FleF=[];
-      // Make sure each entry ends with charF and removing multiples.
-    var obj={}; for(var i=0;i<FleF.length;i++){ var flef=trim(FleF[i], charF)+charF; obj[flef]=1; }; FleF=Object.keys(obj)
-      // Making sure fleTargetDataDir is in FleF and setting indCur.
-    var indCur; for(var i=0;i<FleF.length;i++){ if(FleF[i]==fleTargetDataDir){ indCur=i; break;}}
-    if(typeof indCur=='undefined') {FleF.push(fleTargetDataDir); indCur=FleF.length-1;}
-      // Checking if the folders exist.
-    var FsF=FleF.map(fleFTmp=>fsTargetDbDir+charF+fleFTmp);
-    var [err, BoExist]=await fileExistArr(FsF); if(err) {debugger; return [err];}
-
-    var strData=FleF.join('\n')
-    var [err]=await writeFileRemote(fsDbB, strData, strHostTarget); if(err) {debugger; return [err];}
-  }
-  //extend(this, {FleF, BoExist, indCur, fleTargetDataDir})
-  return [null, FleF, BoExist, indCur]
-}
-
-
 
 
 var treeParserW=async function(arg){
@@ -89,10 +9,9 @@ var treeParserW=async function(arg){
   argTmp.leafFilterFirst=argTmp.leafFilter
     // Parse tree
   var treeParser=new TreeParser()
-  //var arg={charTRes, leafFilter, leafFilterFirst:leafFilter, fsDir, charFilterMethod, strHost}
   var [err, arrTreef, arrTreeF] =await treeParser.parseTree(argTmp); if(err) {debugger; return [err];}
-  removeLeafFileFromArrTreef(arrTreef, settings.leafDb)
-  removeLeafFileFromArrTreef(arrTreef, settings.leafDbB)
+  removeFileFromArrTreef(arrTreef, settings.leafDb)
+  removeFileFromArrTreef(arrTreef, RegExp('buvtDb\\.bak[0-9]*\\.txt'))
 
   return [null, arrTreef, arrTreeF]
 }
@@ -111,10 +30,6 @@ var treeParserW=async function(arg){
 
 
 var checkingForMultipleIds=async function(arrTreef, arrTreeF, arrDb, charSide){
-  //var {charSide, boTarget}=argSide;
-  //var {charTRes, fsDb, fsDataDir, fsDbDir, strHost}=argSide
-  //var {flTargetDataDir, charFilterMethod, leafFilter}=arg
-
   var PathCur=gThis[`Path${charSide}`],   myResultWriter=new MyWriter(PathCur)
 
       // Id match (Checking for hard links)
@@ -157,9 +72,6 @@ var categorizeSMRelations=async function(arrTreef, arrDb, charSide){
   // var [err, arrDb]=parseDb(strData); if(err) {debugger; return [err];}
   // funSetMTimeArr(arrDb, charTRes);
 
-  //var arg={arrDb, boTarget, fsDbDir, strHost, flTargetDataDir}
-  //var [err, arrRelevant, arrReadOnly]=await separateByRelevance(arg); if(err){debugger; return [err];}
-  //var arrDb=arrRelevant
 
   var PathCur=gThis[`Path${charSide}`],   myResultWriter=new MyWriter(PathCur)
 
@@ -231,6 +143,10 @@ var categorizeSMRelations=async function(arrTreef, arrDb, charSide){
   myResultWriter.Str.untouched=formatList(arrTrUntouched, ...ObjKeyList['untouched']);
   var arrUntouched=arrTrUntouched
 
+
+  arrCreate.sort(funIncStrName)
+  arrDelete.sort(funIncStrName)
+
   var ObjFeedback={}
   ObjFeedback.objTree={strHov:undefined, nFile:arrTree.length}
   ObjFeedback.objDb={strHov:undefined, nFile:arrDb.length}
@@ -275,8 +191,10 @@ var categorizeSMRelations=async function(arrTreef, arrDb, charSide){
 
 
 
-var addHashToCreated=async function(arrCreated, argSide){  // Read "created" and add hashcodes to it.
-  var {charSide, fsDbDir, strHost}=argSide
+//var addHashToCreated=async function(arrCreated, argSide){  // Read "created" and add hashcodes to it.
+var addHashToCreated=async function(arrCreated, objOptSide){  // Read "created" and add hashcodes to it.
+  //var {charSide, fsDbDir, strHost}=argSide
+  var {charSide, fsDbDir, strHost}=objOptSide
 
   var PathCur=gThis[`Path${charSide}`]
 
@@ -316,184 +234,78 @@ var writeTmpDb=async function(arrDb, argSide){  // Read "created" and add hashco
 }
 
 
-class SyncDbOne{
-  constructor(arg){
-    Object.assign(this, arg);
+var fun1Prework=async function(arg){
+  var {divT2DBoth, charSide, argGeneral}=arg
+  var boTarget=charSide=='T', strSide=boTarget?'target':'source', iSide=Number(boTarget)
+
+  var {objOptSource, objOptTarget, FleSSub, FleTSub, strHostTarget}=argGeneral
+  var objOptSide=boTarget?objOptTarget:objOptSource
+  var FleSub=boTarget?FleTSub:FleSSub
+
+  if(boTarget){ //boRemote
+    var [err]=await interfacePython.uploadZip(strHostTarget); if(err) { debugger; return [err];}
   }
-  async constructorB(){ // For stuff that needs await
-    return [null];
-  }
-  async fun1Prework(){
-    var {divT2DBoth, charSide, argGeneral}=this
-    var boTarget=charSide=='T', strSide=boTarget?'target':'source', iSide=Number(boTarget)
-
-    var {strHostTarget, ArgSide}=argGeneral
-    var [argS, argT]=ArgSide, argSide=ArgSide[iSide]
-    //var {fsSourceDir, fsTargetDbDir, fsTargetDataDir, fsSourceDb, fsTargetDb, fleTargetDataDir, leafFilter}=argGeneralExtra
-    //extend(argGeneral, {charSide});
-
-    if(boTarget){ //boRemote
-      var [err]=await interfacePython.uploadZip(strHostTarget); if(err) { debugger; return [err];}
-    }
-      // Reading databases
-    var argTmp=copySome({}, argSide, ["fsDb", "strHost"])
-    var [err, arrDb]=await parseDbW(argTmp); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrDb, argSide.charTRes);
-
-    var argTmp=copySome({},argGeneral, ["strHostTarget", "flTargetDataDir", "fsTargetDbDir", "fleTargetDataDir"])
-    var [err, FleF, BoExist, indCur]=await readNSyncDbB(argTmp); if(err) {debugger; return [err];}
-
-      // getRelevantForCategorizations (db)
-    if(boTarget){
-      var [arrDb_TAllInside, arrDb_TAllOutside]=ArrDb.selectWPrefixArr(arrDb, FleF);
-      var [arrDb_TCurInside, arrDb_TCurOutside]=ArrDb.selectWPrefix(arrDb, FleF[indCur]);
-    }else{ var arrDb_SRelevantForCat=arrDb; }
-
-      // Parsing trees
-    var strMess=`Parsing ${strSide} tree`;   if(boTarget) strMess+=` (db folder)`;   setMess(strMess, null, true)
-    var argTmp=copySome({}, argSide, ['charTRes', 'strHost']); copySome(argTmp, argGeneral, ['charFilterMethod', 'leafFilter']);argTmp.fsDir=argSide.fsDbDir
-    var [err, arrTreef, arrTreeF] =await treeParserW(argTmp); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrTreef, argSide.charTRes);
-    extend(this, {arrDb, arrTreef})
-
-      // Set boNew=false
-    arrTreef.forEach(r=>r.boNew=false);
-
-      // getRelevantForCategorizations (tree)
-    if(boTarget){
-      var [arrTr_TAllInside, arrTr_TAllOutside]=ArrDb.selectWPrefixArr(arrTreef, FleF);
-      var [arrTr_TCurInside, arrTr_TCurOutside]=ArrDb.selectWPrefix(arrTreef, FleF[indCur]);
-      extend(this, {arrDb_TAllOutside, arrTr_TAllOutside, arrDb_TCurOutside, arrTr_TCurOutside})
-      if(arrDb_TAllInside.length!=arrTr_TAllInside.length) {debugger; return [Error('arrDb_TAllInside.length!=arrTr_TAllInside.length')];}
-      extend(this, {arrDb_TAllInside});
-    }else {var arrTr_SRelevantForCat=arrTreef; }
+    // Reading databases
+  var argTmp=copySome({}, objOptSide, ["fsDb", "strHost"])
+  var [err, arrDb]=await parseDbW(argTmp); if(err) {debugger; return [err];}
+  funSetMTimeArr(arrDb, objOptSide.charTRes);
 
 
-    var [err, objHL]=await checkingForMultipleIds(arrTreef, arrTreeF, arrDb, charSide); if(err) {debugger; return [err];}
-    if(objHL) {divT2DBoth.setHLVal(objHL, iSide); debugger; return [err, {objHL}];}
+    // getRelevantForCategorizations (db)
+  var [arrDb_AllInside, arrDb_AllOutside]=ArrDb.selectWPrefixArr(arrDb, FleSub);
 
-    var ArgTmp=boTarget?[arrTr_TAllOutside, arrDb_TAllOutside]:[arrTr_SRelevantForCat, arrDb_SRelevantForCat]
-    var [err, objCategory]=await categorizeSMRelations(...ArgTmp, charSide); if(err) {debugger; return [err];}
-    extend(this, {objCategory, argGeneral, ArgSide});
-    divT2DBoth.setVal(objCategory, iSide);
 
-      // boChanged
-    var {arrCreate, boChanged}=objCategory, boCreated=Boolean(arrCreate.length)
-    extend(this, {boCreated, boChanged})
+    // Parsing trees
+  var strMess=`Parsing ${strSide} tree`;   setMess(strMess, null, true)
+  var argTmp=copySome({}, objOptSide, ['charTRes', 'strHost', 'charFilterMethod', 'leafFilter', 'fsDir']);
+  var [err, arrTreef, arrTreeF] =await treeParserW(argTmp); if(err) {debugger; return [err];}
+  funSetMTimeArr(arrTreef, objOptSide.charTRes);
+  var objOut={}
+  extend(objOut, {arrDb, arrTreef})
 
-    return [null]
-  }
+    // Set boNew=false
+  //arrTreef.forEach(r=>r.boNew=false);
+
+    // getRelevantForCategorizations (tree)
+  var [arrTr_AllInside, arrTr_AllOutside]=ArrDb.selectWPrefixArr(arrTreef, FleSub);
+  extend(objOut, {arrDb_AllInside, arrDb_AllOutside, arrTr_AllOutside})
+  if(arrDb_AllInside.length!=arrTr_AllInside.length) {debugger; return [Error('arrDb_AllInside.length!=arrTr_AllInside.length')];}
+
+
+  var [err, objHL]=await checkingForMultipleIds(arrTreef, arrTreeF, arrDb, charSide); if(err) {debugger; return [err];}
+  if(objHL) {divT2DBoth.setHLVal(objHL, iSide); debugger; return [err, {objHL}];}
+
+  var ArgTmp=[arrTr_AllOutside, arrDb_AllOutside]
+  var [err, objCategory]=await categorizeSMRelations(...ArgTmp, charSide); if(err) {debugger; return [err];}
+  extend(objOut, {objCategory});
+  divT2DBoth.setVal(objCategory, iSide);
+
+    // boChanged
+  var {arrCreate, boChanged}=objCategory, boCreated=Boolean(arrCreate.length)
+  extend(objOut, {boCreated, boChanged})
+
+  return [null, objOut]
 }
 
-var fun1_5CreateNewDb= function(charSide, argGeneral, syncDb){
-  var boTarget=charSide=='T', strSide=boTarget?'target':'source', iSide=Number(boTarget)
-  var {strHostTarget, ArgSide}=argGeneral
-  var [argS, argT]=ArgSide, argSide=ArgSide[iSide]
 
+var fun1_5CreateNewDb= function(syncDb){
   var {objCategory}=syncDb
-  var boTarget=charSide=='T', iSide=Number(boTarget)
   var {arrTrUntouched, arrTrM1T1, arrTrMMult, arrCreate}=objCategory;
-
-  var arrDbTmp=[].concat(arrTrUntouched, arrTrM1T1, arrTrMMult, arrCreate);
-  if(boTarget) arrDbTmp=arrDbTmp.concat(syncDb.arrDb_TAllInside)
-
-  extend(syncDb, {arrDbTmp})
+  var arrDbOwnWCollision=[].concat(arrTrUntouched, arrTrM1T1, arrTrMMult, arrCreate); //, syncDb.arrDb_AllInside
+  extend(syncDb, {arrDbOwnWCollision})
 }
 
 var fun2AddHash= async function(charSide, argGeneral, syncDb){
-  var boTarget=charSide=='T', strSide=boTarget?'target':'source', iSide=Number(boTarget)
-  var {strHostTarget, ArgSide}=argGeneral
-  var [argS, argT]=ArgSide, argSide=ArgSide[iSide]
+  var boTarget=charSide=='T';
+  var {objOptSource, objOptTarget}=argGeneral
+  var objOptSide=boTarget?objOptTarget:objOptSource
 
-  var {objCategory}=syncDb
-  var boTarget=charSide=='T', iSide=Number(boTarget)
-  var {arrCreate}=objCategory;
-  var [err]=await addHashToCreated(arrCreate, argSide); if(err) {debugger; return [err];}
+  var {objCategory}=syncDb, {arrCreate}=objCategory;
+  var [err]=await addHashToCreated(arrCreate, objOptSide); if(err) {debugger; return [err];}
     // Write temporary db
-  //var [err]=await writeTmpDb(arrDbTmp, argSide); if(err) {debugger; return [err];}
+  //var [err]=await writeTmpDb(arrDbOwnWCollision, argSide); if(err) {debugger; return [err];}
   return [null]
 }
-
-
-class SyncDbBoth{
-  constructor(arg){
-    Object.assign(this, arg);
-  }
-  async constructorB(){ // For stuff that needs await
-    return [null];
-  }
-  async fun1Prework(){
-    var {divT2DBoth, argGeneral}=this
-
-    var {strHostTarget, ArgSide}=argGeneral
-    var [argS, argT]=ArgSide;
-
-    if(1){ //boRemote
-      var [err]=await interfacePython.uploadZip(strHostTarget); if(err) { debugger; return [err];}
-    }
-      // Reading databases
-    //var [err, arrSourceDb, arrTargetDb]=await readDbA(argGeneral); if(err) {debugger; return [err];}
-    var argTmp=copySome({}, argS, ["fsDb", "strHost"])
-    var [err, arrSourceDb]=await parseDbW(argTmp); if(err) {debugger; return [err];}
-    var argTmp=copySome({}, argT, ["fsDb", "strHost"])
-    var [err, arrTargetDb]=await parseDbW(argTmp); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrSourceDb, argS.charTRes); funSetMTimeArr(arrTargetDb, argT.charTRes);
-
-    var argTmp=copySome({},argGeneral, ["strHostTarget", "flTargetDataDir", "fsTargetDbDir", "fleTargetDataDir"])
-    var [err, FleF, BoExist, indCur]=await readNSyncDbB(argTmp); if(err) {debugger; return [err];}
-
-      // getRelevantForCategorizations (db)
-    var arrDb_SRelevantForCat=arrSourceDb;
-    var [arrDb_TAllInside, arrDb_TAllOutside]=ArrDb.selectWPrefixArr(arrTargetDb, FleF);
-    var [arrDb_TCurInside, arrDb_TCurOutside]=ArrDb.selectWPrefix(arrTargetDb, FleF[indCur]);
-
-      // Parsing trees
-    setMess(`Parsing source tree`, null, true)
-    //var argTmp=extend({}, argS); argTmp.fsDb=argS.fsDbDir
-    var argTmp=copySome({}, argS, ['charTRes', 'strHost']); copySome(argTmp, argGeneral, ['charFilterMethod', 'leafFilter']);argTmp.fsDir=argS.fsDbDir
-    var [err, arrTreef_S, arrTreeF_S] =await treeParserW(argTmp); if(err) {debugger; return [err];}
-    setMess(`Parsing target tree (db-folder)`, null, true)
-    var argTmp=copySome({}, argT, ['charTRes', 'strHost']); copySome(argTmp, argGeneral, ['charFilterMethod', 'leafFilter']);argTmp.fsDir=argT.fsDbDir
-    var [err, arrTreef_T, arrTreeF_T] =await treeParserW(argTmp); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrTreef_S, argS.charTRes); funSetMTimeArr(arrTreef_T, argT.charTRes);
-    //extend(this, {arrTreef_S, arrTreef_T})
-
-      // Set boNew=false
-    arrTreef_S.forEach(r=>r.boNew=false); //arrCreate_S.forEach(r=>r.boNew=true);
-    arrTreef_T.forEach(r=>r.boNew=false); //arrCreate_T.forEach(r=>r.boNew=true);
-
-      // getRelevantForCategorizations (tree)
-    var arrTr_SRelevantForCat=arrTreef_S;
-    var [arrTr_TAllInside, arrTr_TAllOutside]=ArrDb.selectWPrefixArr(arrTreef_T, FleF);
-    var [arrTr_TCurInside, arrTr_TCurOutside]=ArrDb.selectWPrefix(arrTreef_T, FleF[indCur]);
-
-    if(arrDb_TAllInside.length!=arrTr_TAllInside.length) {debugger; return [Error('arrDb_TAllInside.length!=arrTr_TAllInside.length')];}
-
-    var [err, objHL]=await checkingForMultipleIds(arrTreef_S, arrTreeF_S, arrSourceDb, 'S'); if(err) {debugger; return [err];}
-    if(objHL) {divT2DBoth.setHLVal(objHL, 0); debugger; return [err, {objHL}];}
-    var [err, objHL]=await checkingForMultipleIds(arrTreef_T, arrTreeF_T, arrTargetDb, 'T'); if(err) {debugger; return [err];}
-    if(objHL) {divT2DBoth.setHLVal(objHL, 1); debugger; return [err, {objHL}];}
-
-    //var [err, ]=await checkingForMultipleSMInDb(argGeneral, argS); if(err) {debugger; return [err];}
-
-    var [err, objCategory]=await categorizeSMRelations(arrTr_SRelevantForCat, arrDb_SRelevantForCat, 'S'); if(err) {debugger; return [err];}
-    var {boChanged, arrCreate}=objCategory, boCreated=Boolean(arrCreate.length)
-    var syncDb_S={objCategory, arrDb:arrSourceDb, arrTreef:arrTreef_S, boChanged, boCreated};
-    var [err, objCategory]=await categorizeSMRelations(arrTr_TAllOutside, arrDb_TAllOutside, 'T'); if(err) {debugger; return [err];}
-    var {boChanged, arrCreate}=objCategory, boCreated=Boolean(arrCreate.length)
-    var syncDb_T={objCategory, arrDb:arrTargetDb, arrTreef:arrTreef_T, boChanged, boCreated, arrDb_TAllOutside, arrTr_TAllOutside, arrDb_TCurOutside, arrTr_TCurOutside, arrDb_TAllInside};
-
-    extend(this, {argGeneral, ArgSide, arrDb_TAllInside});
-    divT2DBoth.setVal(syncDb_S.objCategory, 0);
-    divT2DBoth.setVal(syncDb_T.objCategory, 1);
-
-    var arrSyncDb=[syncDb_S, syncDb_T];
-    //var boCreated=syncDb_S.boCreated || syncDb_T.boCreated;
-    extend(this, {arrSyncDb})
-    return [null]
-  }
-}
-
 
 var createBundWExtraHashDim=function(BundA){
   var Bund3D={}
@@ -516,112 +328,68 @@ var createBundWExtraHashDim=function(BundA){
 // var [Bund3D, BundSMMultHashNonConsistent, BundSMMultHashConsistent, nTotNonConsistent, nTotConsistent]=createBundWExtraHashDim(BundSMMult);
 
 
-class SMMultWorkBoth{
-  constructor(arg){
-    copySome(this, arg, ["divT2DBoth", "arrSyncDb", "argGeneral"])
-  }
+var fun3GetMultSM=async function(arg, argGeneral, syncDb, boTarget){
+  var {divT2DBoth}=arg
 
-}
+  var {objOptSource, objOptTarget}=argGeneral
+  var objOptSide=boTarget?objOptTarget:objOptSource
+  var {charTRes}=objOptSide;
 
-var fun3CalcMult=async function(arg){
-  var {divT2DBoth, argGeneral, arrSyncDb}=arg
+  var {objCategory, arrDbOwnWCollision, arrDb, arrTreef}=syncDb;
+  var {arrDb_AllOutside}=syncDb;
+  var {arrCreate}=objCategory;
 
-  var {ArgSide}=argGeneral, [argS, argT]=ArgSide, {charTResCollision}=argGeneral
-
-  var [syncDb_S, syncDb_T]=arrSyncDb
-  var {objCategory:objCategoryS, arrDbTmp:arrDbTmp_S, arrDb:arrSourceDb, arrTreef:arrTreef_S}=syncDb_S;
-  var {objCategory:objCategoryT, arrDbTmp:arrDbTmp_T, arrDb:arrTargetDb, arrTreef:arrTreef_T, arrDb_TAllOutside, arrTr_TAllOutside, arrDb_TCurOutside, arrTr_TCurOutside}=syncDb_T;
-  var {arrCreate:arrCreate_S}=objCategoryS,  {arrCreate:arrCreate_T}=objCategoryT;
-
-
-  funSetMTimeArr(arrSourceDb, charTResCollision)
-  funSetMTimeArr(arrTargetDb, charTResCollision)
-  funSetMTimeArr(arrTreef_S, charTResCollision)
-  funSetMTimeArr(arrTreef_T, charTResCollision)
-
-  funSetMTimeArr(arrCreate_S, charTResCollision)
-  funSetMTimeArr(arrCreate_T, charTResCollision)
-
-  funSetMTimeArr(arrDbTmp_S, charTResCollision)
-  funSetMTimeArr(arrDbTmp_T, charTResCollision)
-
+  funSetMTimeArr(arrDb, charTRes)
+  funSetMTimeArr(arrTreef, charTRes)
+  funSetMTimeArr(arrCreate, charTRes)
+  funSetMTimeArr(arrDbOwnWCollision, charTRes)
 
     // SM collision check for new SM
     // Get Relevant For SM Collision Check
-  arrTreef_S.forEach(r=>r.boNew=false); arrTreef_T.forEach(r=>r.boNew=false);
-  arrSourceDb.forEach(r=>r.boNew=false); arrTargetDb.forEach(r=>r.boNew=false);
+  arrTreef.forEach(r=>r.boNew=false);
+  arrDb.forEach(r=>r.boNew=false);
 
-  arrCreate_S.forEach(r=>r.boNew=true); //arrCreate_T.forEach(r=>r.boNew=false);
-  var arrRelevant=[].concat(arrDbTmp_S);
-  //var arrBase=[].concat(arrDbTmp_S, arrTr_TCurOutside);
-  var arrBase=[].concat(arrDbTmp_S, arrCreate_T, arrDb_TCurOutside);    //arrDb_TCurOutside.forEach(r=>r.boNew=false);
-  var argTmp={arrRelevant, arrBase};
-  copySome(argTmp, argS, ['charSide', 'charTRes']); extend(argTmp, {charTResCollision}) 
+  arrCreate.forEach(r=>r.boNew=true); //arrCreate_T.forEach(r=>r.boNew=false);
+  var argTmp={arrDbOwnWCollision};  copySome(argTmp, objOptSide, ['charSide', 'charTRes']); 
   var smMultWork=new SMMultWork(argTmp);
   var [err, result]=await smMultWork.getMult(); if(err) {debugger; return [err];}
   var {StrConsistentShort, StrNonConsistentShort, nTotConsistent, nPatConsistent, nTotNonConsistent, nPatNonConsistent}=result;
-  divT2DBoth.MiniViewSMMatch[0].setUI_SMMultiples(result)
+  divT2DBoth.MiniViewSMMatch[boTarget].setUI_SMMultiples(result)
 
   var [err, result]=await smMultWork.findNewMTime(); if(err) {debugger; return [err];}
-  var {nToChange, StrToChangeShort, nRevert, StrRevertShort, arrToChange:arrToChangeS}=result
-  divT2DBoth.MiniViewSMMatch[0].setUI_NewMTime(result)
-  //smMultWork.addTDiff()
-  smMultWork.copyTDiff(arrDbTmp_S, arrToChangeS)
+  var {nToChange, StrToChangeShort, nRevert, StrRevertShort, arrToChange}=result
+  divT2DBoth.MiniViewSMMatch[boTarget].setUI_NewMTime(result)
 
-
-  arrTreef_S.forEach(r=>r.boNew=false); arrTreef_T.forEach(r=>r.boNew=false);
-  arrSourceDb.forEach(r=>r.boNew=false); arrTargetDb.forEach(r=>r.boNew=false);
-
-  var arrRelevant=[].concat(arrDb_TAllOutside);   // arrDb_TAllOutside.forEach(r=>r.boNew=false);
-  //arrCreate_S.forEach(r=>r.boNew=false);
-  arrCreate_T.forEach(r=>r.boNew=true);
-  var arrBase=[].concat(arrDbTmp_T, arrCreate_S);
-  var argTmp={arrRelevant, arrBase};
-  copySome(argTmp, argT, ['charSide', 'charTRes']); extend(argTmp, {charTResCollision})
-  var smMultWork=new SMMultWork(argTmp);
-  var [err, result]=await smMultWork.getMult(); if(err) {debugger; return [err];}
-  var {StrConsistentShort, StrNonConsistentShort, nTotConsistent, nPatConsistent, nTotNonConsistent, nPatNonConsistent}=result;
-  divT2DBoth.MiniViewSMMatch[1].setUI_SMMultiples(result)
-
-  var [err, result]=await smMultWork.findNewMTime(); if(err) {debugger; return [err];}
-  var {nToChange, StrToChangeShort, nRevert, StrRevertShort, arrToChange:arrToChangeT}=result
-  divT2DBoth.MiniViewSMMatch[1].setUI_NewMTime(result)
-  //smMultWork.addTDiff()
-  smMultWork.copyTDiff(arrDbTmp_T, arrToChangeT)
-
-  return [null, {arrToChangeS, arrToChangeT}]
+  return [null, arrToChange]
 }
 
-var fun4WriteDbBoth=async function(arg){
-  var {arrToChangeS, arrToChangeT, arrSyncDb, argGeneral}=arg
-  var {ArgSide}=argGeneral, [argS, argT]=ArgSide;
+var fun4WriteDb=async function(arrToChange, syncDb, argGeneral, boTarget){
+  var {arrDbOwnWCollision}=syncDb
+  var {objOptSource, objOptTarget}=argGeneral
+  var objOptSide=boTarget?objOptTarget:objOptSource
+  var {charTRes}=objOptSide
+  
+  SMMultWork.copyTDiff(arrDbOwnWCollision, arrToChange, charTRes)
 
-  var [syncDb_S, syncDb_T]=arrSyncDb
-  var {arrDbTmp:arrDbTmp_S}=syncDb_S;
-  var {arrDbTmp:arrDbTmp_T}=syncDb_T;
+  var arrDbNew=[].concat(arrDbOwnWCollision, syncDb.arrDb_AllInside);
 
-  var argTmp=copySome({}, argS, ["fsDbDir", "fsDb", "strHost"]);
-  var [err]=await SMMultWork.mySetMTime(arrToChangeS, arrDbTmp_S, argTmp); if(err) {debugger; return [err];}
-
-  var argTmp=copySome({}, argT, ["fsDbDir", "fsDb", "strHost"]);
-  var [err]=await SMMultWork.mySetMTime(arrToChangeT, arrDbTmp_T, argTmp); if(err) {debugger; return [err];}
+  var argTmp=copySome({}, objOptSide, ["fsDbDir", "fsDb", "strHost"]);
+  var [err]=await SMMultWork.mySetMTime(arrToChange, arrDbNew, argTmp); if(err) {debugger; return [err];}
 
   return [null]
 }
 
+
 //arrCreated, arrChanged, arrDb
 class SMMultWork{
   constructor(arg){
-    var {arrRelevant, arrBase}=arg
-    copySome(this, arg, ['arrRelevant', 'arrBase', 'charSide', 'charTRes', 'charTResCollision'])
-    arrBase.forEach(r=>r.boRelevant=false); arrRelevant.forEach(r=>r.boRelevant=true);   
-    //var arrBase=arrRelevant.concat(arrReadOnly);  extend(this, {arrBase});
+    copySome(this, arg, ['arrDbOwnWCollision', 'charSide', 'charTRes']) 
   }
   async getMult(){
-    var {charSide, arrBase}=this;
+    var {charSide, arrDbOwnWCollision}=this;
     
-    arrBase.sort(funDecSM);
-    var BundSM=bundleOnProperty(arrBase, 'sm'),  nPatSM=Object.keys(BundSM).length
+    arrDbOwnWCollision.sort(funDecSM);
+    var BundSM=bundleOnProperty(arrDbOwnWCollision, 'sm'),  nPatSM=Object.keys(BundSM).length
     var [BundSMMult, nSMMult, arrSingle]=extractBundlesWMultiples(BundSM),  nPatSMMult=Object.keys(BundSMMult).length;
     var BundSMMultHashNonConsistent={}, BundSMMultHashConsistent={}, nTotNonConsistent=0, nTotConsistent=0
     for(var keySM in BundSMMult){
@@ -636,20 +404,20 @@ class SMMultWork{
     var nPatConsistent=Object.keys(BundSMMultHashConsistent).length
     var nPatNonConsistent=Object.keys(BundSMMultHashNonConsistent).length
 
-    var funMatch=s=>`MatchingData ${s.size.myPadStart(10)} ${s.mtime_ns64Floored} ${s.strHash}`,  funUnique=s=>`  ${s.boRelevant.toString().padStart(5)} ${s.strName}`;
+    var funMatch=s=>`MatchingData ${s.size.myPadStart(10)} ${s.mtime_ns64Floored} ${s.strHash}`,  funUnique=s=>`  ${s.strName}`;
     var StrLongList=formatListBundled(BundSMMultHashConsistent, funMatch, funUnique)
     var StrConsistentShort=formatTitle(StrLongList)
-    var strHead=`int int64 string\nsize mtime_ns64Floored strHash\nbool string\nboRelevant strName`;
+    var strHead=`int int64 string\nsize mtime_ns64Floored strHash\nstring\nstrName`;
     if(StrLongList.length) StrLongList.unshift(strHead);
     //myResultWriter.Str.smMultHashConsistent=StrLongList
     var myResultWriter=new MyWriterSingle(gThis[`PathSingle${charSide}`].smMultHashConsistent);
     myResultWriter.Str=StrLongList
     var [err]=await myResultWriter.writeToFile();  if(err) {debugger; return [err];}
 
-    var funMatch=s=>`MatchingData ${s.size.myPadStart(10)} ${s.mtime_ns64Floored}`,  funUnique=s=>`  ${s.boRelevant.toString().padStart(5)} ${s.strHash} ${s.strName}`;
+    var funMatch=s=>`MatchingData ${s.size.myPadStart(10)} ${s.mtime_ns64Floored}`,  funUnique=s=>`  ${s.strHash} ${s.strName}`;
     var StrLongList=formatListBundled(BundSMMultHashNonConsistent, funMatch, funUnique)
     var StrNonConsistentShort=formatTitle(StrLongList)
-    var strHead=`int int64\nsize mtime_ns64Floored\nbool string string\nboRelevant strHash strName`;
+    var strHead=`int int64\nsize mtime_ns64Floored\nstring string\nstrHash strName`;
     if(StrLongList.length) StrLongList.unshift(strHead);
     //myResultWriter.Str.smMultHashNonConsistent=StrLongList
     var myResultWriter=new MyWriterSingle(gThis[`PathSingle${charSide}`].smMultHashNonConsistent);
@@ -664,7 +432,7 @@ class SMMultWork{
     
   }
   async findNewMTime(){
-    var {BundSMMultHashNonConsistent, arrBase, charTResCollision, charSide}=this
+    var {BundSMMultHashNonConsistent, arrDbOwnWCollision, charTRes, charSide}=this
 
     var [Bund3D]=createBundWExtraHashDim(BundSMMultHashNonConsistent);
 
@@ -688,8 +456,8 @@ class SMMultWork{
 
       // Create BoSizeMTime
     var BoSizeMTime={}
-    arrBase.sort(funDecSM);
-    var BundSize=bundleOnProperty(arrBase, 'size')
+    arrDbOwnWCollision.sort(funDecSM);
+    var BundSize=bundleOnProperty(arrDbOwnWCollision, 'size')
     for(var s in BundSize){
       var bundSize=BundSize[s];   BoSizeMTime[s]={}
       for(var i=0;i<bundSize.length;i++){ var row=bundSize[i], {mtime_ns64Floored}=row;  BoSizeMTime[s][mtime_ns64Floored]=true; }
@@ -697,58 +465,44 @@ class SMMultWork{
   
     var tDiffMax_ns=1e11
 
-      // Create BoAnyExtra
-    var obj=Bund3D, BoAnyExtra={}
+      // Add nNew
+    var obj=Bund3D;
     for(var keySM in obj){ 
-      var BundHash=Object.values(obj[keySM]), boAnyExtra=false;
+      var BundHash=Object.values(obj[keySM]);
       BundHash.forEach(bundHash=>{
-          // Add nRelevant and nExtra as properties to each array
-        var nRelevant=0, nExtra=0, nNew=0; bundHash.forEach(r=>{ 
-          if(r.boRelevant) nRelevant++; else nExtra++;
-          if(r.boNew) nNew++
-         });
-        extend(bundHash, {nRelevant, nExtra, nNew});
-          // Sort so the extras comes last
-        bundHash.sort((A,B)=>{return Number(A.boExtra)-Number(B.boExtra)})
-        boAnyExtra||=nExtra>0
+          // Add nNew as properties to each array
+        var nNew=0; bundHash.forEach(r=>{  if(r.boNew) nNew++; });
+        extend(bundHash, {nNew});
       }); 
-      BoAnyExtra[keySM]=boAnyExtra;
     }
 
     var StrToChange=[], nToChange=0, StrRevert=[], arrToChange=[]; //, Bund3ToChange={}
     for(var keySM in obj){
-      var BundHash=Object.values(obj[keySM]), boAnyExtra=BoAnyExtra[keySM];
-      if(!boAnyExtra){
-          // If there are no extras (nExtra==0) one can skip one bundHash (the first).
-          // Sort so that the bundHash you want to skip comes first
-        BundHash.sort((A,B)=>{var a=A.nRelevant, b=B.nRelevant; return (a<b) ? 1 : ((a>b)?-1:0)}); // Sort that so the most nRelevant is first
-        BundHash.sort((A,B)=>{var a=A.nNew, b=B.nNew; return (a<b) ? -1 : ((a>b)?1:0)}); // Sort so that the least nNew is first
-          // In other words low nNew comes first, if multiple entries has the same nNew, then the entries with highest nRelevant comes first.
-          // BundHash=[{nNew:0, nRelevant:5}, {nNew:0, nRelevant:1}, {nNew:1, nRelevant:2}]
-      }
+      var BundHash=Object.values(obj[keySM]);
+        // One can skip one bundHash (the first).
+        // Sort so that the bundHash you want to skip comes first
+      BundHash.sort((A,B)=>{ return -diffMy(A.nNew, B.nNew);}); // ◢ Sort so that the least nNew is first
+        // BundHash=[{nNew:0}, {nNew:0}, {nNew:1}]
+      
       var tDiff_ns=BigInt(0)
-      var bundHash0=BundHash[0], {nRelevant, nExtra}=bundHash0, r00=bundHash0[0], {size, mtime_ns64Floored, strName}=r00;
+      var bundHash0=BundHash[0], r00=bundHash0[0], {size, mtime_ns64Floored, strName}=r00;
       StrToChange.push(`MatchingData ${size} ${mtime_ns64Floored}`);  StrRevert.push(`MatchingData ${size} ${mtime_ns64Floored}`)
       var keyBund=`${size}_${mtime_ns64Floored}`; 
-      var iStart=boAnyExtra?0:1; // If no extras, then one can leave one (the first) bundHash unchanged
-      for(var i=iStart;i<BundHash.length;i++){ 
-        var bundHash=BundHash[i], {nRelevant, nExtra}=bundHash, row0=bundHash[0], {size, mtime_ns64Floored, strName}=row0;
-        if(nRelevant==0) continue
-          // Find mtime_ns64FlooredNew
+      for(var i=1;i<BundHash.length;i++){  // One can leave one (the first) bundHash unchanged
+        var bundHash=BundHash[i], row0=bundHash[0], {size, mtime_ns64Floored, strName}=row0;
+
         while(1){
-          tDiff_ns+=IntTDiv[charTResCollision];    if(tDiff_ns>tDiffMax_ns) {debugger; return [Error(`New time could not be calculated: tDiff_ns: ${tDiff_ns} ${strName}`)]; }
+          tDiff_ns+=IntTDiv[charTRes];    if(tDiff_ns>tDiffMax_ns) {debugger; return [Error(`New time could not be calculated: tDiff_ns: ${tDiff_ns} ${strName}`)]; }
           var mtime_ns64FlooredNew=mtime_ns64Floored+tDiff_ns
           if(mtime_ns64FlooredNew in BoSizeMTime[size]) {continue;} else { BoSizeMTime[size][mtime_ns64FlooredNew]=true;  break;}
         }
-          // For all the boRelevant entries: Assign mtime_ns64FlooredNew
-        for(var j=nExtra;j<bundHash.length;j++){
-          var row=bundHash[j], {boRelevant, strHash, strName}=row;
-          funSetMTime(row, charTResCollision, mtime_ns64FlooredNew)
+          // Create arrToChange
+        for(var j=0;j<bundHash.length;j++){
+          var row=bundHash[j], {strHash, strName}=row;
+          var rowNew=extend({}, row)
+          funSetMTime(rowNew, charTRes, mtime_ns64FlooredNew)
           StrToChange.push(`  ${tDiff_ns} ${strHash} ${strName}`);  nToChange++,  StrRevert.push(`  0 ${strHash} ${strName}`)
-          // if(!(keyBund in Bund3ToChange)) Bund3ToChange[keyBund]={};
-          // if(!(strHash in Bund3ToChange[keyBund])) Bund3ToChange[keyBund][strHash]=[];
-          // Bund3ToChange[keyBund][strHash].push(row)
-          arrToChange.push(row)
+          arrToChange.push(rowNew)
         } 
       }
     }
@@ -767,19 +521,7 @@ class SMMultWork{
     return [null, {nToChange, StrToChangeShort, nRevert, StrRevertShort, arrToChange}]
   }
 
-  // addTDiff(){
-  //   var {arrCreated:arrRow, charTResCollision}=this;
-  //   for(var i=0;i<arrRow.length;i++){
-  //     var row=arrRow[i], {tDiff_ns, mtime_ns64Floored:mtime_ns64}=row; //, {mtime_ns64}=rowDb;
-  //     row.mtime_ns64=mtime_ns64+tDiff_ns
-  //     funSetMTime(row, charTResCollision)
-  //   }
-  // }
-  copyTDiff(arrDb, arrToChange){ // Copy modtime from arrToChange to arrDb (matched by strName)
-    var { charTResCollision}=this;
-
-    //var arrToChange=[];  for(var k in BundSMMultHashNonConsistent){ var arr=BundSMMultHashNonConsistent[k]; arrToChange=arrToChange.concat(arr); }
-
+  static copyTDiff(arrDb, arrToChange, charTRes){ // Copy modtime from arrToChange to arrDb (matched by strName)
     arrDb.sort(funIncStrName);   arrToChange.sort(funIncStrName)
     var [err, arrDbMatch, arrToChangeMatch, arrDbRem, arrToChangeRem]=extractMatching(arrDb, arrToChange, ['strName']); if(err) {debugger; return [err];}
     if(arrToChangeRem.length) {debugger; return [Error("arrToChangeRem.length>0")];}
@@ -787,13 +529,12 @@ class SMMultWork{
     for(var i=0;i<arrDbMatch.length;i++){
       var rowDb=arrDbMatch[i], rowToChange=arrToChangeMatch[i], {mtime_ns64Floored:mtime_ns64}=rowToChange;
       //extend(rowDb, rowToChange)
-      funSetMTime(rowDb, charTResCollision, mtime_ns64)
+      funSetMTime(rowDb, charTRes, mtime_ns64)
     }
     return [null]
   }
   static async mySetMTime(arrToChange, arrDb, arg){
     var {fsDbDir, fsDb, strHost}=arg; 
-
     var [err]=await setMTime(arrToChange, fsDbDir, strHost);  if(err) {debugger; return [err];}
     var [err]=await writeDbWrapper(arrDb, fsDb, strHost); if(err) { return [err];}
     return [null]
@@ -807,40 +548,22 @@ touch -m -d '@1716905269.022141964' a0a.txt a1a.txt a1b.txt a2a.txt a2b.txt a2c.
 touch -m -d '@1716905369.022141964' b0a.txt b1a.txt b1b.txt b2a.txt b2b.txt b2c.txt ../../buvt-TargetFs/OtherStuff/stuffb.txt
 touch -m -d '@1746873142.792115391' c0.txt c1.txt
 touch -m -d '@1746873242.792115391' c2.txt
+
+touch -m -d '@1716905269.022141964' a0a.txt a1a.txt a1b.txt a2a.txt a2b.txt a2c.txt
 */
 
 
 class HashMultWork{
-  constructor(){ }
-  async getMult(arg){
-    var {fsSourceDir, strHostTarget, fsTargetDbDir, flTargetDataDir, charTRes, charSide, FleF}=arg;
+  constructor(arg){
+    copySome(this, arg, ['arrDbOwnWCollision', 'charSide', 'charTRes']) 
+  }
+  async getMult(){
+
+    var {charSide, arrDbOwnWCollision}=this;
     var boTarget=charSide=='T'
+    arrDbOwnWCollision.sort(funDecSM);
 
-    //var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; return [err];}
-    //var [err, fsTargetDbDir]=await myRealPath(fiTargetDbDir, strHostTarget); if(err) {debugger; return [err];}
-    var fsSourceDb=fsSourceDir+charF+settings.leafDb,  fsTargetDb=fsTargetDbDir+charF+settings.leafDb;
-    var [strHost, fsDbDir, fsDb]=boTarget?[strHostTarget, fsTargetDbDir, fsTargetDb]:[null, fsSourceDir, fsSourceDb]
-    extend(this, {fsDbDir, fsDb, strHost})
-
-    var [err, strData]=await readStrFile(fsSourceDb);
-    if(err){    if(err.code==STR_ENOENT){err=null; strData=""} else{ debugger; return [err]}    }
-    var [err, arrSourceDb]=parseDb(strData); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrSourceDb, charTRes);
-
-    var [err, strData]=await readStrFile(fsTargetDb);
-    if(err){    if(err.code==STR_ENOENT){err=null; strData=""} else{ debugger; return [err]}    }
-    var [err, arrTargetDb]=parseDb(strData); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrTargetDb, charTRes);
-
-    var [arrRelevant, arrReadOnly]=separateByRelevance(arrTargetDb, FleF);
-    var arrBase=arrRelevant.concat(arrReadOnly)
-
-    var StrLongList=arrReadOnly.map(r=>`${r.size.myPadStart(10)} ${r.mtime_ns64Floored} ${r.strName}`)
-    var StrReadOnlyShort=formatTitle(StrLongList)
-    var nReadOnly=arrReadOnly.length
-
-    arrBase.sort(funDecSM);
-    var BundHash=bundleOnProperty(arrBase, 'strHash'),  nPatHash=Object.keys(BundHash).length
+    var BundHash=bundleOnProperty(arrDbOwnWCollision, 'strHash'),  nPatHash=Object.keys(BundHash).length
     var [BundHashMult, nHashMult, arrSingle]=extractBundlesWMultiples(BundHash),  nPatHashMult=Object.keys(BundHashMult).length;
     var BundHashMultSMNonConsistent={}, BundHashMultSMConsistent={}, nTotNonConsistent=0, nTotConsistent=0
     for(var h in BundHashMult){
@@ -855,119 +578,135 @@ class HashMultWork{
     var nPatConsistent=Object.keys(BundHashMultSMConsistent).length
     var nPatNonConsistent=Object.keys(BundHashMultSMNonConsistent).length
 
-    
-    var funMatch=s=>`MatchingData ${s.strHash} ${s.size.myPadStart(10)} ${s.mtime_ns64}`,  funUnique=s=>`  ${s.boRelevant.toString().padStart(5)} ${s.strName}`;
+
+    var funMatch=s=>`MatchingData ${s.strHash} ${s.size.myPadStart(10)} ${s.mtime_ns64}`,  funUnique=s=>`  ${s.strName}`;
     var StrLongList=formatListBundled(BundHashMultSMConsistent, funMatch, funUnique)
     var StrConsistentShort=formatTitle(StrLongList)
-    var strHead=`string int int64\nstrHash size mtime_ns64\nbool string\nboRelevant strName`;
+    var strHead=`string int int64\nstrHash size mtime_ns64\nbool string\nstrName`;
     if(StrLongList.length) StrLongList.unshift(strHead);
     //myResultWriter.Str.hashMultSMConsistent=StrLongList
     var myResultWriter=new MyWriterSingle(gThis[`PathSingle${charSide}`].hashMultSMConsistent);
     myResultWriter.Str=StrLongList
     var [err]=await myResultWriter.writeToFile();  if(err) {debugger; return [err];}
 
-    var funMatch=s=>`MatchingData ${s.strHash}`,  funUnique=s=>`  ${s.boRelevant.toString().padStart(5)} ${s.size.myPadStart(10)} ${s.mtime_ns64} ${s.strName}`;
+    var funMatch=s=>`MatchingData ${s.strHash}`,  funUnique=s=>`  ${s.size.myPadStart(10)} ${s.mtime_ns64} ${s.strName}`;
     var StrLongList=formatListBundled(BundHashMultSMNonConsistent, funMatch, funUnique)
     var StrNonConsistentShort=formatTitle(StrLongList)
-    var strHead=`string\nstrHash\nbool int int64 string\nboRelevant size mtime_ns64 strName`;
+    var strHead=`string\nstrHash\nbool int int64 string\nsize mtime_ns64 strName`;
     if(StrLongList.length) StrLongList.unshift(strHead);
     //myResultWriter.Str.hashMultSMNonConsistent=StrLongList
     var myResultWriter=new MyWriterSingle(gThis[`PathSingle${charSide}`].hashMultSMNonConsistent);
     myResultWriter.Str=StrLongList
     var [err]=await myResultWriter.writeToFile();  if(err) {debugger; return [err];}
-    
 
-      // Creating obj
-    var obj={}
-    for(var h in BundHashMultSMNonConsistent){
-      var bundT=BundHashMultSMNonConsistent[h]; obj[h]={};
-      for(var i=0;i<bundT.length;i++){
-        var r=bundT[i], {sm}=r;    if(!(sm in obj[h])) obj[h][sm]=[];    obj[h][sm].push(r)
-      }
+
+    extend(this, {BundHashMultSMConsistent})
+
+    return [null, {StrConsistentShort, StrNonConsistentShort, nTotConsistent, nPatConsistent, nTotNonConsistent, nPatNonConsistent}]
+
+  }
+  async findNewMTime(){
+    var {BundHashMultSMConsistent, arrDbOwnWCollision, charTRes, charSide}=this
+
+    var [Bund3D]=createBundWExtraHashDim(BundHashMultSMConsistent);
+
+    var fsTmp=gThis[`PathSingle${charSide}`].hashMultSMNonConsistent.fsName, [err, strData]=await readStrFile(fsTmp); if(err) return [err]
+    var [err, obj, Arr]=parseRelations(strData, true, undefined, arr=>arr[1]); if(err) return [err]
+      // Note!
+      // Number of dimensions:
+      //   Arr: 2D
+      //   obj: 3D
+      //   BundHashMultSMConsistent: 2D.
+      //   Bund3D: 3D
+      // strHash (top key) in obj, BundHashMultSMConsistent and Bund3D has the "size"-part 0-padded differently:
+      //   obj: no padding
+      //   BundHashMultSMConsistent: 0-padded.
+      //   Bund3D: 0-padded
+      // Ex:
+      //   Arr={9f6e6800cfae7749eb6c486619254b9c:[]}
+      //   obj={3_1716905274000000000:{9f6e6800cfae7749eb6c486619254b9c:[]}}
+      //   BundHashMultSMConsistent={000000000003_1716905274000000000:[]}
+      //   Bund3D={000000000003_1716905274000000000:{9f6e6800cfae7749eb6c486619254b9c:[]}}
+
+      // Create BoSizeMTime
+    var BoSizeMTime={}
+    arrDbOwnWCollision.sort(funDecSM);
+    var BundSize=bundleOnProperty(arrDbOwnWCollision, 'size')
+    for(var s in BundSize){
+      var bundSize=BundSize[s];   BoSizeMTime[s]={}
+      for(var i=0;i<bundSize.length;i++){ var row=bundSize[i], {mtime_ns64Floored}=row;  BoSizeMTime[s][mtime_ns64Floored]=true; }
     }
+  
+    var tDiffMax_ns=1e11
 
-    var NBundWExtra={}  //BoAnyExtra={},
-    for(var kHash in obj){ 
-      var BundSM=Object.values(obj[kHash]), boAnyExtra=false, nBundWExtra=0;
+      // Add nNew
+    var obj=Bund3D;
+    for(var strHash in obj){ 
+      var BundSM=Object.values(obj[strHash]);
       BundSM.forEach(bundSM=>{
-          // Add nRelevant and nExtra as properties to each array
-        var nRelevant=0, nExtra=0; bundSM.forEach(r=>{ if(r.boRelevant) nRelevant++; else nExtra++ });
-        extend(bundSM, {nRelevant, nExtra});
-          // Sort so the extras comes last
-        bundSM.sort((A,B)=>{return Number(A.boExtra)-Number(B.boExtra)}) //◢
-        //for(var i=bundSM.length;i;i--){ if()}
-        //boAnyExtra=boAnyExtra||nExtra>0
-        //boAnyExtra||=nExtra>0
-        if(nExtra) nBundWExtra++
+          // Add nNew as properties to each array
+        var nNew=0; bundSM.forEach(r=>{  if(r.boNew) nNew++; });
+        extend(bundSM, {nNew});
       }); 
-      //BoAnyExtra[kHash]=boAnyExtra;
-      NBundWExtra[kHash]=nBundWExtra;
     }
 
-    var StrToChange=[], StrRevert=[]
-    for(var h in obj){
-      var BundSM=Object.values(obj[h]), nBundWExtra=NBundWExtra[h]; //, boAnyExtra=BoAnyExtra[h]
-      BundSM.sort((A,B)=>{var a=A.nRelevant, b=B.nRelevant; return (a<b) ? 1 : ((a>b)?-1:0)}); // ◣ Sort that so the most nRelevant is first
-      BundSM.sort((A,B)=>{var a=A.nExtra, b=B.nExtra; return (a<b) ? -1 : ((a>b)?1:0)}); // ◢ Sort so that the least nExtra is first
-        // Example [{nExtra:0, nRelevant:5}, {nExtra:0, nRelevant:1}, {nExtra:1, nRelevant:5}, {nExtra:1, nRelevant:1}, {nExtra:0, nRelevant:1}]
-      //var bund0=BundSM[0], r00=bund0[0], {size}=r00;
-      //if(nBundWExtra==0) 
-      //var iStart=nBundWExtra?0:1; // If no extras, then one can leave one (the first) bundSM unchanged
-      var iRef, iStart, iEnd
-      if(nBundWExtra==0) {iRef=0; iStart=1; iEnd=BundSM.length} else{ iRef=BundSM.length-nBundWExtra; iStart=0; iEnd=iRef;}
-      var bundRef=BundSM[iRef], rRef0=bundRef[0], {size, mtime_ns64}=rRef0;
-      for(var i=iStart;i<iEnd;i++){ 
-        var bundSM=BundSM[i], {nRelevant, nExtra}=bundSM;
-        if(nRelevant==0) continue
-        //var iRef=(nExtra)?nRelevant:0, rRef=bundSM[iRef], {size, mtime_ns64}=rRef;
-          // For all the boRelevant entries: Assign mtime_ns64FlooredNew
-        for(var j=nExtra;j<bundSM.length;j++){
-          var row=bundSM[j], {mtime_ns64:mtime_ns64Old, strName}=row, tDiff=mtime_ns64-mtime_ns64Old;
-          funSetMTime(row, charTRes, mtime_ns64)
-          StrToChange.push(`${mtime_ns64} ${tDiff} ${strName}`);    StrRevert.push(`${mtime_ns64Old} ${strName}`)
+    var StrToChange=[], nToChange=0, StrRevert=[], arrToChange=[]; //, Bund3ToChange={}
+    for(var strHash in obj){
+      var BundSM=Object.values(obj[strHash]);
+        // One can skip one bundSM (the first).
+        // Sort so that the bundSM you want to skip comes first
+      BundSM.sort((A,B)=>{ return -diffMy(A.nNew, B.nNew);}); // ◢ Sort so that the least nNew is first
+        // BundSM=[{nNew:0}, {nNew:0}, {nNew:1}]
+      
+      var tDiff_ns=BigInt(0)
+      var bundSM0=BundSM[0], r00=bundSM0[0], {size, strHash}=r00;
+      StrToChange.push(`MatchingData ${strHash} ${size}`);  StrRevert.push(`MatchingData ${strHash} ${size}`)
+      for(var i=1;i<BundSM.length;i++){  // One can leave one (the first) bundSM unchanged
+        var bundSM=BundSM[i], row0=bundSM[0], {size, mtime_ns64Floored, strName, strHash}=row0;
+
+        while(1){
+          tDiff_ns+=IntTDiv[charTRes];    if(tDiff_ns>tDiffMax_ns) {debugger; return [Error(`New time could not be calculated: tDiff_ns: ${tDiff_ns} ${strName}`)]; }
+          var mtime_ns64FlooredNew=mtime_ns64Floored+tDiff_ns
+          if(mtime_ns64FlooredNew in BoSizeMTime[size]) {continue;} else { BoSizeMTime[size][mtime_ns64FlooredNew]=true;  break;}
+        }
+          // Create arrToChange
+        for(var j=0;j<bundSM.length;j++){
+          var row=bundSM[j], {strHash, strName}=row;
+          var rowNew=extend({}, row)
+          funSetMTime(rowNew, charTRes, mtime_ns64FlooredNew)
+          StrToChange.push(`  ${tDiff_ns} ${strHash} ${strName}`);  nToChange++,  StrRevert.push(`  0 ${strHash} ${strName}`)
+          arrToChange.push(rowNew)
         } 
       }
     }
+    var nRevert=nToChange
 
-
-    //var strHead=`int64 string\nmtime_ns64 strName`;
-    var strHead=`int64 int64 string\nmtime_ns64 tDiff strName`;
-
-    var nToChange=StrToChange.length, StrToChangeShort=formatTitle(StrToChange)
+    var strHead=`int int64\nsize mtime_ns64Floored\nint64 string string\ntDiff_ns strHash strName`;
+  
+    var StrToChangeShort=formatTitle(StrToChange)
     if(StrToChange.length) StrToChange.unshift(strHead);
-    var myWriter=new MyWriterSingle(gThis[`PathSingle${charSide}`].hsmToChange); myWriter.Str=StrToChange
-    var [err]=await myWriter.writeToFile();  if(err) {debugger; return [err];}
-
-    var nRevert=StrRevert.length, StrRevertShort=formatTitle(StrRevert)
+    var [err]=await writeFile(gThis[`PathSingle${charSide}`].smToChange.fsName, StrToChange.join('\n')); if(err) {debugger; return [err];}
+  
+    var StrRevertShort=formatTitle(StrRevert)
     if(StrRevert.length) StrRevert.unshift(strHead);
-    var myWriter=new MyWriterSingle(gThis[`PathSingle${charSide}`].hsmRevert); myWriter.Str=StrRevert
-    var [err]=await myWriter.writeToFile();  if(err) {debugger; return [err];}
-
-    extend(this, {arrRelevant, charTRes, arrBase, charSide})
-    return [null, {StrConsistentShort, StrNonConsistentShort, nTotConsistent, nPatConsistent, nTotNonConsistent, nPatNonConsistent, nToChange, nRevert, StrToChangeShort, StrRevertShort, nReadOnly, StrReadOnlyShort}]
+    var [err]=await writeFile(gThis[`PathSingle${charSide}`].smRevert.fsName, StrRevert.join('\n')); if(err) {debugger; return [err];}
+  
+    return [null, {nToChange, StrToChangeShort, nRevert, StrRevertShort, arrToChange}]
   }
 
-  async mySetMTime(pathInput){
-    var {fsDbDir, fsDb, strHost, charTRes}=this;
-
-      // Parsing fsDb (database)
-    var [err, strData]=await readStrFileWHost(fsDb, strHost);
-    if(err){    if(err.code==STR_ENOENT){err=null; strData=""} else{ debugger; return [err]}    }
-    var [err, arrDb]=parseDb(strData); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrDb, charTRes);
-
-    var [err, strData]=await readStrFile(pathInput.fsName);
-    if(err){    if(err.code==STR_ENOENT){err=null; strData=""} else{ debugger; return [err]}    }
-    var [err, arrToChange]=parseSSVWType(strData); if(err) {debugger; return [err];}
-
+  static copyTDiff(arrDb, arrToChange, charTRes){ // Copy modtime from arrToChange to arrDb (matched by strName)
     arrDb.sort(funIncStrName);   arrToChange.sort(funIncStrName)
     var [err, arrDbMatch, arrToChangeMatch, arrDbRem, arrToChangeRem]=extractMatching(arrDb, arrToChange, ['strName']); if(err) {debugger; return [err];}
     if(arrToChangeRem.length) {debugger; return [Error("arrToChangeRem.length>0")];}
 
     for(var i=0;i<arrDbMatch.length;i++){
-      var rowDb=arrDbMatch[i], rowNew=arrToChangeMatch[i], {mtime_ns64}=rowNew;
+      var rowDb=arrDbMatch[i], rowToChange=arrToChangeMatch[i], {mtime_ns64Floored:mtime_ns64}=rowToChange;
       funSetMTime(rowDb, charTRes, mtime_ns64)
     }
+    return [null]
+  }
+  static async mySetMTime(arrToChange, arrDb, arg){
+    var {fsDbDir, fsDb, strHost}=arg; 
 
     var [err]=await setMTime(arrToChange, fsDbDir, strHost);  if(err) {debugger; return [err];}
     var [err]=await writeDbWrapper(arrDb, fsDb, strHost); if(err) { return [err];}
@@ -980,12 +719,9 @@ class HashMultWork{
 class HashMultWorkDelete{
   constructor(){ }
   async getMult(arg){
-    var {fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir, charTRes, charSide}=arg
+    var {fsSourceDir, strHostTarget, fsTargetDbDir, charTRes, charSide}=arg
     var boTarget=charSide=='T'
 
-    var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; return [err];}
-    var [err, fsTargetDbDir]=await myRealPath(fiTargetDbDir, strHostTarget); if(err) {debugger; return [err]; }
-    var fsTargetDataDir=fsTargetDbDir; if(flTargetDataDir) fsTargetDataDir=fsTargetDbDir+charF+flTargetDataDir
     var fsSourceDb=fsSourceDir+charF+settings.leafDb, fsTargetDb=fsTargetDbDir+charF+settings.leafDb;
     var [strHost, fsDbDir, fsDb]=boTarget?[strHostTarget, fsTargetDbDir, fsTargetDb]:[null, fsSourceDir, fsSourceDb]
     extend(this, {fsDbDir, fsDb, strHost})
@@ -1054,11 +790,10 @@ class HashMultWorkDelete{
  ****************************************************************************************/
 
 var parseNDump=async function(arg){
-  var {charTRes=settings.charTRes, leafFilter, leafFilterFirst, fiSourceDir, charFilterMethod}=arg
-  var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; return [err];}
+  var {charTRes=settings.charTRes, leafFilter, leafFilterFirst, fsDir, charFilterMethod}=arg
   setMess(`Parsing tree`, null, true)
   var treeParser=new TreeParser()
-  var arg={charTRes, leafFilter, leafFilterFirst, fsDir:fsSourceDir, charFilterMethod}
+  var arg={charTRes, leafFilter, leafFilterFirst, fsDir, charFilterMethod}
   var [err, arrTreef, arrTreeF] =await treeParser.parseTree(arg); if(err) {debugger; return [err];}
 
   var Str=arrTreef.map(row=>row.strName)
@@ -1074,11 +809,10 @@ var parseNDump=async function(arg){
 
 
 var listEmptyFolders=async function(arg){
-  var {charTRes=settings.charTRes, leafFilter, leafFilterFirst, fiSourceDir, charFilterMethod}=arg
-  var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; return [err];}
+  var {charTRes=settings.charTRes, leafFilter, leafFilterFirst, fsDir, charFilterMethod}=arg
   setMess(`Parsing tree`, null, true)
   var treeParser=new TreeParser()
-  var arg={charTRes, leafFilter, leafFilterFirst, fsDir:fsSourceDir, charFilterMethod}
+  var arg={charTRes, leafFilter, leafFilterFirst, fsDir, charFilterMethod}
   var [err, arrTreef, arrTreeF] =await treeParser.parseTree(arg); if(err) {debugger; return [err];}
 
   //var arrTree=arrTreeF+arrTreef, arrTree.sort(funIncStrName);
@@ -1220,9 +954,8 @@ var moveMeta=async function(arg){ //Not used
  *********************************************************************/
 var testFilter=async function(arg){ //Not used
   var {leafFilter, leafFilterFirst, charFilterMethod}=arg
-  var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; return [err];}
-  var {fiSourceDir}=result
-  var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; return [err];}
+  var [err, result]=await getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
+  var {fsSourceDir}=result
   var arg={fsDir:fsSourceDir, charTRes, leafFilter, leafFilterFirst}
   var [err, arrRsf, arrRsF, arrRsOther]=await getRsyncList(arg); if(err) {debugger; return [err];}
 
@@ -1272,8 +1005,8 @@ var changeIno=async function(arg){ //Not used
   setMess(`Parsing tree`, null, true)
   var arg={charTRes, leafFilter, leafFilterFirst, fsDir, charFilterMethod}
   var [err, arrTreef, arrTreeF] =await treeParser.parseTree(arg); if(err) {debugger; return [err];}
-  removeLeafFileFromArrTreef(arrTreef, settings.leafDb)
-  removeLeafFileFromArrTreef(arrTreef, settings.leafDbB)
+  removeFileFromArrTreef(arrTreef, settings.leafDb)
+  removeFileFromArrTreef(arrTreef, RegExp('buvtDb\\.bak[0-9]*\\.txt'))
     // Parse fsDb
   var [err, strData]=await readStrFile(fsDb); if(err) return [err]
   var [err, arrDb]=parseDb(strData); if(err) {debugger; return [err];}
@@ -1323,8 +1056,8 @@ var utilityMatchTreeAndDbFile=async function(arg){
   setMess(`Parsing tree`, null, true)
   var arg={charTRes, leafFilter, leafFilterFirst, fsDir, charFilterMethod}
   var [err, arrTreef, arrTreeF] =await treeParser.parseTree(arg); if(err) {debugger; return [err];}
-  removeLeafFileFromArrTreef(arrTreef, settings.leafDb)
-  removeLeafFileFromArrTreef(arrTreef, settings.leafDbB)
+  removeFileFromArrTreef(arrTreef, settings.leafDb)
+  removeFileFromArrTreef(arrTreef, RegExp('buvtDb\\.bak[0-9]*\\.txt'))
     // Parse fsDb
   var [err, strData]=await readStrFile(fsDb); if(err) return [err]
   var [err, arrDb]=parseDb(strData); if(err) {debugger; return [err];}
@@ -1447,11 +1180,8 @@ var replacePrefix=async function(arg){  // For running different experiments
 var utilityT2T=async function(arg){
     // For running different experiments
     // Not used
-  var {charTRes=settings.charTRes, leafFilter, leafFilterFirst, fiSourceDir, fiTargetDbDir, flTargetDataDir, charFilterMethod}=arg
+  var {charTRes=settings.charTRes, leafFilter, leafFilterFirst, fsSourceDir, fsTargetDbDir, fsTargetDataDir, charFilterMethod}=arg
 
-  var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; return [err];}
-  var [err, fsTargetDbDir]=await myRealPath(fiTargetDbDir, strHostTarget); if(err) {debugger; return [err]; }
-  var fsTargetDataDir=fsTargetDbDir; if(flTargetDataDir) fsTargetDataDir=fsTargetDbDir+charF+flTargetDataDir
   var treeParser=new TreeParser()
   setMess(`Parsing source tree`, null, true)
   var arg={charTRes, leafFilter, leafFilterFirst, fsDir:fsSourceDir, charFilterMethod}

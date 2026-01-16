@@ -71,7 +71,7 @@ gThis.divTabT2TUsingHashCreator=function(el){
 <tr><td></td><td> <button>Do actions</button></td></tr>`
 //<button>Delete</button> <button>Create</button>   <br/>(read fr files)
   var tHead=createElement('thead').myHtml(htmlHead);
-  var tBody=createElement('tbody').myHtml(htmlBody);
+  var tBody=createElement('tbody').myHtml(htmlBody).addClass('redWTitle');
   var table=createElement('table').myAppend(tHead, tBody).addClass('main');
 
   var [tHeadRA]=tHead.children
@@ -105,7 +105,7 @@ gThis.divTabT2TUsingHashCreator=function(el){
     setMess('DeleteNWrite: Making changes...'); blanket.show();
     var [err]=await self.syncT2T.makeChanges();  if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     var strMess='DeleteNWrite: Done'; setMess(strMess); myConsole.printNL(strMess)
-    var [err]=await argumentTab.setTLastSync();  if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var [err]=await relationTab.setTLastSync();  if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     blanket.hide();
   })
 
@@ -134,6 +134,18 @@ gThis.divT2TUsingHashCreator=function(el){
     divMat1.setVal(Mat1)
     divTab.setVal(syncT2T)
   }
+  el.setUIBasedOnSetting=function(arg){
+    var {objOptSource, objOptTarget, idSource, idTarget, labelSource, labelTarget, fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir, suffixFilterFirstT2T, boRemoteTarget}=arg;
+    var {leafFilter}=objOptSource;
+
+      // Set T2T-filter links
+    var leafFilterFirstT2T=leafFilter+suffixFilterFirstT2T
+    var title=fiSourceDir+charF+leafFilterFirstT2T; linkFilterFirstT2T.prop({title}).myText(leafFilterFirstT2T).toggleClass('disabled', suffixFilterFirstT2T=='');
+
+    //var title=fiTargetDbDir+charF+flTargetDataDir; 
+    //linkFolder.prop({title}).toggle(flTargetDataDir!='');
+
+  }
 
   var funT2T=async function(){
     //try{
@@ -141,25 +153,17 @@ gThis.divT2TUsingHashCreator=function(el){
     var boSync=false
     var strMess=`Compare T2T ...`
     myConsole.clear(); el.clearVal(); setMess(strMess); blanket.show();
-    var [err, argGeneral]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var {charTResS, charTResT, charFilterMethod, suffixFilterFirstT2T}=argGeneral
-    //var [err, argGeneralExtra]=await argumentTab.calcExtraData(argGeneral); if(err) {debugger; return [err];}
-    //var {ArgSide}=argGeneralExtra
-    //extend(argGeneral, argGeneralExtra)
+    var [err, argGeneral]=await getSelectedFrFileWExtra(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {objOptSource, suffixFilterFirstT2T}=argGeneral
+    var {leafFilter, charFilterMethod}=objOptSource;
 
 
-    var leafFilter=LeafFilter[charFilterMethod], leafFilterFirst=leafFilter+suffixFilterFirstT2T
+    var leafFilterFirst=leafFilter+suffixFilterFirstT2T
 
     var [err]=await funFilterFirstCheckExistance(argGeneral); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     
-    var charTRes=IntTDiv[charTResS]>IntTDiv[charTResT]?charTResS:charTResT
-    
-    var {fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir}=argGeneral
-    var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return; }
-    var [err, fsTargetDbDir]=await myRealPath(fiTargetDbDir, strHostTarget); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return; }
-
-    var arg={fsSourceDir, fsTargetDbDir, flTargetDataDir, leafFilter, leafFilterFirst, charTRes, charFilterMethod};
-    copySome(arg, argGeneral, ["strHostTarget", "boAllowLinks", "boAllowCaseCollision", "strTargetCharSet"])
+    var arg={leafFilterFirst, charFilterMethod};
+    copySome(arg, argGeneral, ["objOptSource", "objOptTarget", "fsSourceDir", "strHostTarget", "fsTargetDbDir", "flTargetDataDir", "fleTargetDataDir", "fsTargetDataDir"])
     var syncT2T=new SyncT2TUsingHash(arg);
     var [err]=await syncT2T.compare();   if(err) { myConsole.error(err); resetMess(); blanket.hide(); return; }
 
@@ -168,7 +172,7 @@ gThis.divT2TUsingHashCreator=function(el){
 
     el.setVal(syncT2T)
     if(!syncT2T.boChanged){
-      var [err]=await argumentTab.setTLastSync();  if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+      var [err]=await relationTab.setTLastSync();  if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     }
 
     var strMess=`Compare tree to tree: Done`
@@ -176,13 +180,16 @@ gThis.divT2TUsingHashCreator=function(el){
     //}catch(e){debugger }
   }
 
-  var butCompareT2T=createElement('button').myAppend('Compare').on('click', funT2T);
+  var butCompareT2T=createElement('button').myAppend('Compare').on('click', funT2T).css({'margin':'0 0 0 0.3em'});
 
-  el.linkFilterFirstT2T=createElement('a').myText('filterFirst').prop({href:""}).on('click', methGoToTitle);
+  //var linkFolder=createElement('a').myText('(Folder)').prop({href:""}).on('click', methGoToTitle);
+  var linkFilterFirstT2T=createElement('a').myText('filterFirst').prop({href:""}).on('click', methGoToTitle);
 
-  var hT2T=createElement('b').myText('S to T');
+  //var hT2T=createElement('b').myText(' S to T ');
   var divSpace=createElement('div').css({flex:'1'});
-  var divButton=createElement('div').myAppend(hT2T, butCompareT2T, el.linkFilterFirstT2T).css({display:'flex', 'align-items':'center', 'column-gap':'3px', background:'var(--bg-color)', flex:"0 1", border:"solid 1px", 'flex-wrap':'wrap', position:'sticky', top:0}); //, butWriteMTimeOnSource , butSyncT2T, butSyncT2TBrutal , opacity:0.8
+  var imgTreeS=createElement('img').prop({src:`icons/buvtTreeSFull.png`}).css({zoom:'1', 'vertical-align':'middle'});
+  var imgTreeT=createElement('img').prop({src:`icons/buvtTSub.png`}).css({zoom:'1', 'vertical-align':'middle'});
+  var divButton=createElement('div').myAppend(imgTreeS, ` ${charRightArrow} `, imgTreeT, ' ', butCompareT2T, linkFilterFirstT2T).css({display:'flex', 'align-items':'center', 'column-gap':'3px', background:'var(--bg-color)', flex:"0 1", border:"solid 1px", 'flex-wrap':'wrap', position:'sticky', top:0}); //, hT2T, linkFolder, butWriteMTimeOnSource , butSyncT2T, butSyncT2TBrutal , opacity:0.8
 
   var divFolderInfo=divFolderInfoCreator(createElement('div'), makeOpenExtCB(PathT2T.createdF), makeOpenExtCB(PathT2T.deletedF))
   var divConflict=divConflictCreator(createElement('div'), makeOpenExtCB(PathT2T.link), makeOpenExtCB(PathT2T.caseCollision), makeOpenExtCB(PathT2T.reservedChar), makeOpenExtCB(PathT2T.reservedCharF))

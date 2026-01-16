@@ -39,6 +39,8 @@ var fiUnsorted=fieImageFolder+'blackTriangleUpDown.png';
 
 var charBackSymbol='◄';
 var charDelete='✖'; //x, ❌, X, ✕, ☓, ✖, ✗, ✘
+var charRightArrow='➜';
+var charDb='⛃'
 
 var intConsoleHDefault=70
 
@@ -47,7 +49,7 @@ var funLoad=async function(){
   //gThis.boExperiment=(argv.indexOf('--experiment')!=-1) 
   
   gThis.boDbg=(argv.indexOf('--dbg')!=-1) 
-  ArgumentTabRow.extendClass()
+  LocationRow.extendClass()
 
 
   var boPython=true
@@ -136,7 +138,8 @@ var funLoad=async function(){
     viewCheck.setBottomMargin(hNew)
     //viewCollision.setBottomMargin(hNew)
     viewExtra.setBottomMargin(hNew)
-    argumentTab.setBottomMargin(hNew)
+    relationTab.setBottomMargin(hNew)
+    locationTab.setBottomMargin(hNew)
     fitAddon.fit();
   }
   var funDragHREnd=function(){
@@ -145,8 +148,14 @@ var funLoad=async function(){
   }
 
   var funSetUIBasedOnSetting=async function(){
-    await divTop.setUIBasedOnSetting()
+    var [err, result]=await getSelectedFrFile(); 
+    if(err) {
+      if(err.message=='no-argument-selected') { var label='(no-argument-selected)'; myConsole.error(err); return;}
+      else {debugger; myConsole.error(err); return;}
+    }
+    divTop.setUIBasedOnSetting(result)
     //await viewFront.setUIBasedOnSetting()
+    viewExtra.setUIBasedOnSetting(result)
   }
   gThis.dragHR=dragHRExtend(createElement('hr'), funDragHRStartWHeight, funDragHR, funDragHREnd); dragHR.css({height:'0.3em',background:'var(--bg-colorEmp)',margin:0});
   gThis.butClear=createElement('button').myAppend('C').prop({title:'Clear output console and tables.'}).css({}).on('click',  function(){
@@ -168,25 +177,34 @@ var funLoad=async function(){
   gThis.viewCheck=viewCheckCreator(createElement('div')).addClass('viewDiv');
   //gThis.viewCollision=viewCollisionCreator(createElement('div')).addClass('viewDiv');
   gThis.viewExtra=viewExtraCreator(createElement('div')).addClass('viewDiv');
-  gThis.argumentSetPop=argumentSetPopExtend(createElement('div'));
-  gThis.argumentDeletePop=argumentDeletePopExtend(createElement('div'));
-  gThis.argumentTab=argumentTabExtend(createElement('div')).addClass('viewDiv');
-  //gThis.argumentTab=ArgumentTab.factory().addClass('viewDiv');
-  argumentTab.on('eventObjOptNonStatisticsChanged', async function(){
+  gThis.relationSetPop=relationSetPopExtend(createElement('div'));
+  gThis.relationDeletePop=relationDeletePopExtend(createElement('div'));
+  gThis.relationTab=relationTabExtend(createElement('div')).addClass('viewDiv');
+  document.on('eventObjOptNonStatisticDataChanged', async function(){
     viewFront.clearUI();
     await funSetUIBasedOnSetting();
   });
-  var [err]=await argumentTab.constructorPart2();
+  var [err]=await relationTab.constructorPart2();
   if(err){
-    myConsole.error()
     if(err.message=='no-argument-selected') { console.log(err.message); }
-    else {debugger; myConsole.error(err); return}
+    else {myConsole.error(err); debugger; return}
   }
+
+  gThis.locationSetPop=locationSetPopExtend(createElement('div'));
+  gThis.locationDeletePop=locationDeletePopExtend(createElement('div'));
+  gThis.locationTab=locationTabExtend(createElement('div')).addClass('viewDiv');
+  //gThis.locationTab=LocationTab.factory().addClass('viewDiv');
+  var [err]=await locationTab.constructorPart2();
+  if(err){
+    if(err.message=='no-argument-selected') { console.log(err.message); }
+    else {myConsole.error(err); debugger; return}
+  }
+
   await funSetUIBasedOnSetting();
 
   gThis.blanket=createElement('div').addClass("blanket").hide();
 
-  gThis.MainDiv=[viewFront, viewCheck, viewExtra, argumentTab, argumentSetPop, argumentDeletePop]; //viewT2D, viewT2T , editDiv, adminDiv, viewCollision
+  gThis.MainDiv=[viewFront, viewCheck, viewExtra, relationTab, relationSetPop, relationDeletePop, locationTab, locationSetPop, locationDeletePop]; //viewT2D, viewT2T , editDiv, adminDiv, viewCollision
   gThis.StrMainDiv=MainDiv.map(obj=>obj.toString());
   gThis.StrMainDivFlip=array_flip(StrMainDiv);
 
@@ -228,7 +246,13 @@ var funLoad=async function(){
     divTop.setButTab(this.toString())
     return true;
   }
-  argumentTab.setVis=async function(){
+  relationTab.setVis=async function(){
+    MainDiv.forEach(ele=>ele.hide()); this.show();
+    var [err]=await this.setUp(); if(err) return [err]
+    divTop.setButTab(this.toString())
+    return [null, true];
+  }
+  locationTab.setVis=async function(){
     MainDiv.forEach(ele=>ele.hide()); this.show();
     var [err]=await this.setUp(); if(err) return [err]
     divTop.setButTab(this.toString())

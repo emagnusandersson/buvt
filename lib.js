@@ -25,6 +25,7 @@ gThis.toNBP=function(p){
 
 gThis.extend=Object.assign;
 gThis.copySome=function(a,b,Str){for(var i=0;i<Str.length;i++) { var name=Str[i]; a[name]=b[name]; } return a; }
+gThis.copySomeRename=function(a,b,StrA,StrB){for(var i=0;i<StrA.length;i++) { a[StrA[i]]=b[StrB[i]]; } return a; }
 gThis.object_values=function(obj){ // Could be replaced by Object.values(obj) Right?
   var arr=[];      for(var name in obj) arr.push(obj[name]);
   return arr;
