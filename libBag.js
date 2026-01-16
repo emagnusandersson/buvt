@@ -16,12 +16,6 @@ var funStrShortest=function(rowA,rowB){
   else if(strA==strB) return 0
   else {debugger; throw Error("Error not lt, not gt and not equal???")}
 }
-function funInt(a,b){
-  if(a<b) return 1
-  else if(a>b) return -1
-  else if(a==b) return 0
-  else {debugger; throw Error("Error not lt, not gt and not equal???")}
-}
 
 /***************************************************************************************
  * [arrAMatching, arrBMatching, arrARem, arrBRem]=extractMatchingF(arrA, arrB, funM101): Comparing two arrays
@@ -90,7 +84,7 @@ gThis.extractMatching=function(arrA, arrB, KeyA, KeyB=null){ // Wrapper of extra
   return [null, ...extractMatchingF(arrA, arrB, funM101)]
 }
 
-//extractMatchingF([3,6,9], [2,3,8], funInt)
+//extractMatchingF([3,6,9], [2,3,8], diffMy)
 
 
   // An arrA element may match multiple arrB elements (but not the other way around)
@@ -706,4 +700,15 @@ var seperateOutCaseCollisions=function(arr){
   }
   var arr=Object.values(obj)
   return arr
+}
+
+
+
+var checkPropIsUniqueAmongArrayEntries=function(Obj, key){
+    //var funTmp=(e)=>{var boExist=e in objTargetByMTmp; if objTmp[e]
+    var objFound={}
+    for(var i=0;i<Obj.length;i++){ var v=Obj[i][key]; if(v in objFound) return [false, i, v];
+      objFound[v]=true;
+    }
+    return [true];
 }

@@ -167,7 +167,7 @@ div.section {background:lightgray; margin-top:3px}
 .num {background:var(--bg-colorEmp2);}
 
 
-.argumentTab td {  word-wrap:anywhere}  /*word-break:break-all; background-color: var(--bg-color);*/
+.relationTab td, .locationTab td {  word-wrap:anywhere}  /*word-break:break-all; background-color: var(--bg-color);*/
 
 
 .tableSticky {border-width:0px;}
