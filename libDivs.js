@@ -1,19 +1,10 @@
 
 "use strict"
 
-
-var formatTitleOld=function(arrIn, n=nShortListMax, fun=row=>row.strName){
-  var l=arrIn.length, nOut=Math.min(n,l), StrOut=Array(nOut)
-  if(nOut==0) return undefined
-  for(var i=0;i<nOut;i++) { var row=arrIn[i]; StrOut[i]=fun(row);}
-  if(l>n) StrOut.push('⋮')
-  return StrOut.join('\n')
-}
-
 var formatTitle=function(arrIn, fun){ // If fun is not supplied the input is assumed to be StrIn (array of strings)
   var lIn=arrIn.length;
   if(lIn==0) return undefined
-  var arrT=arrIn.slice(0,nShortListMax);
+  var arrT=arrIn.slice(0, nShortListMax);
   if(fun) arrT=arrT.map(fun)
   if(arrT.length==nShortListMax) arrT.push('⋮');
   return arrT
@@ -257,7 +248,8 @@ var headExtend=function(elTr, tBody, nRowVisible){
       //var aN=Number(a); if(!isNaN(aN) && a!=='') {a=aN;} else {a=a?.toLowerCase(); boAStr=1;}
       //var bN=Number(b); if(!isNaN(bN) && b!=='') {b=bN;} else {b=b?.toLowerCase(); boBStr=1;}
       //if(boAStr!=boBStr) return ((boAStr<boBStr)?-1:1)*dire;
-      if(a==b) {return 0;} else return ((a<b)?-1:1)*dire;
+      //if(a==b) {return 0;} else return ((a<b)?-1:1)*dire;
+      return -diffMy(a,b)*dire
     }
     var arrToSortN=msort.call(arrToSort,comparator);
     tBody.append(...arrToSortN);
@@ -358,6 +350,15 @@ var makeOpenExtCB=function(PathFile){
   }
   return cbFunI
 }
+// var cbOpenExtCB=async function(ev){
+//   ev.preventDefault()
+//   var fsName=this.attr('data-fsname')
+//   var arrCommand=[strExec, fsName]
+//   var strCommand=arrCommand.join(' ');
+//   // var [exitCode, stdErr, stdOut]=await execMy(arrCommand);   if(stdErr) { debugger; return [stdErr];}  // Using spawn doesn't work on Windows !!!?!?!?
+//   var [err, objT]=await exec(strCommand).toNBP(); if(err) { debugger; myConsole.error(err); return;}
+// }
+//aLink.attr({'data-fsname':PathFile.fsName}).on('click', cbOpenExtCB)
 
 
 
