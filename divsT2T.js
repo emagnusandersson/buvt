@@ -105,7 +105,7 @@ gThis.divTabT2TUsingHashCreator=function(el){
     setMess('DeleteNWrite: Making changes...'); blanket.show();
     var [err]=await self.syncT2T.makeChanges();  if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     var strMess='DeleteNWrite: Done'; setMess(strMess); myConsole.printNL(strMess)
-    var [err]=await argumentTab.setTLastSync();  if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var [err]=await relationTab.setTLastSync();  if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     blanket.hide();
   })
 
@@ -141,9 +141,10 @@ gThis.divT2TUsingHashCreator=function(el){
     var boSync=false
     var strMess=`Compare T2T ...`
     myConsole.clear(); el.clearVal(); setMess(strMess); blanket.show();
-    var [err, argGeneral]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var {charTResS, charTResT, charFilterMethod, suffixFilterFirstT2T}=argGeneral
-    //var [err, argGeneralExtra]=await argumentTab.calcExtraData(argGeneral); if(err) {debugger; return [err];}
+    var [err, argGeneral]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {objOptSource, charTResS, charTResT, suffixFilterFirstT2T}=argGeneral
+    var {charFilterMethod}=objOptSource;
+    //var [err, argGeneralExtra]=await calcExtraData(argGeneral); if(err) {debugger; return [err];}
     //var {ArgSide}=argGeneralExtra
     //extend(argGeneral, argGeneralExtra)
 
@@ -159,7 +160,7 @@ gThis.divT2TUsingHashCreator=function(el){
     var [err, fsTargetDbDir]=await myRealPath(fiTargetDbDir, strHostTarget); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return; }
 
     var arg={fsSourceDir, fsTargetDbDir, flTargetDataDir, leafFilter, leafFilterFirst, charTRes, charFilterMethod};
-    copySome(arg, argGeneral, ["strHostTarget", "boAllowLinks", "boAllowCaseCollision", "strTargetCharSet"])
+    copySome(arg, argGeneral, ["objOptSource", "objOptTarget", "strHostTarget"])
     var syncT2T=new SyncT2TUsingHash(arg);
     var [err]=await syncT2T.compare();   if(err) { myConsole.error(err); resetMess(); blanket.hide(); return; }
 
@@ -168,7 +169,7 @@ gThis.divT2TUsingHashCreator=function(el){
 
     el.setVal(syncT2T)
     if(!syncT2T.boChanged){
-      var [err]=await argumentTab.setTLastSync();  if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+      var [err]=await relationTab.setTLastSync();  if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     }
 
     var strMess=`Compare tree to tree: Done`

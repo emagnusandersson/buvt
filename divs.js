@@ -2,7 +2,8 @@
 "use strict"
 
 gThis.funFilterFirstCheckExistance=async function(result){
-  var {fiSourceDir, charFilterMethod, suffixFilterFirstT2T}=result
+  var {objOptSource, fiSourceDir, suffixFilterFirstT2T}=result;
+  var {charFilterMethod}=objOptSource
   if(suffixFilterFirstT2T){
     var leafFilter=LeafFilter[charFilterMethod], leafFilterFirstT2T=leafFilter+suffixFilterFirstT2T
     var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; return [err];}
@@ -31,18 +32,26 @@ gThis.divTopCreator=function(el){
   // }
   // var settingButton=createElement('button').myAppend('⚙').addClass('fixWidth').prop('title','Settings').on('click',settingButtonClick); 
 
-  var argumentButton=createElement('button').myText('Option preset').addClass('fixWidth').on('click',function(){
-    doHistPush({strView:'argumentTab'});
-    argumentTab.setVis();
+  var butRelation=createElement('button').myText('Relation').addClass('fixWidth').on('click',function(){
+    doHistPush({strView:'relationTab'});
+    relationTab.setVis();
+  });
+  var butLocation=createElement('button').myText('Location').addClass('fixWidth').on('click',function(){
+    doHistPush({strView:'locationTab'});
+    locationTab.setVis();
   });
   el.setUIBasedOnSetting=async function(){
-    var [err, result]=await argumentTab.getSelectedFrFile(); 
+    var [err, result]=await getSelectedFrFile(); 
     if(err) {
       if(err.message=='no-argument-selected') { var label='(no-argument-selected)'; }
       else {debugger; myConsole.error(err); return;}
     }
-    else { var {label, fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir, charFilterMethod, suffixFilterFirstT2T, boRemoteTarget, boAllowLinks, boAllowCaseCollision, strTargetCharSet}=result; }
-    argumentButton.myText(`⚙ (${label})`) //+' ◂'
+    else {
+      var {objOptSource, objOptTarget, keySource, keyTarget, fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir, suffixFilterFirstT2T, boRemoteTarget}=result;
+      //var {charFilterMethod}=objOptSource
+    }
+    var label=`⚙ (${keySource} - ${keyTarget})`
+    butRelation.myText(label) //+' ◂'
     if(err) return
     
     
@@ -59,7 +68,7 @@ gThis.divTopCreator=function(el){
   }
   el.setButTab=function(strView){
     ButTab.forEach(b=>b.css({background:'var(--bg-color)'}))
-    var Views=[viewFront, viewCheck, viewExtra, argumentTab]; //, viewCollision
+    var Views=[viewFront, viewCheck, viewExtra, relationTab, locationTab]; //, viewCollision
     var StrView=Views.map(v=>v.toString())
     var iView; StrView.forEach((strV,i)=>{if(strV==strView) iView=i;})
     ButTab[iView].css({background:'var(--bg-colorEmp)'})
@@ -100,7 +109,7 @@ gThis.divTopCreator=function(el){
   var selectorOfTheme=SelThemeCreate.factory();  setThemeClass(); selectorOfTheme.setValue();
   selectorOfTheme.css({ width:"2.5em", 'vertical-align':'bottom', padding:0})
   
-  var ButTab=[butFront, butCheck, butExtra, argumentButton]; //, butCollision
+  var ButTab=[butFront, butCheck, butExtra, butRelation, butLocation]; //, butCollision
   ButTab.forEach(b=>b.css({'border-bottom':'0px', 'border-top-left-radius':'10px', 'border-top-right-radius':'10px', 'border-bottom-left-radius':'0', 'border-bottom-right-radius':'0'}))
 
 
@@ -155,13 +164,16 @@ gThis.viewFrontCreator=function(el){
     //divCollisionHashW.clearUI(); //divCollisionHashW.divExtraTargetF.myText('')
   }
   el.setUIBasedOnSetting=async function(){
-    var [err, result]=await argumentTab.getSelectedFrFile(); 
+    var [err, result]=await getSelectedFrFile(); 
     if(err) {
       if(err.message=='no-argument-selected') { var label='(no-argument-selected)'; }
       else {debugger; myConsole.error(err); return;}
       return
     }
-    else { var {label, fiSourceDir, strHostTarget, fiTargetDbDir, charFilterMethod, suffixFilterFirstT2T, boRemoteTarget, boAllowLinks, boAllowCaseCollision, strTargetCharSet}=result; }
+    else {
+      var {objOptSource, objOptTarget, keySource, keyTarget, fiSourceDir, strHostTarget, fiTargetDbDir, suffixFilterFirstT2T, boRemoteTarget}=result;
+      var {charFilterMethod}=objOptSource;
+    }
     //divCollisionSMW.setUp(result)
     divT2DBoth.setUIBasedOnSetting(result)
     //divT2DS.setUIBasedOnSetting(result);  divT2DT.setUIBasedOnSetting(result)
@@ -228,8 +240,10 @@ gThis.viewCheckCreator=function(el){
   var leafTmp=PathS.hl.leaf;
   var butHardLinkCheck=createElement('button').myAppend('Check for hard links').attr({'title':`Check source tree for hard links. (Note: all functions relying on the absence of hard links also checks for hard links) \nFound hard links are written to ${leafTmp} in the result folder.`}).on('click',  async function(){
     myConsole.clear(); setMess('Hard link check ...'); blanket.show();
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var {fiSourceDir, charTResS, charFilterMethod}=result,  leafFilter=LeafFilter[charFilterMethod];
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {objOptSource, fiSourceDir, charTResS}=result;
+    var {charFilterMethod}=objOptSource;
+    var leafFilter=LeafFilter[charFilterMethod];
     var arg=extend({}, {leafFilter, fiSourceDir, charTRes:charTResS, charFilterMethod})
     var [err]=await hardLinkCheck(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     setMess('Hard link check: Done'); blanket.hide();
@@ -243,22 +257,22 @@ gThis.viewCheckCreator=function(el){
   var butCheckViaPythonS=createElement('button').myAppend('Source').on('click', async function(){
     myConsole.clear(); setMess('CheckS ...'); blanket.show();
     //viewCheck.butCheckCancel.show(); viewCheck.boCheckCancel=false
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var {fiSourceDir, charTResS}=result
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {fiSourceDir, charTResS, keySource}=result
     var arg=extend({}, {fiDbDir:fiSourceDir, iStart:Number(inpIStart.value), myConsole, charTRes:charTResS})
     var [err, mess=""]=await checkViaPython(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return; }
     setMess(mess); blanket.hide(); viewCheck.butCheckCancel.hide();
-    var [err]=await argumentTab.setTLastCheck('S'); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return; }
+    var [err]=await locationTab.setTLastCheck(keySource); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return; }
   });
   var butCheckViaPythonT=createElement('button').myAppend('Target').on('click', async function(){
     myConsole.clear(); setMess('CheckT ...'); blanket.show();
     //viewCheck.butCheckCancel.show(); viewCheck.boCheckCancel=false
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var {strHostTarget:strHost, fiTargetDbDir, charTResT}=result
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {strHostTarget:strHost, fiTargetDbDir, charTResT, keyTarget}=result
     var arg=extend({}, {fiDbDir:fiTargetDbDir, iStart:Number(inpIStart.value), myConsole, charTRes:charTResT, strHost})
     var [err, mess=""]=await checkViaPython(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     setMess(mess); blanket.hide(); viewCheck.butCheckCancel.hide();
-    var [err]=await argumentTab.setTLastCheck('T'); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return; }
+    var [err]=await locationTab.setTLastCheck(keyTarget); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return; }
   });
 
 
@@ -285,7 +299,7 @@ REMEMBER to "sync" the db first. Otherwise changed/missing files will be reporte
   //   var strMess=`Setting tLastCheck?\nWritten to:\n ${fsMyStorage}`;
   //   var boOK=await myConfirmer.confirm(strMess);
   //   if(!boOK) { return}
-  //   var [err]=await argumentTab.setTLastCheck(); if(err) {debugger; myConsole.error(err); return;}
+  //   var [err]=await locationTab.setTLastCheck(); if(err) {debugger; myConsole.error(err); return;}
   // });
 
   var divMid=createElement('div').myAppend(divCheckHash).css({display:'flex', 'column-gap':'3px', 'justify-content':'space-between', margin:'3px 0', 'align-items':'stretch'}); //, butHardLinkCheck, butSetLastCheck  , divCheckFileExistance
@@ -313,7 +327,7 @@ REMEMBER to "sync" the db first. Otherwise changed/missing files will be reporte
 gThis.miniViewFilterMethodTesterCreator=function(el){
   el.setUp=async function(){
     resetMess()
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); return;}
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); return;}
     var {suffixFilterFirstT2T}=result; 
     spanCheckBox.myText(` Use ".buvt-filter${suffixFilterFirstT2T}" / ".rsync-filter${suffixFilterFirstT2T}" as the top-level filter file.`)
     labCheckBox.toggle(suffixFilterFirstT2T)
@@ -358,7 +372,7 @@ gThis.miniViewFilterMethodTesterCreator=function(el){
   var funParseTmp=async function(charFilterMethodLoc){
     var boAddSuffix=checkBox.checked
     myConsole.clear(); setMess(`${charFilterMethodLoc} Parseing ...`); blanket.show();
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     var {fiSourceDir, charTResS, suffixFilterFirstT2T}=result, leafFilter=LeafFilter[charFilterMethodLoc], leafFilterFirst=leafFilter
     if(boAddSuffix) leafFilterFirst+=suffixFilterFirstT2T
     var arg=extend({}, {leafFilter, leafFilterFirst, fiSourceDir, charTRes:charTResS, charFilterMethod:charFilterMethodLoc})
@@ -416,8 +430,10 @@ gThis.miniViewFilterMethodTesterCreator=function(el){
 gThis.miniViewEmptyFolderCreator=function(el){
   el.setUp=async function(){
     resetMess();
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); return;}
-    var {suffixFilterFirstT2T, charFilterMethod}=result, leafFilter=LeafFilter[charFilterMethod];
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); return;}
+    var {objOptSource, suffixFilterFirstT2T}=result;
+    var {charFilterMethod}=objOptSource;
+    var leafFilter=LeafFilter[charFilterMethod];
 
     spanA.myText(`... ${leafFilter} `)
     spanB.myText(`... ${leafFilter+suffixFilterFirstT2T} `)
@@ -432,8 +448,10 @@ gThis.miniViewEmptyFolderCreator=function(el){
   var funTmp=async function(boAddSuffix){
     //var boAddSuffix=checkBox.checked
     myConsole.clear(); setMess('EmptyFolderCheck ...'); blanket.hide();
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var {fiSourceDir, charTResS, suffixFilterFirstT2T, charFilterMethod}=result, leafFilter=LeafFilter[charFilterMethod], leafFilterFirst=leafFilter
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {objOptSource, fiSourceDir, charTResS, suffixFilterFirstT2T}=result;
+    var {charFilterMethod}=objOptSource
+    var leafFilter=LeafFilter[charFilterMethod], leafFilterFirst=leafFilter
     if(boAddSuffix) leafFilterFirst+=suffixFilterFirstT2T
     var arg=extend({}, {leafFilter, leafFilterFirst, fiSourceDir, charTRes:charTResS, charFilterMethod})
     var [err, nEmpty, StrShortList]=await listEmptyFolders(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
@@ -477,8 +495,8 @@ gThis.miniViewHashMatchDeleteCreator=function(el, charSide='S', boTab=false){
     var strLab=`Find hash collisions`
     var charTRes='9'; //selTRes.value
     myConsole.clear(); setMess(strLab+' ...'); blanket.show();
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var {fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir, boRemoteTarget }=result;
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir, boRemoteTarget}=result;
     // var boTarget=charSide=='T'
     // var fiDir=boTarget?fiTargetDbDir:fiSourceDir
     // var fiDbDir=boTarget?fiTargetDbDir:fiSourceDir

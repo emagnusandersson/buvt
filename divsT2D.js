@@ -159,7 +159,8 @@ gThis.divT2DBothCreator=function(el){
 
   //el.clearUI=function(){ miniViewSMMatchS.clearUI(); miniViewSMMatchT.clearUI(); }
   el.setUIBasedOnSetting=function(arg){
-    var {label, fiSourceDir, strHostTarget, fiTargetDbDir, charFilterMethod, suffixFilterFirstT2T, boRemoteTarget, boAllowLinks, boAllowCaseCollision, strTargetCharSet}=arg;
+    var {objOptSource, objOptTarget, fiSourceDir, strHostTarget, fiTargetDbDir, suffixFilterFirstT2T, boRemoteTarget}=arg;
+    var {charFilterMethod}=objOptSource;
 
     var strTargetDbDir=boRemoteTarget?`${strHostTarget}:${fiTargetDbDir}`:fiTargetDbDir
     var {leafDb}=settings
@@ -205,7 +206,7 @@ gThis.divT2DBothCreator=function(el){
     DivTab[iSide].clearVal();
     setMess(strMess); blanket.show(); viewFront.divT2TUsingHash.clearVal();
     
-    var [err, argGeneralT]=await argumentTab.getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
+    var [err, argGeneralT]=await getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
     argGeneral=argGeneralT
     var syncDbOne=arrSyncDb[iSide]=new SyncDbOne({divT2DBoth:el, charSide, argGeneral})
     var [err]=await syncDbOne.fun1Prework(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;};
@@ -235,7 +236,7 @@ gThis.divT2DBothCreator=function(el){
     var strMess=`Compare both`;
     myConsole.clear(); el.clearVal(); setMess(strMess); blanket.show(); viewFront.divT2TUsingHash.clearVal();
 
-    var [err, argGeneralT]=await argumentTab.getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
+    var [err, argGeneralT]=await getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
     argGeneral=argGeneralT
     syncDbBoth=new SyncDbBoth({divT2DBoth:el, argGeneral})
     var [err]=await syncDbBoth.fun1Prework(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
@@ -252,7 +253,7 @@ gThis.divT2DBothCreator=function(el){
     var strMess=`Compare both`;
     myConsole.clear(); el.clearVal(); setMess(strMess); blanket.show(); viewFront.divT2TUsingHash.clearVal();
 
-    var [err, argGeneralT]=await argumentTab.getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
+    var [err, argGeneralT]=await getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
     argGeneral=argGeneralT
     syncDbBoth=new SyncDbBoth({divT2DBoth:el, argGeneral})
     var [err]=await syncDbBoth.fun1Prework(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}

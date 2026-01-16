@@ -34,7 +34,9 @@ gThis.miniViewSMMatchCreator=function(el, charSide='S', boTab=false){
 
   var Opt=[];   for(var k of KeyTRes){ var optTmp=createElement('option').myText(k).prop('value',k);  Opt.push(optTmp); }
   var selTResCollision=createElement('select').myAppend(...Opt).on('change',async function(e){
-    var [err]=await argumentTab.setTResCollision(this.value); if(err) {debugger; myConsole.error(err); return;}
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {keySource, keyTarget}=result, key=boTarget?keyTarget:keySource;
+    var [err]=await locationTab.setTResCollision(key, this.value); if(err) {debugger; myConsole.error(err); return;}
   })
   var divTRes=createElement('span').myAppend(spanTRes, selTResCollision)
 
@@ -91,7 +93,7 @@ gThis.miniViewHashMatchCreator=function(el, charSide='S', boTab=false){
     var strLab=`Find hash collisions`
     var charTRes='9'; //selTRes.value
     myConsole.clear(); setMess(strLab+' ...'); blanket.show();
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     var {fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir}=result;
 
     var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
@@ -186,7 +188,7 @@ gThis.miniViewHashMatchCreator=function(el, charSide='S', boTab=false){
 gThis.divCollisionHashWCreator=function(el){
   el.clearUI=function(){ miniViewHashMatchS.clearUI(); miniViewHashMatchT.clearUI(); }
   el.setUp=async function(){
-    var [err, result]=await argumentTab.getSelectedFrFile(); 
+    var [err, result]=await getSelectedFrFile(); 
     if(err) {
       if(err.message=='no-argument-selected') { var label='(no-argument-selected)'; }
       else {debugger; myConsole.error(err); return;}
@@ -201,7 +203,9 @@ gThis.divCollisionHashWCreator=function(el){
 
   var Opt=[];   for(var k of KeyTRes){ var optTmp=createElement('option').myText(k).prop('value',k);  Opt.push(optTmp); }
   var selTResCollision=createElement('select').myAppend(...Opt).on('change',async function(e){
-    var [err]=await argumentTab.setTResCollision(this.value); if(err) {debugger; myConsole.error(err); return;}
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {keySource, keyTarget}=result, key=boTarget?keyTarget:keySource;
+    var [err]=await locationTab.setTResCollision(key, this.value); if(err) {debugger; myConsole.error(err); return;}
   })
 
   var divH=createElement('div').myAppend(head, spanTRes, selTResCollision).css({'grid-area':'1/1/span 1/span 2'})

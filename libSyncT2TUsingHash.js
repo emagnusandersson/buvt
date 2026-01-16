@@ -402,13 +402,15 @@ class CategoryUntouched{
 class SyncT2TUsingHash{
   constructor(arg){
     var {charTRes, leafFilter, leafFilterFirst, fsTargetDbDir, flTargetDataDir}=arg
-    copySome(this, arg, ["fsSourceDir", "strHostTarget", "charFilterMethod", "boAllowLinks", "boAllowCaseCollision", "strTargetCharSet"]);
+    copySome(this, arg, ["objOptSource", "objOptTarget", "fsSourceDir", "strHostTarget"]);
     var fsTargetDataDir=fsTargetDbDir; if(flTargetDataDir) fsTargetDataDir=fsTargetDbDir+charF+flTargetDataDir
     extend(this, {charTRes, leafFilter, leafFilterFirst, fsTargetDbDir, flTargetDataDir, fsTargetDataDir})
   }
   
   async compare(){
-    var {charTRes, leafFilter, leafFilterFirst, fsSourceDir, strHostTarget, fsTargetDbDir, flTargetDataDir, fsTargetDataDir, charFilterMethod, boAllowLinks, boAllowCaseCollision, strTargetCharSet}=this
+    var {objOptSource, objOptTarget, charTRes, leafFilter, leafFilterFirst, fsSourceDir, strHostTarget, fsTargetDbDir, flTargetDataDir, fsTargetDataDir}=this;
+    var {charFilterMethod}=objOptSource;
+    //var {boAllowsLinks, boAllowsCaseCollision, strCharSet}=objOptTarget
  
       // Quick return if target doesn't exists. (It would have been detected when parsing, but this way one doesn't have to wait.)
     var [err, boExist]=await fileExist(fsTargetDataDir, strHostTarget); if(err) {debugger; return [err]; }
@@ -426,7 +428,8 @@ class SyncT2TUsingHash{
       // Parsing source tree
     var treeParser=new TreeParser()
     setMess(`Parsing source tree`, null, true)
-    var arg={charTRes, leafFilter, leafFilterFirst, fsDir:fsSourceDir, charFilterMethod}
+    var arg={charTRes, leafFilter, leafFilterFirst, fsDir:fsSourceDir};
+    copySome(arg, objOptSource, ["charFilterMethod"]);
     var [err, arrSourcef, arrSourceF] =await treeParser.parseTree(arg); if(err) {debugger; return [err];}
     removeLeafFileFromArrTreef(arrSourcef, settings.leafDb); // Note this does not remove the .bak.txt files
     removeLeafFileFromArrTreef(arrSourcef, settings.leafDbB)
@@ -435,7 +438,8 @@ class SyncT2TUsingHash{
 
       // Parsing target tree
     setMess(`Parsing target tree`, null, true);  
-    var arg={charTRes, leafFilter, leafFilterFirst, strHost:strHostTarget, fsDir:fsTargetDataDir, charFilterMethod}
+    var arg={charTRes, leafFilter, leafFilterFirst, strHost:strHostTarget, fsDir:fsTargetDataDir}
+    copySome(arg, objOptTarget, ["charFilterMethod"])
     var [err, arrTargetf, arrTargetF] =await treeParser.parseTree(arg); if(err) {debugger; return [err];}
     //removeLeafFileFromArrTreef(arrTargetf, settings.leafDb); // Note! this arrTargetf is not used (so this line could be deleted)
     //removeLeafFileFromArrTreef(arrTargetf, settings.leafDbB)
@@ -491,7 +495,7 @@ class SyncT2TUsingHash{
 
       // Links
     var arrLink=[]
-    if(!boAllowLinks){
+    if(!objOptTarget.boAllowsLinks){
       arrDbSM=arrDbSM.filter(entry=>{ var boLink=entry.strType=='l';  if(boLink) arrLink.push(entry);   return !boLink;   })
     }
     var Str=myResultWriter.Str.link=arrLink.map(row=>row.strName)
@@ -500,7 +504,7 @@ class SyncT2TUsingHash{
 
       // CaseCollisions
     var BundMult={}, nMultf=0
-    if(!boAllowCaseCollision){
+    if(!objOptTarget.boAllowsCaseCollision){
       var Bundf=bundleOnProperty(arrDbSM, r=>r.strName.toLowerCase())
       var [BundMult, nMultf, arrSingle]=extractBundlesWMultiples(Bundf),  nMultPatf=Object.keys(BundMult).length;
       arrDbSM=arrSingle;
@@ -520,7 +524,7 @@ class SyncT2TUsingHash{
     var RegReservedChar={ms:/["\*\/:<>\?\\\|]/, ext4:``}
     var RegReservedCharWOFwdSlash={ms:/["\*:<>\?\\\|]/, ext4:``}
     var arrReservedChar=[], arrReservedCharF=[];
-    if(strTargetCharSet=='ms'){
+    if(objOptTarget.strCharSet=='ms'){
       var reg=RegReservedCharWOFwdSlash.ms
       //var arrDbSM=arrDbSM.filter(r=>{var leaf=basename(r.strName), boRes=reg.test(leaf); if(boRes) arrReservedChar.push(r); return !boRes})
       var arrDbSM=arrDbSM.filter(r=>{var boRes=reg.test(r.strName); if(boRes) arrReservedChar.push(r); return !boRes})
@@ -625,7 +629,8 @@ CopyOnTarget: ${nT} file${pluralS(nT)}`
   }
 
   async makeChanges(){
-    var {charTRes, leafFilter, leafFilterFirst, categoryDelete, copyOnTarget1, moveOnTarget, moveOnTargetNSetMTime, categorySetMTime, copyToTarget, copyOnTarget2, arrDbS, arrDbTNonRelevant, fsSourceDir, strHostTarget, fsTargetDbDir, flTargetDataDir, fsTargetDataDir, arrSource, charFilterMethod}=this;
+    var {objOptSource, objOptTarget, charTRes, leafFilter, leafFilterFirst, categoryDelete, copyOnTarget1, moveOnTarget, moveOnTargetNSetMTime, categorySetMTime, copyToTarget, copyOnTarget2, arrDbS, arrDbTNonRelevant, fsSourceDir, strHostTarget, fsTargetDbDir, flTargetDataDir, fsTargetDataDir, arrSource}=this;
+    var {charFilterMethod}=objOptSource;
     var [err]=await this.createFolders(); if(err) {debugger; return [err];}
   
     var [err]=await categoryDelete.delete(); if(err) {debugger; return [err];}

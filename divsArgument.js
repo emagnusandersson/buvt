@@ -1,0 +1,158 @@
+
+
+"use strict"
+
+//////////////////////////////////////////////////////////
+// 
+//////////////////////////////////////////////////////////
+
+var boTouch=false
+if(boTouch){  var strStartEv='touchstart', strMoveEv='touchmove', strEndEv='touchend'; }
+else{   var strStartEv='mousedown', strMoveEv='mousemove', strEndEv='mouseup';    }
+
+
+gThis.draggableTabExtend=function(el, divScrollableContainer, mouseUpCB){
+  var movedRow, iStart, scrollTimer=null, yMouse=null
+  var funRearranger=function(){
+    var y=yMouse
+    var iCur=movedRow.myIndex();
+    var hCur=movedRow.offsetHeight, yMouseOff=y-hCur/2;
+    var tBody=el.children[1]
+    var len=tBody.childElementCount, boMoved=false
+
+    if(iCur>0) {  //Check if previous is better
+      var rowT=movedRow.previousElementSibling;
+      var yPrevOff=rowT.getBoundingClientRect().top;
+      var hPrev=rowT.offsetHeight;
+      if(y<yPrevOff+hPrev/2) { rowT.insertAdjacentElement('beforebegin', movedRow); boMoved=true }
+    }
+    if(!boMoved && iCur<len-1) { //Check if next is better
+      var rowT=movedRow.nextElementSibling;
+      var yNextOff=rowT.getBoundingClientRect().top;
+      var hNext=rowT.offsetHeight;
+      if(y>yNextOff+hNext/2) { rowT.insertAdjacentElement('afterend', movedRow); }
+    }
+    var yCurOff=movedRow.getBoundingClientRect().top
+    var strYTrans=movedRow.style.transform; strYTrans=strYTrans.slice(11,-3); var yTrans=Number(strYTrans)
+    var yCurOrgOff=yCurOff-yTrans
+    movedRow.css({'transform':'translateY('+(yMouseOff-yCurOrgOff)+'px)'});
+  }
+  el.myMousedown= function(e){
+    var e = e || window.event; if(e.which==3) return;
+    movedRow=this.parentNode.parentNode;
+    iStart=getNodeIndex(movedRow);
+    movedRow.css({position:'relative', opacity:0.55, 'z-index':'auto'});  
+    document.on(strMoveEv, myMousemove, {passive: false}); document.on(strEndEv, myMouseup);
+    e.preventDefault(); // to prevent mobile crome from reloading page
+    //setMess('Down');
+    scrollTimer=setInterval(scrollTimerCb,50)
+  } 
+  var myMouseup= function(e){ 
+    movedRow.css({'transform':'translateY(0px)',opacity:1,'z-index':'auto'});
+    document.off(strMoveEv, myMousemove); document.off(strEndEv, myMouseup);
+    mouseUpCB()
+    clearInterval(scrollTimer)
+  }
+  var myMousemove= function(e){
+    if(boTouch) {e.preventDefault(); e.stopPropagation(); yMouse=e.changedTouches[0].pageY;}
+    else {yMouse=e.clientY;}
+    funRearranger()
+  }
+  var scrollTimerCb=function(){
+    var y=yMouse, yZone=10, yStep=10
+    if(y<yZone) {divScrollableContainer.scrollTop-=yStep;}
+    else if(y>divScrollableContainer.offsetHeight-yZone) {divScrollableContainer.scrollTop+=yStep;}
+    funRearranger()
+  }
+  return el
+}
+
+const eventObjOptNonStatisticDataChanged = new Event("eventObjOptNonStatisticDataChanged");
+
+gThis.getSelectedFrFile=async function(){
+  var [err, ObjOptRelation, iSelected]=await relationTab.getDataFrFile();  if(err) {debugger; return [err];}
+  var objOptRelation=ObjOptRelation[iSelected], {keySource, keyTarget}=objOptRelation;
+  if(keySource.length==0 || keyTarget.length==0) {debugger; return [Error("keySource.length==0 || keyTarget.length==0")];}
+  if(keySource==keyTarget) {debugger; return [Error("keySource==keyTarget")];}
+
+  var [err, ObjOptLocation]=await locationTab.getDataFrFile();  if(err) {debugger; return [err];}
+  var objOptSource, objOptTarget;
+  for(var i=0;i<ObjOptLocation.length;i++){
+    var objOptLocation=ObjOptLocation[i], {key}=objOptLocation;
+    if(key==keySource) objOptSource=objOptLocation
+    if(key==keyTarget) objOptTarget=objOptLocation
+  }
+  if(typeof objOptSource=='undefined') {debugger; return [Error("typeof objOptSource=='undefined'")];}
+  if(typeof objOptTarget=='undefined') {debugger; return [Error("typeof objOptTarget=='undefined'")];}
+  
+
+    //Old
+  //propDefault:{boSelected:false, label:'', fiSourceDir:'', strHostTarget:'', fiTargetDbDir:'', flTargetDataDir:'', suffixFilterFirstT2T:'', charTResS:'9', charTResT:'9', charTResCollision:'d', tLastSync:0, tLastCheckS:0, tLastCheckT:0, charFilterMethod:"b", boAllowLinks:true, boAllowCaseCollision:true, strTargetCharSet:'ext4'},
+    // Relation
+  //propDefault:{boSelected:false, keySource:"", keyTarget:"", flTargetDataDir:'', suffixFilterFirstT2T:'', tLastSync:0}, 
+    // Location
+  //propDefault:{key:'', fiDir:'', strHost:'', charTRes:'9', charTResCollision:'d', tLastSync:0, tLastCheck:0, charFilterMethod:"b", boAllowsLinks:true, boAllowsCaseCollision:true, strCharSet:'ext4'}, 
+
+  var objOptExtended=copySome({}, objOptRelation, ["keySource", "keyTarget", "flTargetDataDir", "suffixFilterFirstT2T"])
+  //copySomeRename(objOptExtended, objOptRelation, ["tLastSyncCopy"], ["tLastSync"])
+  copySome(objOptExtended, objOptSource, ["charTResCollision", "tLastSync", "charFilterMethod"])
+  copySomeRename(objOptExtended, objOptSource, ["fiSourceDir", "charTResS", "tLastSyncHashS", "tLastCheckS"], ["fiDir", "charTRes", "tLastSync", "tLastCheck"])
+  copySomeRename(objOptExtended, objOptTarget, ["fiTargetDbDir", "strHostTarget", "charTResT", "tLastSyncHashT", "tLastCheckT"], ["fiDir", "strHost", "charTRes", "tLastSync", "tLastCheck"])
+    // Note!!  fiTargetDbDir should probably be renamed to fiTargetDir (or fiSourceDir to fiSourceDbDir) to perserve symetry.
+  extend(objOptExtended, {objOptSource, objOptTarget})
+
+  var {strHostTarget}=objOptExtended
+  if(!strHostTarget) strHostTarget="localhost";   var boRemoteTarget=strHostTarget!="localhost"
+  extend(objOptExtended, {boRemoteTarget, strHostTarget})
+  return [null, objOptExtended];
+}
+gThis.calcExtraData=async function(objOpt){ // Extra calculations based on side and also caclulating fs from fi
+    // , charSide
+  var {objOptSource, objOptTarget, fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir, charTResS, charTResT}=objOpt;
+  var {charFilterMethod}=objOptSource
+
+  var {fiDir, strHost}=objOptSource
+  var [err, fsDir]=await myRealPath(fiDir, strHost); if(err) {debugger; return [err];}
+  extend(objOptSource, {fsDir, fsDbDir:fsDir})
+  var fsSourceDir=fsDir
+
+  var {fiDir, strHost}=objOptTarget
+  var [err, fsDir]=await myRealPath(fiDir, strHost); if(err) {debugger; return [err];}
+  extend(objOptTarget, {fsDir, fsDbDir:fsDir})
+  var fsTargetDbDir=fsDir
+
+  //var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; return [err];}
+  //var [err, fsTargetDbDir]=await myRealPath(fiTargetDbDir, strHostTarget); if(err) {debugger; return [err];}
+  //for(var k of ['S', 'T'])
+  if(flTargetDataDir) {var fsTargetDataDir=fsTargetDbDir+charF+flTargetDataDir, fleTargetDataDir=flTargetDataDir+charF;}
+  else {var fsTargetDataDir=fsTargetDbDir, fleTargetDataDir=""; }
+  var fsSourceDb=fsSourceDir+charF+settings.leafDb,  fsTargetDb=fsTargetDbDir+charF+settings.leafDb
+
+
+  extend(objOptSource, {fsDataDir:fsSourceDir, fsDb:fsSourceDb, charSide:'S', boTarget:false})
+  extend(objOptTarget, {fsDataDir:fsTargetDataDir, fsDb:fsTargetDb, charSide:'T', boTarget:true})
+
+  // var argS={strHost:"localhost", fsDbDir:fsSourceDir, fsDataDir:fsSourceDir, charTRes:charTResS, fsDb:fsSourceDb, charSide:'S', boTarget:false}
+  // var argT={strHost:strHostTarget, fsDbDir:fsTargetDbDir, fsDataDir:fsTargetDataDir, charTRes:charTResT, fsDb:fsTargetDb, charSide:'T', boTarget:true}
+  // var ArgSide=[argS, argT]
+
+  var leafFilter=LeafFilter[charFilterMethod];
+
+  //var boTarget=charSide=='T',  argSide=ArgSide[Number(boTarget)], {fsDbDir, fsDataDir, charTRes, strHost}=argSide;
+  //if(!charTRes) charTRes=settings.charTRes;
+  //var fsDb=fsDbDir+charF+settings.leafDb
+
+  var argExtra={fsSourceDir, fsTargetDbDir, fsTargetDataDir, fsSourceDb, fsTargetDb, fleTargetDataDir, leafFilter} //, ArgSide
+  //var argSideExtra={boTarget, fsDbDir, fsDataDir, charTRes, strHost, fsDb}, argSideExtra
+
+  return [null, argExtra];
+}
+//var [err, objOpt]=await relationTab.calcExtraData(objOpt)
+gThis.getSelectedFrFileWExtra=async function(){
+  var [err, argGeneral]=await getSelectedFrFile(); if(err) {debugger; return [err];}
+
+  //var {fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir, charTResS, charTResT, charFilterMethod, charTResCollision}=argGeneral
+  var [err, argGeneralExtra]=await calcExtraData(argGeneral); if(err) {debugger; return [err];}
+  extend(argGeneral, argGeneralExtra)
+  return [null, argGeneral]
+}

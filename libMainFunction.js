@@ -275,8 +275,10 @@ var categorizeSMRelations=async function(arrTreef, arrDb, charSide){
 
 
 
-var addHashToCreated=async function(arrCreated, argSide){  // Read "created" and add hashcodes to it.
-  var {charSide, fsDbDir, strHost}=argSide
+//var addHashToCreated=async function(arrCreated, argSide){  // Read "created" and add hashcodes to it.
+var addHashToCreated=async function(arrCreated, objOptSide){  // Read "created" and add hashcodes to it.
+  //var {charSide, fsDbDir, strHost}=argSide
+  var {charSide, fsDbDir, strHost}=objOptSide
 
   var PathCur=gThis[`Path${charSide}`]
 
@@ -320,15 +322,14 @@ class SyncDbOne{
   constructor(arg){
     Object.assign(this, arg);
   }
-  async constructorB(){ // For stuff that needs await
-    return [null];
-  }
   async fun1Prework(){
     var {divT2DBoth, charSide, argGeneral}=this
     var boTarget=charSide=='T', strSide=boTarget?'target':'source', iSide=Number(boTarget)
 
-    var {strHostTarget, ArgSide}=argGeneral
-    var [argS, argT]=ArgSide, argSide=ArgSide[iSide]
+    var {objOptSource, objOptTarget, strHostTarget}=argGeneral
+    var objOptSide=boTarget?objOptTarget:objOptSource
+    //var {ArgSide}=argGeneral}
+    //var [argS, argT]=ArgSide, argSide=ArgSide[iSide]
     //var {fsSourceDir, fsTargetDbDir, fsTargetDataDir, fsSourceDb, fsTargetDb, fleTargetDataDir, leafFilter}=argGeneralExtra
     //extend(argGeneral, {charSide});
 
@@ -336,9 +337,9 @@ class SyncDbOne{
       var [err]=await interfacePython.uploadZip(strHostTarget); if(err) { debugger; return [err];}
     }
       // Reading databases
-    var argTmp=copySome({}, argSide, ["fsDb", "strHost"])
+    var argTmp=copySome({}, objOptSide, ["fsDb", "strHost"])
     var [err, arrDb]=await parseDbW(argTmp); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrDb, argSide.charTRes);
+    funSetMTimeArr(arrDb, objOptSide.charTRes);
 
     var argTmp=copySome({},argGeneral, ["strHostTarget", "flTargetDataDir", "fsTargetDbDir", "fleTargetDataDir"])
     var [err, FleF, BoExist, indCur]=await readNSyncDbB(argTmp); if(err) {debugger; return [err];}
@@ -351,9 +352,12 @@ class SyncDbOne{
 
       // Parsing trees
     var strMess=`Parsing ${strSide} tree`;   if(boTarget) strMess+=` (db folder)`;   setMess(strMess, null, true)
-    var argTmp=copySome({}, argSide, ['charTRes', 'strHost']); copySome(argTmp, argGeneral, ['charFilterMethod', 'leafFilter']);argTmp.fsDir=argSide.fsDbDir
+    var argTmp=copySome({}, objOptSide, ['charTRes', 'strHost']);
+    copySome(argTmp, argGeneral, ['leafFilter']);
+    argTmp.fsDir=objOptSide.fsDbDir
+    copySome(argTmp, objOptSource, ['charFilterMethod']);
     var [err, arrTreef, arrTreeF] =await treeParserW(argTmp); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrTreef, argSide.charTRes);
+    funSetMTimeArr(arrTreef, objOptSide.charTRes);
     extend(this, {arrDb, arrTreef})
 
       // Set boNew=false
@@ -374,7 +378,8 @@ class SyncDbOne{
 
     var ArgTmp=boTarget?[arrTr_TAllOutside, arrDb_TAllOutside]:[arrTr_SRelevantForCat, arrDb_SRelevantForCat]
     var [err, objCategory]=await categorizeSMRelations(...ArgTmp, charSide); if(err) {debugger; return [err];}
-    extend(this, {objCategory, argGeneral, ArgSide});
+    //extend(this, {objCategory, argGeneral, ArgSide});
+    extend(this, {objCategory}); //, argGeneral, ArgSide
     divT2DBoth.setVal(objCategory, iSide);
 
       // boChanged
@@ -387,8 +392,8 @@ class SyncDbOne{
 
 var fun1_5CreateNewDb= function(charSide, argGeneral, syncDb){
   var boTarget=charSide=='T', strSide=boTarget?'target':'source', iSide=Number(boTarget)
-  var {strHostTarget, ArgSide}=argGeneral
-  var [argS, argT]=ArgSide, argSide=ArgSide[iSide]
+  //var {strHostTarget, ArgSide}=argGeneral
+  //var [argS, argT]=ArgSide, argSide=ArgSide[iSide]
 
   var {objCategory}=syncDb
   var boTarget=charSide=='T', iSide=Number(boTarget)
@@ -402,13 +407,15 @@ var fun1_5CreateNewDb= function(charSide, argGeneral, syncDb){
 
 var fun2AddHash= async function(charSide, argGeneral, syncDb){
   var boTarget=charSide=='T', strSide=boTarget?'target':'source', iSide=Number(boTarget)
-  var {strHostTarget, ArgSide}=argGeneral
-  var [argS, argT]=ArgSide, argSide=ArgSide[iSide]
+  //var {strHostTarget, ArgSide}=argGeneral
+  //var [argS, argT]=ArgSide, argSide=ArgSide[iSide]
+  var {objOptSource, objOptTarget}=argGeneral
+  var objOptSide=boTarget?objOptTarget:objOptSource
 
   var {objCategory}=syncDb
   var boTarget=charSide=='T', iSide=Number(boTarget)
   var {arrCreate}=objCategory;
-  var [err]=await addHashToCreated(arrCreate, argSide); if(err) {debugger; return [err];}
+  var [err]=await addHashToCreated(arrCreate, objOptSide); if(err) {debugger; return [err];}
     // Write temporary db
   //var [err]=await writeTmpDb(arrDbTmp, argSide); if(err) {debugger; return [err];}
   return [null]
@@ -419,25 +426,24 @@ class SyncDbBoth{
   constructor(arg){
     Object.assign(this, arg);
   }
-  async constructorB(){ // For stuff that needs await
-    return [null];
-  }
   async fun1Prework(){
     var {divT2DBoth, argGeneral}=this
 
-    var {strHostTarget, ArgSide}=argGeneral
-    var [argS, argT]=ArgSide;
+    var {strHostTarget}=argGeneral
+    //var {ArgSide}=argGeneral
+    //var [argS, argT]=ArgSide;
+    var {objOptSource, objOptTarget}=argGeneral
 
     if(1){ //boRemote
       var [err]=await interfacePython.uploadZip(strHostTarget); if(err) { debugger; return [err];}
     }
       // Reading databases
     //var [err, arrSourceDb, arrTargetDb]=await readDbA(argGeneral); if(err) {debugger; return [err];}
-    var argTmp=copySome({}, argS, ["fsDb", "strHost"])
+    var argTmp=copySome({}, objOptSource, ["fsDb", "strHost"])
     var [err, arrSourceDb]=await parseDbW(argTmp); if(err) {debugger; return [err];}
-    var argTmp=copySome({}, argT, ["fsDb", "strHost"])
+    var argTmp=copySome({}, objOptTarget, ["fsDb", "strHost"])
     var [err, arrTargetDb]=await parseDbW(argTmp); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrSourceDb, argS.charTRes); funSetMTimeArr(arrTargetDb, argT.charTRes);
+    funSetMTimeArr(arrSourceDb, objOptSource.charTRes); funSetMTimeArr(arrTargetDb, objOptTarget.charTRes);
 
     var argTmp=copySome({},argGeneral, ["strHostTarget", "flTargetDataDir", "fsTargetDbDir", "fleTargetDataDir"])
     var [err, FleF, BoExist, indCur]=await readNSyncDbB(argTmp); if(err) {debugger; return [err];}
@@ -449,13 +455,19 @@ class SyncDbBoth{
 
       // Parsing trees
     setMess(`Parsing source tree`, null, true)
-    //var argTmp=extend({}, argS); argTmp.fsDb=argS.fsDbDir
-    var argTmp=copySome({}, argS, ['charTRes', 'strHost']); copySome(argTmp, argGeneral, ['charFilterMethod', 'leafFilter']);argTmp.fsDir=argS.fsDbDir
+    //var argTmp=extend({}, objOptSource); argTmp.fsDb=objOptSource.fsDbDir
+    var argTmp=copySome({}, objOptSource, ['charTRes', 'strHost']);
+    copySome(argTmp, argGeneral, ['leafFilter']);
+    argTmp.fsDir=objOptSource.fsDbDir
+    copySome(argTmp, objOptSource, ['charFilterMethod']);
     var [err, arrTreef_S, arrTreeF_S] =await treeParserW(argTmp); if(err) {debugger; return [err];}
     setMess(`Parsing target tree (db-folder)`, null, true)
-    var argTmp=copySome({}, argT, ['charTRes', 'strHost']); copySome(argTmp, argGeneral, ['charFilterMethod', 'leafFilter']);argTmp.fsDir=argT.fsDbDir
+    var argTmp=copySome({}, objOptTarget, ['charTRes', 'strHost']);
+    copySome(argTmp, argGeneral, ['leafFilter']);
+    argTmp.fsDir=objOptTarget.fsDbDir
+    copySome(argTmp, objOptSource, ['charFilterMethod']);
     var [err, arrTreef_T, arrTreeF_T] =await treeParserW(argTmp); if(err) {debugger; return [err];}
-    funSetMTimeArr(arrTreef_S, argS.charTRes); funSetMTimeArr(arrTreef_T, argT.charTRes);
+    funSetMTimeArr(arrTreef_S, objOptSource.charTRes); funSetMTimeArr(arrTreef_T, objOptTarget.charTRes);
     //extend(this, {arrTreef_S, arrTreef_T})
 
       // Set boNew=false
@@ -474,7 +486,7 @@ class SyncDbBoth{
     var [err, objHL]=await checkingForMultipleIds(arrTreef_T, arrTreeF_T, arrTargetDb, 'T'); if(err) {debugger; return [err];}
     if(objHL) {divT2DBoth.setHLVal(objHL, 1); debugger; return [err, {objHL}];}
 
-    //var [err, ]=await checkingForMultipleSMInDb(argGeneral, argS); if(err) {debugger; return [err];}
+    //var [err, ]=await checkingForMultipleSMInDb(argGeneral, objOptSource); if(err) {debugger; return [err];}
 
     var [err, objCategory]=await categorizeSMRelations(arrTr_SRelevantForCat, arrDb_SRelevantForCat, 'S'); if(err) {debugger; return [err];}
     var {boChanged, arrCreate}=objCategory, boCreated=Boolean(arrCreate.length)
@@ -483,7 +495,8 @@ class SyncDbBoth{
     var {boChanged, arrCreate}=objCategory, boCreated=Boolean(arrCreate.length)
     var syncDb_T={objCategory, arrDb:arrTargetDb, arrTreef:arrTreef_T, boChanged, boCreated, arrDb_TAllOutside, arrTr_TAllOutside, arrDb_TCurOutside, arrTr_TCurOutside, arrDb_TAllInside};
 
-    extend(this, {argGeneral, ArgSide, arrDb_TAllInside});
+    //extend(this, {argGeneral, ArgSide, arrDb_TAllInside});
+    extend(this, {arrDb_TAllInside}); // argGeneral, ArgSide, 
     divT2DBoth.setVal(syncDb_S.objCategory, 0);
     divT2DBoth.setVal(syncDb_T.objCategory, 1);
 
@@ -516,17 +529,12 @@ var createBundWExtraHashDim=function(BundA){
 // var [Bund3D, BundSMMultHashNonConsistent, BundSMMultHashConsistent, nTotNonConsistent, nTotConsistent]=createBundWExtraHashDim(BundSMMult);
 
 
-class SMMultWorkBoth{
-  constructor(arg){
-    copySome(this, arg, ["divT2DBoth", "arrSyncDb", "argGeneral"])
-  }
-
-}
-
 var fun3CalcMult=async function(arg){
   var {divT2DBoth, argGeneral, arrSyncDb}=arg
 
-  var {ArgSide}=argGeneral, [argS, argT]=ArgSide, {charTResCollision}=argGeneral
+  //var {ArgSide}=argGeneral, [argS, argT]=ArgSide;
+  var {charTResCollision}=argGeneral;
+  var {objOptSource, objOptTarget}=argGeneral
 
   var [syncDb_S, syncDb_T]=arrSyncDb
   var {objCategory:objCategoryS, arrDbTmp:arrDbTmp_S, arrDb:arrSourceDb, arrTreef:arrTreef_S}=syncDb_S;
@@ -556,7 +564,7 @@ var fun3CalcMult=async function(arg){
   //var arrBase=[].concat(arrDbTmp_S, arrTr_TCurOutside);
   var arrBase=[].concat(arrDbTmp_S, arrCreate_T, arrDb_TCurOutside);    //arrDb_TCurOutside.forEach(r=>r.boNew=false);
   var argTmp={arrRelevant, arrBase};
-  copySome(argTmp, argS, ['charSide', 'charTRes']); extend(argTmp, {charTResCollision}) 
+  copySome(argTmp, objOptSource, ['charSide', 'charTRes']); extend(argTmp, {charTResCollision}) 
   var smMultWork=new SMMultWork(argTmp);
   var [err, result]=await smMultWork.getMult(); if(err) {debugger; return [err];}
   var {StrConsistentShort, StrNonConsistentShort, nTotConsistent, nPatConsistent, nTotNonConsistent, nPatNonConsistent}=result;
@@ -577,7 +585,7 @@ var fun3CalcMult=async function(arg){
   arrCreate_T.forEach(r=>r.boNew=true);
   var arrBase=[].concat(arrDbTmp_T, arrCreate_S);
   var argTmp={arrRelevant, arrBase};
-  copySome(argTmp, argT, ['charSide', 'charTRes']); extend(argTmp, {charTResCollision})
+  copySome(argTmp, objOptTarget, ['charSide', 'charTRes']); extend(argTmp, {charTResCollision})
   var smMultWork=new SMMultWork(argTmp);
   var [err, result]=await smMultWork.getMult(); if(err) {debugger; return [err];}
   var {StrConsistentShort, StrNonConsistentShort, nTotConsistent, nPatConsistent, nTotNonConsistent, nPatNonConsistent}=result;
@@ -594,16 +602,17 @@ var fun3CalcMult=async function(arg){
 
 var fun4WriteDbBoth=async function(arg){
   var {arrToChangeS, arrToChangeT, arrSyncDb, argGeneral}=arg
-  var {ArgSide}=argGeneral, [argS, argT]=ArgSide;
+  //var {ArgSide}=argGeneral, [argS, argT]=ArgSide;
+  var {objOptSource, objOptTarget}=argGeneral
 
   var [syncDb_S, syncDb_T]=arrSyncDb
   var {arrDbTmp:arrDbTmp_S}=syncDb_S;
   var {arrDbTmp:arrDbTmp_T}=syncDb_T;
 
-  var argTmp=copySome({}, argS, ["fsDbDir", "fsDb", "strHost"]);
+  var argTmp=copySome({}, objOptSource, ["fsDbDir", "fsDb", "strHost"]);
   var [err]=await SMMultWork.mySetMTime(arrToChangeS, arrDbTmp_S, argTmp); if(err) {debugger; return [err];}
 
-  var argTmp=copySome({}, argT, ["fsDbDir", "fsDb", "strHost"]);
+  var argTmp=copySome({}, objOptTarget, ["fsDbDir", "fsDb", "strHost"]);
   var [err]=await SMMultWork.mySetMTime(arrToChangeT, arrDbTmp_T, argTmp); if(err) {debugger; return [err];}
 
   return [null]
@@ -1220,7 +1229,7 @@ var moveMeta=async function(arg){ //Not used
  *********************************************************************/
 var testFilter=async function(arg){ //Not used
   var {leafFilter, leafFilterFirst, charFilterMethod}=arg
-  var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; return [err];}
+  var [err, result]=await getSelectedFrFile(); if(err) {debugger; return [err];}
   var {fiSourceDir}=result
   var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; return [err];}
   var arg={fsDir:fsSourceDir, charTRes, leafFilter, leafFilterFirst}
