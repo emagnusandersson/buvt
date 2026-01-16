@@ -345,3 +345,23 @@ gThis.myMenu=function(elWrap, elPar){
   var funClose=function() { elBubble.hide(); }
   elWrap.on(strEvOpen,funOpen).on(strEvClose,funClose)
 }
+
+
+var vippButtonExtend=function(el, name, fun){
+  el.setStat=function(i){
+    Inp[Number(i)].checked=true;
+  }
+  el.getStat=function(){
+    var inp=el.querySelector('input[type=radio]:checked'), i=Number(inp.value); return i;
+  }
+
+  var Inp=el.querySelectorAll('input')
+  //var form=createElement('form').css({ border:'1px solid', width:'fit-content'});
+  var Inp=[...Inp]
+  for(var i=0;i<Inp.length;i++){
+    Inp[i].attr({type:'radio', id:`${i}`, name, value:`${i}`})
+    if(fun) Inp[i].on('click', fun)
+  }
+  Inp[0].checked=true;
+  return el;
+}

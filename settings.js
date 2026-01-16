@@ -29,7 +29,6 @@ KeyTRes.push('d'); IntTDiv['d']=BigInt(2e9);
 
 gThis.settings={
   leafDb:"buvtDb.txt", 
-  leafDbB:"buvtDbB.txt", 
   charTRes:'9'
 }
 gThis.LeafFilter={b:".buvt-filter", r:".rsync-filter", R:".rsync-filter"};
@@ -38,6 +37,8 @@ gThis.LeafFilter={b:".buvt-filter", r:".rsync-filter", R:".rsync-filter"};
   // Creating S_ and T_
 var KeyD=[
   "hl", 
+  "hlF", 
+  "dbHashUniquenessPerSM",
   "hash", 
   "allTr",
   "allDb",
@@ -69,11 +70,11 @@ var KeyT2T=[
 "renamed",
 //"ancestor",
 //"renamedAdditional",
-"STMatch1_02",
-"STMatch1_12",
-"STMatch1_20",
-"STMatch1_21",
-"STMatch1_22",
+// "STMatch1_02",
+// "STMatch1_12",
+// "STMatch1_20",
+// "STMatch1_21",
+// "STMatch1_22",
 //"STMatch2_02",
 //"STMatch2_12",
 //"STMatch2_20",
@@ -101,10 +102,13 @@ class MyTextFile{
 var KeyParseNDump=[ "b", "r", "R"]
 
 
-var StemLoose=['rsyncTempFile', 'arg', 'emptyFolders', 'remoteFileLocally', 'tmp', 'hashCollisionKeep'];
+  // StemLoose: files that are written one at a time
+var StemLoose=['rsyncTempFile', 'arg', 'emptyFolders', 'remoteFileLocally', 'tmp', 'hashCollisionKeep', 'hashCollisionUnify', 'hashCollisionUnifyToChange'];
 // var StemHashMult=["hashMultSMConsistent", "hashMultSMNonConsistent"]
-// var StemSMMult=["smMultHashConsistent", "smMultHashNonConsistent"]
-var KeySingle=["hashMultSMConsistent", "hashMultSMNonConsistent", "smMultHashConsistent", "smMultHashNonConsistent", 'hsmRevert', 'hsmToChange', 'smToChange', 'smRevert', 'smReadOnly'];
+// var StemSMMult=["smMultHashConsistent", "collisionXTM"]
+
+  // KeySingle: files that are written one at a time, but still devided into "S_" and "T_" version
+var KeySingle=["hashMultSMNonConsistent", "collision1TM", "collisionMTM", "collisionXTM", "collision1T1_mult", "collisionMT1", 'hsmRevert', 'hsmToChange', 'smToChange', 'smReadOnly', 'notInDb']; //, 'smRevert', "hashMultSMConsistent", "smMultHashConsistent", 
 
 gThis.calcFs=function(fsF){
   gThis.PathS={};  gThis.PathT={}
@@ -130,7 +134,7 @@ gThis.calcFs=function(fsF){
   // gThis.pathHashMultSMConsistent=new MyTextFile(fsF, 'hashMultSMConsistent');
   // gThis.pathHashMultSMNonConsistent=new MyTextFile(fsF, 'hashMultSMNonConsistent');
   // gThis.pathSMMultHashConsistent=new MyTextFile(fsF, 'smMultHashConsistent');
-  // gThis.pathSMMultHashNonConsistent=new MyTextFile(fsF, 'smMultHashNonConsistent');
+  // gThis.pathSMMultHashNonConsistent=new MyTextFile(fsF, 'collisionXTM');
   // gThis.pathHSMRevert=new MyTextFile(fsF, 'hsmRevert');
   // gThis.pathHSMToChange=new MyTextFile(fsF, 'hsmToChange');
   // gThis.pathSMToChange=new MyTextFile(fsF, 'smToChange');

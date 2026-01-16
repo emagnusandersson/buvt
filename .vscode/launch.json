@@ -9,18 +9,13 @@
             "request": "launch",
             "name": "Launch Program",
             "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "electron37",
+            "runtimeExecutable": "electron39",
             "windows": {
               "runtimeExecutable": "electron"
             },
-            //"args" : ["."],
-            //"args" : [".", "--dbg"],
-            //"args" : [".", "--dbg"],
-            //"args" : [".", "--dbg", "--wSeparateTargetDb"],
-            //"args" : [".", "--dbg", "--wNonSeparateTargetDb"],
             "args" : [".", "--dbg"],
             //"args" : ["--inspect=9229", ".", "--dbg"],
             
-        }
+        },
     ]
 }
