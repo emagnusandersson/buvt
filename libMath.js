@@ -30,3 +30,6 @@ globalThis.find=function(V) { // Returns indexes of nonzero elements
   V.forEach(function(x,i) { if(x) W.push(i);});
   return W;
 }
+
+globalThis.diffMy=function(a,b){ return (a<b) ? 1 : ((a>b)?-1:0) }
+//globalThis.diffMy=function(a,b){ return b-a; }

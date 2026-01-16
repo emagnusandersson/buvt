@@ -2,179 +2,210 @@
 "use strict"
 
 
-
-gThis.miniViewSMMatchCreator=function(el, charSide='S', boTab=false){
+gThis.miniViewSMMatchCreator=function(el, charSide='S'){
   el.clearUI=function(){
-    aConsistent.myText(`-`).prop({title:undefined})
-    aNonConsistent.myText(`-`).prop({title:undefined})
-    aToChange.myText(`-`).prop({title:undefined})
-    //aRevert.myText(`-`).prop({title:undefined})
-    if(boTarget){ divTDataList.clearUI(); }
-    //[buttFindNewMTime, butWrite, butRevert].forEach(ele=>ele.disable())
-    //buttFindNewMTime.disable();  //butWrite.disable(); //butRevert.disable();
+    [...Alink].forEach(ele=>ele.myText(`-`).prop({title:undefined}))
+    span1T1_single.myText(`-`)
+    aToChange.myText(`-`).prop({title:undefined});
   }
   el.setUI_SMMultiples=function(arg){
-    var {StrConsistentShort, StrNonConsistentShort, nTotConsistent, nPatConsistent, nTotNonConsistent, nPatNonConsistent}=arg;
-    aConsistent.myText(`${nPatConsistent} (${nTotConsistent})`).prop({title:StrConsistentShort?.join(`\n`)})
-    aNonConsistent.myText(`${nPatNonConsistent} (${nTotNonConsistent})`).prop({title:StrNonConsistentShort?.join(`\n`)})
-    //if(nPatNonConsistent){ buttFindNewMTime.enable();  }
+    var { nTot1TM, nPat1TM, nTotMTM, nPatMTM, n1T1_single, nTot1T1_mult, nPat1T1_mult, nTotMT1, nPatMT1, Str1TMShort, StrMTMShort, StrXTMShort, Str1T1_mult_Short, StrMT1Short}=arg;
+
+    a1TM.myText(`${nPat1TM} (${nTot1TM})`).prop({title:Str1TMShort?.join(`\n`)})
+    aMTM.myText(`${nPatMTM} (${nTotMTM})`).prop({title:StrMTMShort?.join(`\n`)})
+    span1T1_single.myText(`${n1T1_single}`)
+    a1T1_mult.myText(`${nPat1T1_mult} (${nTot1T1_mult})`).prop({title:Str1T1_mult_Short?.join(`\n`)})
+    aMT1.myText(`${nPatMT1} (${nTotMT1})`).prop({title:StrMT1Short?.join(`\n`)})
+
+    var nPatXTM=nPat1TM+nPatMTM, nTotXTM=nTotMTM+nTotMTM
+    aXTM.myText(`${nPatXTM} (${nTotXTM})`).prop({title:StrXTMShort?.join(`\n`)})
   }
   el.setUI_NewMTime=function(arg){
     var {nToChange, StrToChangeShort, nRevert, StrRevertShort}=arg
     aToChange.myText(`${nToChange}`).prop({title:StrToChangeShort?.join(`\n`)})
-    //aRevert.myText(`${nRevert}`).prop({title:StrRevertShort?.join(`\n`)})
-    //butWrite.enable(); //butRevert.enable();
   }
+  el.setUIBasedOnSetting=function(arg){ }
 
-  el.setUIBasedOnSetting=function(arg){
-    selTResCollision.value=arg.charTResCollision;
-  }
-  var headCollision=createElement('h3').css({'text-align':'left', 'font-weight':'bold'}).myAppend('SM collisions').css({margin:'0 0.4em 0 0', display:'inline'}); //.prop({title:'SM (and hashes) are read from the db-file (not from the actual files) (so make sure the db-file is updated first)'})
-  var spanTRes=createElement('span').myAppend('tResCollision: ')
-
-  var Opt=[];   for(var k of KeyTRes){ var optTmp=createElement('option').myText(k).prop('value',k);  Opt.push(optTmp); }
-  var selTResCollision=createElement('select').myAppend(...Opt).on('change',async function(e){
-    var [err]=await argumentTab.setTResCollision(this.value); if(err) {debugger; myConsole.error(err); return;}
-  })
-  var divTRes=createElement('span').myAppend(spanTRes, selTResCollision)
+  var headCollision=createElement('h3').css({'text-align':'left', 'font-weight':'bold'}).myAppend('SM collisions among hash-codes').css({margin:'0 0.4em 0 0', display:'inline'}).prop({title:'That is: files with the same hash-code may have the same SM.'})
 
 
-  var boTarget=charSide=='T'
-  var smMultWork
-  //var strHeadA=`SM-collisions`, strHeadB=boTab?` (${charSide})`:'', strHead=strHeadA+strHeadB
-  var head=createElement('h3').css({'text-align':'left'}).myAppend(charSide).css({margin:'0'}); //.prop({title:'Where SM (and hashes) are read from the db-file (not from the actual files) (so make sure the db-file is updated)'})
+  var htmlBody=
+  `<tr><td colspan=2><img/><a/></td> <td><img/><a/></td> <td><span>To be fixed</span><br/><span>∑: </span><a/></td></tr>
+  <tr><td><img/><span/></td> <td><img/><a/></td> <td><img/><a/></td> <td><span>OK (Ignored)</span></td></tr>`
+  var tBody=createElement('tbody').myHtml(htmlBody);
+  var table=createElement('table').myAppend(tBody).css({'border-collapse':'separate', borderSpacing: '0px 0px'});
 
-  var divTDataList=createElement('div').css({'grid-area':'1/2', background:'var(--bg-colorEmp)'})
-  if(boTarget){ divTDataListCreator(divTDataList);  } else divTDataList.hide()
+  var Tr=tBody.children, [tr0, tr1]=Tr,  Td0=tr0.children, [td1TM, tdMTM]=Td0, Td1=tr1.children, [td1T1_single, td1T1_mult, tdMT1]=Td1
 
-  
-    // FindCollision
-  //var spanLab=createElement('span').css({'text-align':'left', 'font-weight':'bold'}).myAppend("Find sm collisions")
-  //var headFindCollision=createElement('div').css({'text-align':'left'}).myAppend(butSearch);
-  var spanLab=createElement('span').myText('Consistent hash: ').prop({title:`Where within each "SM-colliding" group, all files have the same hash code. (Nothing will be done to these files)`}) // "SM-colliding" group: files with the same "SM" (size and modification time)
-  var funConsistent=makeOpenExtCB(gThis[`PathSingle${charSide}`].smMultHashConsistent);
-  var aConsistent=createElement('a').prop({href:''}).on('click',funConsistent);
-  var imgOTO=createElement('img').prop({src:'icons/buvtSMToHash_OTO.png'}).css({zoom:'0.3'});
-  var divSMMultHashConsistent=createElement('div').myAppend(spanLab, aConsistent, imgOTO)
+  var Img=tBody.querySelectorAll('img'), [img1TM, imgMTM, img1T1, img1T1mult, imgMT1]=Img;
+  var Span=tBody.querySelectorAll('span'), [spanToBeFixed, spanSum, span1T1_single, spanIgnored]=Span
+  var Alink=tBody.querySelectorAll('a'), [a1TM, aMTM, aXTM, a1T1_mult, aMT1]=Alink;
 
-  var spanLab=createElement('span').myText('Non-consistent hash: ').prop({title:`Where within each "SM-colliding" group there at least one file that has a hash code different from the others.`}) // "SM-colliding" group: files with the same "SM" (size and modification time)
-  var fun=makeOpenExtCB(gThis[`PathSingle${charSide}`].smMultHashNonConsistent);
-  var aNonConsistent=createElement('a').prop({href:''}).addClass('input').on('click',fun);
-  var imgOTM=createElement('img').prop({src:'icons/buvtSMToHash_OTM.png'}).css({zoom:'0.3'});
-  var divSMMultHashNonConsistent=createElement('div').myAppend(spanLab, aNonConsistent, imgOTM)
-  var ddFindCollision=createElement('dd').myAppend(divSMMultHashConsistent, divSMMultHashNonConsistent)
-  
+  var fleImgT="icons/SM2Hash/";
+  var LeafImg=['buvtSMToHash_1TM.png', 'buvtSMToHash_MTM.png', 'buvtSMToHash_1T1_singleC.png', 'buvtSMToHash_1T1_multC.png', 'buvtSMToHash_MT1.png'];
+  [...Img].forEach(   (ele, i)=>ele.attr({src:`${fleImgT}${LeafImg[i]}`}).css({zoom:0.4, display:'block'})   );
+  img1TM.css({margin:'auto'});
+
+  [...Td0, ...Td1, table].forEach(   (ele, i)=>ele.css({'border':'0px'})   );
+
+    // Coloring top/bottom borders
+  [td1TM, tdMTM].forEach(   (ele, i)=>ele.css({'border-top':'var(--text-red) solid', 'border-bottom':'var(--text-red) solid'})   );
+  [td1T1_single, td1T1_mult, tdMT1].forEach(   (ele, i)=>ele.css({'border-top':'var(--text-green) solid', 'border-bottom':'var(--text-green) solid'})   );
+
+    // Coloring right/left borders
+  td1TM.css({'border-left':'var(--text-red) solid'});
+  td1T1_single.css({'border-left':'var(--text-green) solid'});
+  tdMTM.css({'border-right':'var(--text-red) solid'});
+  tdMT1.css({'border-right':'var(--text-green) solid'});
+
+   
+  [tdMTM, tdMT1].forEach(ele=>ele.css({'border-left':'1px solid'}));  // Border between between 1TX and MTX
+
+  spanToBeFixed.css({color:'var(--text-red)', 'font-weight': 'bolder'});
+  spanIgnored.css({color:'var(--text-green)', 'font-weight': 'bolder'});
+
+  var StrTmp=["collision1TM", "collisionMTM", "collisionXTM", "collision1T1_mult", "collisionMT1"];
+  [...Alink].forEach((ele,i)=>{
+    var fun=makeOpenExtCB(gThis[`PathSingle${charSide}`][StrTmp[i]]);  ele.prop({href:""}).on('click', fun);
+  });
+
     // MakeUnifrom
   var spanLab=createElement('span').css({'text-align':'left', 'font-weight':'bold'}).myAppend("New mtimes").prop({title:'... to files as well as db.'})
-  var aToChange=createElement('a').prop({href:''}).addClass('input').on('click',makeOpenExtCB(gThis[`PathSingle${charSide}`].smToChange));
+  var aToChange=createElement('a').prop({href:''}).on('click',makeOpenExtCB(gThis[`PathSingle${charSide}`].smToChange)); //.addClass('input')
   var divNew=createElement('div').css({'text-align':'left'}).myAppend(spanLab, " ", aToChange); //, ' ', butWrite
 
   
-  el.myAppend(headCollision, divTDataList, ddFindCollision, divNew).css({'text-align':'left'}); //head,  ,ddFindNewMTime, divSide, headReadOnly, ddReadOnly, divTRes, , butSearch, divRevert, divFindNewMTime
+  el.myAppend(table, divNew).css({'text-align':'left'}); //headCollision
 
-  el.css({background:"var(--bg-color)"});
   el.clearUI()
   return el
 }
 
-gThis.miniViewHashMatchCreator=function(el, charSide='S', boTab=false){
-  el.clearUI=function(){
-    aConsistent.myText(`-`).prop({title:undefined})
-    aNonConsistent.myText(`-`).prop({title:undefined})
-    aToChange.myText(`-`).prop({title:undefined})
-    aRevert.myText(`-`).prop({title:undefined})
-    if(boTarget){ divTDataList.clearUI(); }
-    [butWrite, butRevert].forEach(ele=>ele.disable())
+
+
+gThis.miniViewHashMatchCreator=function(el){
+  el.setUp=function(){
   }
-  //var PathCur=gThis[`Path${charSide}`];
-  var butSearch=createElement('button').myAppend('Search').attr({'title':undefined}).on('click',  async function(){
+  el.clearUI=function(){
+    [...Alink].forEach(ele=>ele.myText(`-`).prop({title:undefined}))
+    span1T1_single.myText(`-`)
+    aToChange.myText(`-`).prop({title:undefined});
+    butWrite.disable()
+  }
+  el.setUI_SMMultiples=function(arg){
+    var { nTot1TM, nPat1TM, nTotMTM, nPatMTM, n1T1_single, nTot1T1_mult, nPat1T1_mult, nTotMT1, nPatMT1, Str1TMShort, StrMTMShort, StrXTMShort, Str1T1_mult_Short, StrMT1Short}=arg;
+
+    a1TM.myText(`${nPat1TM} (${nTot1TM})`).prop({title:Str1TMShort?.join(`\n`)})
+    aMTM.myText(`${nPatMTM} (${nTotMTM})`).prop({title:StrMTMShort?.join(`\n`)})
+    span1T1_single.myText(`${n1T1_single}`)
+    a1T1_mult.myText(`${nPat1T1_mult} (${nTot1T1_mult})`).prop({title:Str1T1_mult_Short?.join(`\n`)})
+    aMT1.myText(`${nPatMT1} (${nTotMT1})`).prop({title:StrMT1Short?.join(`\n`)})
+  }
+  el.setUI_NewMTime=function(arg){
+    var {nToChange, StrToChangeShort, nRevert, StrRevertShort}=arg
+    aToChange.myText(`${nToChange}`).prop({title:StrToChangeShort?.join(`\n`)})
+  }
+
+  var openExtCBLoc=function(ev){
+    var boTarget=vippTarget.getStat(), charSide=boTarget?'T':'S';
+    var key=this.attr('data-key')
+    var pathTmp=gThis[`PathSingle${charSide}`][key]
+    var fun=makeOpenExtCB(pathTmp);  fun.call(this, ev)
+  }
+  var funRadioClick=function(){  };
+  var funGo=async function(){
+    var boTarget=vippTarget.getStat(), charSide=boTarget?'T':'S';
     var strLab=`Find hash collisions`
     var charTRes='9'; //selTRes.value
     myConsole.clear(); setMess(strLab+' ...'); blanket.show();
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var {fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir}=result;
+    var [err, argGeneralT]=await getSelectedFrFileWExtra(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    argGeneral=argGeneralT
+    var {objOptSource, objOptTarget, fsSourceDir, strHostTarget, fsTargetDbDir, fsTargetDataDir}=argGeneral;
+    var objOptSide=boTarget?objOptTarget:objOptSource
 
-    var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var [err, fsTargetDbDir]=await myRealPath(fiTargetDbDir, strHostTarget); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return; }
-    var fsTargetDataDir=fsTargetDbDir; if(flTargetDataDir) fsTargetDataDir=fsTargetDbDir+charF+flTargetDataDir
-    //var flTargetF=fsTargetDataDir.slice(fsTargetDbDir.length).trim(); flTargetF=trim(flTargetF, charF)+charF
-    
-    // var [err, result]=await getFleF({boTarget, flTargetDataDir, fsTargetDbDir, strHostTarget}); if(err) {debugger; return [err];}
-    // var {FleF, BoExist, indCur}=result
-    // if(boTarget && flTargetDataDir){ divTDataList.setUI({FleF, BoExist, indCur}); }
+    var [err, result]=await HashMultWork.readData({argGeneral, charSide}); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {arrDb_Others, arrDb_Own:arrDbOwnNew}=result
+    //var arg=extend({}, {fsSourceDir, strHostTarget, fsTargetDbDir, fsTargetDataDir, charTRes, charSide}); //FleF
+    var [err, result]=await SMMultWork.getMult({arrDbOwnNew, charSide}); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {StrConsistentShort, StrNonConsistentShort, nTotXT1, nPatXT1, nTotXTM, nPatXTM, nToChange, nRevert, StrToChangeShort, StrRevertShort}=result;
 
-    var arg=extend({}, {fsSourceDir, strHostTarget, fsTargetDbDir, fsTargetDataDir, charTRes, charSide}); //FleF
-    hashMultWork=new HashMultWork()
-    var [err, result]=await hashMultWork.getMult(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var {StrConsistentShort, StrNonConsistentShort, nTotConsistent, nPatConsistent, nTotNonConsistent, nPatNonConsistent, nToChange, nRevert, StrToChangeShort, StrRevertShort}=result
+    //a1TX.myText(`${nPatXT1} (${nTotXT1})`).prop({title:StrConsistentShort?.join(`\n`)})
+    //aMTX.myText(`${nPatXTM} (${nTotXTM})`).prop({title:StrNonConsistentShort?.join(`\n`)})
 
-    //var {n, nPatSM, nPatSMMult, nSMMult}=objSM
-    aConsistent.myText(`${nPatConsistent} (${nTotConsistent})`).prop({title:StrConsistentShort?.join(`\n`)})
-    aNonConsistent.myText(`${nPatNonConsistent} (${nTotNonConsistent})`).prop({title:StrNonConsistentShort?.join(`\n`)})
+    var [err, result]=await hashMultWork.findNewMTime(); if(err) {debugger; return [err];}
+    var {nToChange, StrToChangeShort, nRevert, StrRevertShort, arrToChange}=result
+
     aToChange.myText(`${nToChange}`).prop({title:StrToChangeShort?.join(`\n`)})
-    aRevert.myText(`${nRevert}`).prop({title:StrRevertShort?.join(`\n`)})
-    if(nToChange){ butWrite.enable(); butRevert.enable();}
+    if(nToChange){ butWrite.enable();}
     setMess(strLab+': Done'); blanket.hide();
-  }).disable();
-  var hashMultWork
+  }
 
 
-  var boTarget=charSide=='T'
-  //var strHeadA=`Hash-collisions`, strHeadB=boTab?` (${charSide})`:'', strHead=strHeadA+strHeadB;
-  var head=createElement('h3').css({'text-align':'left'}).myAppend(charSide).css({margin:'0'});
-
-  var divTDataList=createElement('div').css({'grid-area':'1/2', background:'var(--bg-colorEmp)'})
-  if(boTarget){ divTDataListCreator(divTDataList);  } else divTDataList.hide()
-
-  var html=`<input type="checkbox"><span class="slider round"></span>`;
-  var labSwitch=createElement('label').addClass('switch').myHtml(html).css({'vertical-align':'middle'})
-  var divSide=createElement('div').myAppend(`Source `, labSwitch, ` Target`)
-  var [cbSide]=labSwitch.querySelectorAll('input')
-
-    // FindCollision
-  //var spanLab=createElement('span').css({'text-align':'left', 'font-weight':'bold'}).myAppend("Find hash collisions")
-  //var headB0=createElement('div').css({'text-align':'left'}).myAppend(butSearch);
-
-  var spanLab=createElement('span').myText('Consistent SM: ')
-  var funConsistent=makeOpenExtCB(gThis[`PathSingle${charSide}`].hashMultSMConsistent);
-  var aConsistent=createElement('a').prop({href:''}).on('click',funConsistent);
-  var imgOTO=createElement('img').prop({src:'icons/buvtHashToSM_OTO.png'}).css({zoom:'0.3'});
-  var divHashMultSMConsistent=createElement('div').myAppend(spanLab, aConsistent, imgOTO)
-
-  var spanLab=createElement('span').myText('Non-consistent SM: ')
-  var funNonConsistent=makeOpenExtCB(gThis[`PathSingle${charSide}`].hashMultSMNonConsistent);
-  var imgOTM=createElement('img').prop({src:'icons/buvtHashToSM_OTM.png'}).css({zoom:'0.3'});
-  var aNonConsistent=createElement('a').prop({href:''}).addClass('input').on('click',funNonConsistent);
-  var divHashMultSMNonConsistent=createElement('div').myAppend(spanLab, aNonConsistent, imgOTM)
-  var dd0=createElement('dd').myAppend(divHashMultSMConsistent, divHashMultSMNonConsistent)
+  var inpS=createElement('input'),   inpT=createElement('input');
+  var labS=createElement('label').myText(`Source`),   labT=createElement('label').myText(`Target`);
+  var vippTarget=createElement('div').myAppend(labS, inpS, inpT, labT).css({margin:'0 0 1em'});
+  var vippTarget=vippButtonExtend(vippTarget, 'strSourceOrTarget3', funRadioClick);
 
 
-    // MakeUnifrom
+  var butGo=createElement('button').myAppend('Go').attr({'title':undefined}).on('click', funGo);
+  var hashMultWork, argGeneral
+
+  var charSide='S';
+
+  var head=createElement('h3').css({'text-align':'left', 'font-weight':'bold'}).myAppend('Uniquify SM-hashcode relations').prop({title:'Hash and SM are read from the db-file (not from the actual files) (so make sure the db-file is updated first)'}).css({margin:'0 0.4em 0'})
+  //var headA=createElement('h3').css({'text-align':'left'}).myAppend(charSide).css({margin:'0'});
+
+
+  var htmlBody=
+  `<tr><td colspan=2><img/><a/></td> <td><img/><a/></td></tr>
+  <tr><td><img/><span/></td> <td><img/><a/></td> <td><img/><a/></td></tr>
+  <tr><td colspan=2><span>(Ignored)</span></td> <td><span>To be fixed</span></td> </tr>`; //<br/><span>∑: </span><a/>
+  var tBody=createElement('tbody').myHtml(htmlBody);
+  var table=createElement('table').myAppend(tBody).css({'border-collapse':'separate', borderSpacing: '0px 0px'});
+
+  var Tr=tBody.children, [tr0, tr1, tr2]=Tr,  Td0=tr0.children, [td1TM, tdMTM]=Td0, Td1=tr1.children, [td1T1_single, td1T1_mult, tdMT1]=Td1, Td2=tr2.children, []=Td2
+
+  var Img=tBody.querySelectorAll('img'), [img1TM, imgMTM, img1T1, img1T1mult, imgMT1]=Img;
+  var Span=tBody.querySelectorAll('span'), [span1T1_single, spanIgnored, spanToBeFixed, spanSum]=Span
+  var Alink=tBody.querySelectorAll('a'), [a1TM, aMTM, a1T1_mult, aMT1]=Alink; //aMTX
+
+  var fleImgT="icons/SM2Hash/";
+  var LeafImg=['buvtSMToHash_1TM.png', 'buvtSMToHash_MTM.png', 'buvtSMToHash_1T1_singleC.png', 'buvtSMToHash_1T1_multC.png', 'buvtSMToHash_MT1.png'];
+  [...Img].forEach(   (ele, i)=>ele.attr({src:`${fleImgT}${LeafImg[i]}`}).css({zoom:0.4, display:'block'})   );
+  img1TM.css({margin:'auto'});
+
+  [...Td0, ...Td1, table].forEach(   (ele, i)=>ele.css({'border':'0px'})   );
+
+    // Coloring borders 
+  td1TM.css({'border-left':'var(--text-green) solid', 'border-top':'var(--text-green) solid', 'border-right':'1px solid', 'border-bottom':'1px solid'});
+  tdMTM.css({'border-top':'var(--text-green) solid', 'border-right':'var(--text-green) solid', 'border-bottom':'var(--text-green) solid'});
+  td1T1_single.css({'border-left':'var(--text-green) solid', 'border-bottom':'var(--text-green) solid'});
+  td1T1_mult.css({'border-bottom':'var(--text-green) solid', 'border-right':'var(--text-green) solid'});
+  tdMT1.css({'border':'var(--text-red) solid', 'translate':'2px 2px'});
+
+
+  spanToBeFixed.css({color:'var(--text-red)', 'font-weight': 'bolder'});
+  spanIgnored.css({color:'var(--text-green)', 'font-weight': 'bolder'});
+
+  var StrTmp=["collision1TM", "collisionMTM", "collision1T1_mult", "collisionMT1"];
+  [...Alink].forEach((ele,i)=>{
+    ele.prop({href:""}).attr({'data-key':StrTmp[i]}).on('click', openExtCBLoc);
+  });
+
+
   var spanLab=createElement('span').css({'text-align':'left', 'font-weight':'bold'}).myAppend("New mtimes").prop({title:'... to files as well as db.'})
-  var fun=makeOpenExtCB(gThis[`PathSingle${charSide}`].hsmToChange);
-  var aToChange=createElement('a').prop({href:''}).addClass('input').on('click',fun);
-  var butWrite=createElement('button').myText('Write').on('click', async function(){
+  var aToChange=createElement('a').prop({href:''}).attr({'data-key':'hsmToChange'}).on('click', openExtCBLoc); //.addClass('input')
+  var divNew=createElement('div').css({'text-align':'left'}).myAppend(spanLab, " ", aToChange); //, ' ', butWrite
+
+  var butWrite=createElement('button').myAppend('Write to db and update mtimes').css({margin:'auto'}).on('click', async function(){
     var strLab=`Changing mtimes`
     myConsole.clear(); setMess(strLab+' ...'); blanket.show();
     var [err]=await hashMultWork.mySetMTime(gThis[`PathSingle${charSide}`].hsmToChange); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
     setMess(strLab+': Done'); blanket.hide();
-  });
-  var headB1=createElement('div').css({'text-align':'left'}).myAppend(spanLab, " ", aToChange, ' ', butWrite)
+  }).disable(); //.on('click', funWriteToDb)
+  var divWrite=createElement('div').myAppend(butWrite);
 
-    // Revert
-  var spanLab=createElement('span').css({'text-align':'left', 'font-weight':'bold'}).myAppend("Revert")
-  var fun=makeOpenExtCB(gThis[`PathSingle${charSide}`].hsmRevert);
-  var aRevert=createElement('a').prop({href:''}).addClass('input').on('click',fun);
-  var butRevert=createElement('button').myText('Write').on('click', async function(){
-    var strLab=`Changing mtimes`
-    myConsole.clear(); setMess(strLab+' ...'); blanket.show();
-    var [err, result]=await hashMultWork.mySetMTime(gThis[`PathSingle${charSide}`].hsmRevert); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    //var {nRewrite, StrRevert}=result
-    setMess(strLab+': Done'); blanket.hide();
-  });
-  var divRevert=createElement('div').css({'text-align':'left'}).myAppend(spanLab, ' ', aRevert, ' ', butRevert)
-
-  el.myAppend(head, butSearch, divTDataList, dd0, headB1, divRevert).css({'text-align':'left'}); //  
+  el.myAppend(head, vippTarget, butGo, table, divNew, divWrite).css({'text-align':'left'}); //, divRevert
 
   el.css({background:"var(--bg-color)"});
   el.clearUI()
@@ -182,33 +213,3 @@ gThis.miniViewHashMatchCreator=function(el, charSide='S', boTab=false){
 }
 
 
-
-gThis.divCollisionHashWCreator=function(el){
-  el.clearUI=function(){ miniViewHashMatchS.clearUI(); miniViewHashMatchT.clearUI(); }
-  el.setUp=async function(){
-    var [err, result]=await argumentTab.getSelectedFrFile(); 
-    if(err) {
-      if(err.message=='no-argument-selected') { var label='(no-argument-selected)'; }
-      else {debugger; myConsole.error(err); return;}
-    }
-    else { var {charTResCollision}=result; }
-    //spanTResB.myText(charTResCollision);
-    selTResCollision.value=charTResCollision;
-  }
-  var head=createElement('h3').css({'text-align':'left', 'font-weight':'bold'}).myAppend('Fix hash collisions').prop({title:'Hash and SM are read from the db-file (not from the actual files) (so make sure the db-file is updated first)'}).css({margin:'0 0.4em 0'})
-  var spanTRes=createElement('span').myAppend('tResCollision: ')
-  //var spanTResB=createElement('span');
-
-  var Opt=[];   for(var k of KeyTRes){ var optTmp=createElement('option').myText(k).prop('value',k);  Opt.push(optTmp); }
-  var selTResCollision=createElement('select').myAppend(...Opt).on('change',async function(e){
-    var [err]=await argumentTab.setTResCollision(this.value); if(err) {debugger; myConsole.error(err); return;}
-  })
-
-  var divH=createElement('div').myAppend(head, spanTRes, selTResCollision).css({'grid-area':'1/1/span 1/span 2'})
-
-  var miniViewHashMatchS=miniViewHashMatchCreator(createElement('div'), 'S', true)
-  var miniViewHashMatchT=miniViewHashMatchCreator(createElement('div'), 'T', true)
-  el.myAppend(divH, miniViewHashMatchS, miniViewHashMatchT).css({display:'grid', 'grid-template-columns':'1fr 1fr', 'column-gap':'3px','margin-top':'0px', 'margin-bottom':'0px', flex:'0 0 auto', 'overflow-y':'auto'})
-  el.hide()
-  return el
-}

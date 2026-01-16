@@ -29,7 +29,6 @@ KeyTRes.push('d'); IntTDiv['d']=BigInt(2e9);
 
 gThis.settings={
   leafDb:"buvtDb.txt", 
-  leafDbB:"buvtDbB.txt", 
   charTRes:'9'
 }
 gThis.LeafFilter={b:".buvt-filter", r:".rsync-filter", R:".rsync-filter"};
@@ -103,8 +102,8 @@ var KeyParseNDump=[ "b", "r", "R"]
 
 var StemLoose=['rsyncTempFile', 'arg', 'emptyFolders', 'remoteFileLocally', 'tmp', 'hashCollisionKeep'];
 // var StemHashMult=["hashMultSMConsistent", "hashMultSMNonConsistent"]
-// var StemSMMult=["smMultHashConsistent", "smMultHashNonConsistent"]
-var KeySingle=["hashMultSMConsistent", "hashMultSMNonConsistent", "smMultHashConsistent", "smMultHashNonConsistent", 'hsmRevert', 'hsmToChange', 'smToChange', 'smRevert', 'smReadOnly'];
+// var StemSMMult=["smMultHashConsistent", "collisionXTM"]
+var KeySingle=["hashMultSMConsistent", "hashMultSMNonConsistent", "smMultHashConsistent", "collision1TM", "collisionMTM", "collisionXTM", "collision1T1_mult", "collisionMT1", 'hsmRevert', 'hsmToChange', 'smToChange', 'smRevert', 'smReadOnly'];
 
 gThis.calcFs=function(fsF){
   gThis.PathS={};  gThis.PathT={}
@@ -130,7 +129,7 @@ gThis.calcFs=function(fsF){
   // gThis.pathHashMultSMConsistent=new MyTextFile(fsF, 'hashMultSMConsistent');
   // gThis.pathHashMultSMNonConsistent=new MyTextFile(fsF, 'hashMultSMNonConsistent');
   // gThis.pathSMMultHashConsistent=new MyTextFile(fsF, 'smMultHashConsistent');
-  // gThis.pathSMMultHashNonConsistent=new MyTextFile(fsF, 'smMultHashNonConsistent');
+  // gThis.pathSMMultHashNonConsistent=new MyTextFile(fsF, 'collisionXTM');
   // gThis.pathHSMRevert=new MyTextFile(fsF, 'hsmRevert');
   // gThis.pathHSMToChange=new MyTextFile(fsF, 'hsmToChange');
   // gThis.pathSMToChange=new MyTextFile(fsF, 'smToChange');
