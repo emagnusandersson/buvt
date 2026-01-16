@@ -66,9 +66,9 @@ class KeySM:
 
 
 class Rule:
-  def __init__(self, strPat, boInc, charType, boIncSub=False, strReg='', intLevel=0, iCandidateStart=0): #, boRootInFilterF
-    self.strPat=strPat; self.boInc=boInc; self.charType=charType; self.boIncSub=boIncSub; self.strReg=strReg; self.intLevel=intLevel; self.iCandidateStart=iCandidateStart  # self.boRootInFilterF=boRootInFilterF;
-    if(strReg=='r'): self.regPat=re.compile(strPat)
+  def __init__(self, strPat, boInc, charType, boIncSub=False, charReg='r', intLevel=0, iCandidateStart=0): #, boRootInFilterF
+    self.strPat=strPat; self.boInc=boInc; self.charType=charType; self.boIncSub=boIncSub; self.charReg=charReg; self.intLevel=intLevel; self.iCandidateStart=iCandidateStart  # self.boRootInFilterF=boRootInFilterF;
+    if(charReg=='R'): self.regPat=re.compile(strPat)
   def test(self, shortname, flName, intLevelOfStr):
       # "Bail" if the pattern is at a level where it is not supposed to be used. 
     if(not self.boIncSub and intLevelOfStr>self.intLevel): return False  
@@ -82,10 +82,10 @@ class Rule:
     else: strName=shortname
 
       # Test pattern
-    if(self.strReg=='r'):
+    if(self.charReg=='R'):
       res=self.regPat.search(strName)
       boMatch=bool(res)
-    elif(self.strReg=='g'):
+    elif(self.charReg=='G'):
       boMatch=fnmatch.fnmatch(strName, self.strPat)
     else:
       boMatch=self.strPat==strName
@@ -93,10 +93,10 @@ class Rule:
 
 
 class RuleR: # Rule for rsync
-  def __init__(self, boInc, strPat, iCandidateStart=0): #, intLevel=0, charType, boFrontTied=False, strReg=''
+  def __init__(self, boInc, strPat, iCandidateStart=0): #, intLevel=0, charType, boFrontTied=False, charReg='_'
     self.boInc=boInc; self.iCandidateStart=iCandidateStart  #  self.intLevel=intLevel;
-    #if(strReg=='r'): self.regPat=re.compile(strPat)
-    if strPat[-1]=='/': charType='F'; strPat=strPat[0:-1]
+    #if(charReg=='R'): self.regPat=re.compile(strPat)
+    if(strPat[-1]=='/'): charType='F'; strPat=strPat[0:-1]
     else: charType='B'
     #strCtrl=strCtrl.lower()
     boFrontTied=strPat[0]=='/'
@@ -169,19 +169,33 @@ def parseFilter(strData, intLevel, iCandidateStart):
       iSpace=strRow.find(' ')
       if(iSpace==-1): strCtrl=strRow; strPat=""
       else: strCtrl=strRow[0:iSpace]; strPat=strRow[iSpace:].strip()
-      #strCtrl=strCtrl.ljust(5, '_')
-      boInc=strCtrl[0]=='+'
-      charType=strCtrl[1] if len(strCtrl) > 1 else 'f'
-      strCtrl=strCtrl.lower()
-      boIncSub=strCtrl[2]=='s' if len(strCtrl) > 2 else False
-      boRootInFilterF=strCtrl[3]=='r' if len(strCtrl) > 3 else False
+        # Put in default values into strCtrl
+      strCtrl=strCtrl.ljust(5, '_')
+      arrCtrl=list(strCtrl)
+      if(arrCtrl[1]=='_'): arrCtrl[1]='f'
+      if(arrCtrl[2]=='_'): arrCtrl[2]='s'
+      if(arrCtrl[3]=='_'): arrCtrl[3]='r'
+      if(arrCtrl[4]=='_'): arrCtrl[4]='r'
+      charInc, charType, charIncSub, charRootInFilterF, charReg =arrCtrl
+      # strCtrl=''.join(arrCtrl)
+      # strCtrlL=strCtrl.lower()
+      # arrCtrlL=list(strCtrlL)
+      # charIncL, charTypeL, charIncSubL, charRootInFilterFL, charRegL =arrCtrlL
+      if(charInc not in '+-'): return {"strTrace":myErrorStack(f"charInc not in '+-': '{strCtrl}'")}, None, None
+      if(charType not in 'fFB_'): return {"strTrace":myErrorStack(f"charType not in 'fFB_': '{strCtrl}'")}, None, None
+      if(charIncSub not in 'Ss_'): return {"strTrace":myErrorStack(f"charIncSub not in 'Ss_': '{strCtrl}'")}, None, None
+      if(charRootInFilterF not in 'Rr_'): return {"strTrace":myErrorStack(f"charRootInFilterF not in 'Rr_': '{strCtrl}'")}, None, None
+      if(charReg not in 'RrG_'): return {"strTrace":myErrorStack(f"charReg not in 'RrG_': '{strCtrl}'")}, None, None
+      boInc=charInc=='+'
+      boIncSub=charIncSub=='S'
+      boRootInFilterF=charRootInFilterF=='R'
       iCandidateStartTmp=iCandidateStart if(boRootInFilterF) else None
-      strReg='r' if len(strCtrl) > 4 and strCtrl[4]=='r' else ''
-      rule = Rule(strPat, boInc, charType, boIncSub, strReg, intLevel, iCandidateStartTmp)
+      #strCtrl=strCtrl.lower()
+      rule = Rule(strPat, boInc, charType, boIncSub, charReg, intLevel, iCandidateStartTmp)
       if(charType=='f'): arrRulef.append(rule)
       elif(charType=='F'): arrRuleF.append(rule)
       elif(charType=='B'): arrRulef.append(rule); arrRuleF.append(rule)
-      else: return {"strTrace":myErrorStack("charType!='fFB'")}, None, None
+      else: return {"strTrace":myErrorStack("charType not in 'fFB'")}, None, None
   return None, arrRulef, arrRuleF
 
 #rule = Rule('.buvt-filter', False, 'f', False, False, 0, None); arrRulef.append(rule)
@@ -418,10 +432,12 @@ def parseTreeNDump(**arg):
     treeParser=TreeParser()
     err, arrTreef, arrTreeF =treeParser.parseTree(fsDir, leafFilter, leafFilterFirst, charFilterMethod) #, charTRes
     if(err): 
-      if(err["e"].errno==errno.ENOENT): print(f'No such folder: {fsDir}')
-      else: print(err["strTrace"])
+      if("e" in err and err["e"].errno==errno.ENOENT): print(f'No such folder: {fsDir}')
+      else: 
+        print(err["strTrace"])
+        sys.exit(err["strTrace"])
 
-      sys.exit(stdData)
+      sys.exit('exiting')
       return
   else:
     err, arrTreef, arrTreeF, arrOther =getRsyncList(fsDir, leafFilter, leafFilterFirst)
@@ -477,7 +493,7 @@ def makeFolders(**arg):
 
   err, arrFolder=parseReturnSeparatedList(fsFile)
   if(err): 
-    if(err["e"].errno==errno.ENOENT): print(f'No such file: {fsFile}')
+    if("e" in err and err["e"].errno==errno.ENOENT): print(f'No such file: {fsFile}')
     else: print(err["strTrace"])
     return
 
@@ -682,7 +698,7 @@ def rmFolders(**arg):
   fsFile=myRealPathf(arg["fiFile"])
   err, arrEntry=parseReturnSeparatedList(fsFile)
   if(err): 
-    if(err["e"].errno==errno.ENOENT): print(f'No such file: {fsFile}')
+    if("e" in err and err["e"].errno==errno.ENOENT): print(f'No such file: {fsFile}')
     else: print(err["strTrace"])
     return
 
@@ -877,7 +893,7 @@ def main():
 # print(f'Signal: {str(signal.SIGTERM)}')
 
 
-if __name__ == "__main__":
+if(__name__ == "__main__"):
   main()
 else:
   pass

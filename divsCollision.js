@@ -27,14 +27,16 @@ gThis.miniViewSMMatchCreator=function(el, charSide='S', boTab=false){
   }
 
   el.setUIBasedOnSetting=function(arg){
-    selTResCollision.value=arg.charTResCollision;
+    //selTResCollision.value=arg.charTResCollision;
   }
-  var headCollision=createElement('h3').css({'text-align':'left', 'font-weight':'bold'}).myAppend('SM collisions').css({margin:'0 0.4em 0 0', display:'inline'}); //.prop({title:'SM (and hashes) are read from the db-file (not from the actual files) (so make sure the db-file is updated first)'})
+  var headCollision=createElement('h3').css({'text-align':'left', 'font-weight':'bold'}).myAppend('SM collisions among hash-codes').css({margin:'0 0.4em 0 0', display:'inline'}).prop({title:'That is: files with the same hash-code may have the same SM.'})
   var spanTRes=createElement('span').myAppend('tResCollision: ')
 
   var Opt=[];   for(var k of KeyTRes){ var optTmp=createElement('option').myText(k).prop('value',k);  Opt.push(optTmp); }
   var selTResCollision=createElement('select').myAppend(...Opt).on('change',async function(e){
-    var [err]=await argumentTab.setTResCollision(this.value); if(err) {debugger; myConsole.error(err); return;}
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {keySource, keyTarget}=result, key=boTarget?keyTarget:keySource;
+    var [err]=await locationTab.setTResCollision(key, this.value); if(err) {debugger; myConsole.error(err); return;}
   })
   var divTRes=createElement('span').myAppend(spanTRes, selTResCollision)
 
@@ -51,17 +53,17 @@ gThis.miniViewSMMatchCreator=function(el, charSide='S', boTab=false){
     // FindCollision
   //var spanLab=createElement('span').css({'text-align':'left', 'font-weight':'bold'}).myAppend("Find sm collisions")
   //var headFindCollision=createElement('div').css({'text-align':'left'}).myAppend(butSearch);
-  var spanLab=createElement('span').myText('Consistent hash: ').prop({title:`Where within each "SM-colliding" group, all files have the same hash code. (Nothing will be done to these files)`}) // "SM-colliding" group: files with the same "SM" (size and modification time)
+  var spanLab=createElement('span').myText('SM collisions NOT among hashcodes (among files): ').prop({title:`Where within each "SM-colliding" group, all have the same hash code. (Nothing will be done to these files (FYI only))`}) // "SM-colliding" group: files with the same "SM" (size and modification time)
   var funConsistent=makeOpenExtCB(gThis[`PathSingle${charSide}`].smMultHashConsistent);
   var aConsistent=createElement('a').prop({href:''}).on('click',funConsistent);
-  var imgOTO=createElement('img').prop({src:'icons/buvtSMToHash_OTO.png'}).css({zoom:'0.3'});
-  var divSMMultHashConsistent=createElement('div').myAppend(spanLab, aConsistent, imgOTO)
+  var imgOTO=createElement('img').prop({src:'icons/buvtSMToHash_OTO.png'}).css({zoom:'0.3', 'vertical-align':'middle'});
+  var divSMMultHashConsistent=createElement('div').myAppend(spanLab, aConsistent, ' ', imgOTO)
 
-  var spanLab=createElement('span').myText('Non-consistent hash: ').prop({title:`Where within each "SM-colliding" group there at least one file that has a hash code different from the others.`}) // "SM-colliding" group: files with the same "SM" (size and modification time)
+  var spanLab=createElement('span').myText('SM collisions among hashcodes: ').prop({title:`Where within each "SM-colliding" group, there are at least one file that has a hash code different from the others.`}) // "SM-colliding" group: files with the same "SM" (size and modification time)
   var fun=makeOpenExtCB(gThis[`PathSingle${charSide}`].smMultHashNonConsistent);
   var aNonConsistent=createElement('a').prop({href:''}).addClass('input').on('click',fun);
-  var imgOTM=createElement('img').prop({src:'icons/buvtSMToHash_OTM.png'}).css({zoom:'0.3'});
-  var divSMMultHashNonConsistent=createElement('div').myAppend(spanLab, aNonConsistent, imgOTM)
+  var imgOTM=createElement('img').prop({src:'icons/buvtSMToHash_OTM.png'}).css({zoom:'0.3', 'vertical-align':'middle'});
+  var divSMMultHashNonConsistent=createElement('div').myAppend(spanLab, aNonConsistent, ' ', imgOTM)
   var ddFindCollision=createElement('dd').myAppend(divSMMultHashConsistent, divSMMultHashNonConsistent)
   
     // MakeUnifrom
@@ -91,14 +93,9 @@ gThis.miniViewHashMatchCreator=function(el, charSide='S', boTab=false){
     var strLab=`Find hash collisions`
     var charTRes='9'; //selTRes.value
     myConsole.clear(); setMess(strLab+' ...'); blanket.show();
-    var [err, result]=await argumentTab.getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var {fiSourceDir, strHostTarget, fiTargetDbDir, flTargetDataDir}=result;
+    var [err, result]=await getSelectedFrFileWExtra(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {fsSourceDir, strHostTarget, fsTargetDbDir, fsTargetDataDir}=result;
 
-    var [err, fsSourceDir]=await myRealPath(fiSourceDir); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
-    var [err, fsTargetDbDir]=await myRealPath(fiTargetDbDir, strHostTarget); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return; }
-    var fsTargetDataDir=fsTargetDbDir; if(flTargetDataDir) fsTargetDataDir=fsTargetDbDir+charF+flTargetDataDir
-    //var flTargetF=fsTargetDataDir.slice(fsTargetDbDir.length).trim(); flTargetF=trim(flTargetF, charF)+charF
-    
     // var [err, result]=await getFleF({boTarget, flTargetDataDir, fsTargetDbDir, strHostTarget}); if(err) {debugger; return [err];}
     // var {FleF, BoExist, indCur}=result
     // if(boTarget && flTargetDataDir){ divTDataList.setUI({FleF, BoExist, indCur}); }
@@ -186,12 +183,12 @@ gThis.miniViewHashMatchCreator=function(el, charSide='S', boTab=false){
 gThis.divCollisionHashWCreator=function(el){
   el.clearUI=function(){ miniViewHashMatchS.clearUI(); miniViewHashMatchT.clearUI(); }
   el.setUp=async function(){
-    var [err, result]=await argumentTab.getSelectedFrFile(); 
+    var [err, result]=await getSelectedFrFile(); 
     if(err) {
       if(err.message=='no-argument-selected') { var label='(no-argument-selected)'; }
       else {debugger; myConsole.error(err); return;}
     }
-    else { var {charTResCollision}=result; }
+    else { var {objOptSource}=result, {charTResCollision}=objOptSource; }
     //spanTResB.myText(charTResCollision);
     selTResCollision.value=charTResCollision;
   }
@@ -201,7 +198,9 @@ gThis.divCollisionHashWCreator=function(el){
 
   var Opt=[];   for(var k of KeyTRes){ var optTmp=createElement('option').myText(k).prop('value',k);  Opt.push(optTmp); }
   var selTResCollision=createElement('select').myAppend(...Opt).on('change',async function(e){
-    var [err]=await argumentTab.setTResCollision(this.value); if(err) {debugger; myConsole.error(err); return;}
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {keySource, keyTarget}=result, key=boTarget?keyTarget:keySource;
+    var [err]=await locationTab.setTResCollision(key, this.value); if(err) {debugger; myConsole.error(err); return;}
   })
 
   var divH=createElement('div').myAppend(head, spanTRes, selTResCollision).css({'grid-area':'1/1/span 1/span 2'})

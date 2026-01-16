@@ -42,7 +42,6 @@
 // ^([fl] +[0-9]+ +[0-9a-f]+ +[0-9]+ +[0-9]+) (.+)$
 // \1 sync/\2
 
-// TargetOther should be targetB
 // [Find relevant tree SM not found in relevant local Db] or [Find new SM] [categorize SM-occurancies]
 //   created_SM.txt
 //   deleted_SM.txt
@@ -62,6 +61,8 @@
 // [Merge created_SM.txt to db]
 
 
+// In SyncT2TUsingHash, when parsing for target tree, should one really add leafFilterFirst
+// "Save sort order"-button should be on a new (perhaps red) bar on the bottom (to be more visible)
 // When syncing T2T from myPassport to c660 with tResT=9 lots of files gets a timestamp with 9 significant decimals. Though on the source (myPassport) (both actual file as well as in the database) they have only 7 significant decimals (last two being zero). Example .buvt-filter
 // "CopyToTarget" should be right after "Deleted" (Unchanged on the top perhaps)
 // Source/Target switch in miniViewHashMatchDeleteCreator ?!?!?
@@ -81,7 +82,7 @@
 // send python kill signal
 // divDisclaimer
 // Separate settings (table) for T2D and T2T
-// getLeafDb method on ArgumentTab
+// getLeafDb method on LocationTab
 // mT1, mTm, 1Tm rows instead of Mult
 //   python output on separate stream
 // Checkbox switching default-Include/Exclude

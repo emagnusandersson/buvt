@@ -159,11 +159,11 @@ gThis.divT2DBothCreator=function(el){
 
   //el.clearUI=function(){ miniViewSMMatchS.clearUI(); miniViewSMMatchT.clearUI(); }
   el.setUIBasedOnSetting=function(arg){
-    var {label, fiSourceDir, strHostTarget, fiTargetDbDir, charFilterMethod, suffixFilterFirstT2T, boRemoteTarget, boAllowLinks, boAllowCaseCollision, strTargetCharSet}=arg;
+    var {objOptSource, objOptTarget, fiSourceDir, strHostTarget, fiTargetDbDir, suffixFilterFirstT2T, boRemoteTarget}=arg;
+    var {leafFilter}=objOptSource;
 
     var strTargetDbDir=boRemoteTarget?`${strHostTarget}:${fiTargetDbDir}`:fiTargetDbDir
     var {leafDb}=settings
-    var leafFilter=LeafFilter[charFilterMethod];
 
     var title=fiSourceDir+charF+leafDb;   LinkDb[0].prop({title}).myText(leafDb)
     var title=fiSourceDir+charF+leafFilter;   LinkFilterFirstT2D[0].prop({title}).myText(leafFilter)
@@ -205,7 +205,7 @@ gThis.divT2DBothCreator=function(el){
     DivTab[iSide].clearVal();
     setMess(strMess); blanket.show(); viewFront.divT2TUsingHash.clearVal();
     
-    var [err, argGeneralT]=await argumentTab.getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
+    var [err, argGeneralT]=await getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
     argGeneral=argGeneralT
     var syncDbOne=arrSyncDb[iSide]=new SyncDbOne({divT2DBoth:el, charSide, argGeneral})
     var [err]=await syncDbOne.fun1Prework(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;};
@@ -235,7 +235,7 @@ gThis.divT2DBothCreator=function(el){
     var strMess=`Compare both`;
     myConsole.clear(); el.clearVal(); setMess(strMess); blanket.show(); viewFront.divT2TUsingHash.clearVal();
 
-    var [err, argGeneralT]=await argumentTab.getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
+    var [err, argGeneralT]=await getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
     argGeneral=argGeneralT
     syncDbBoth=new SyncDbBoth({divT2DBoth:el, argGeneral})
     var [err]=await syncDbBoth.fun1Prework(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
@@ -252,7 +252,7 @@ gThis.divT2DBothCreator=function(el){
     var strMess=`Compare both`;
     myConsole.clear(); el.clearVal(); setMess(strMess); blanket.show(); viewFront.divT2TUsingHash.clearVal();
 
-    var [err, argGeneralT]=await argumentTab.getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
+    var [err, argGeneralT]=await getSelectedFrFileWExtra(); if(err) {debugger; return [err];}
     argGeneral=argGeneralT
     syncDbBoth=new SyncDbBoth({divT2DBoth:el, argGeneral})
     var [err]=await syncDbBoth.fun1Prework(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
@@ -296,12 +296,16 @@ gThis.divT2DBothCreator=function(el){
   var butGo=createElement('button').myAppend('Both').on('click', funCompareNHashNUniquify_both).prop({title:'Compare SM on both Source and Target.'});
   var divGo=createElement('div').myAppend(butGo).css({background:'var(--bg-color)', flex:"0 1", top:0, border:"solid 1px", position:'sticky', 'text-align':'center', 'grid-row':'span 7'}); //, opacity:0.8
 
-  var CharSide=['S', 'T'], DivButton=[], LinkFilterFirstT2D=[], LinkDb=[], DivIdMatch=[], DivMat1=[], DivTab=[], DivTabW=[], ButCalcHash=[], DivCalcHash=[], MiniViewSMMatch=[];  //, DivDbWrite=[]
-  extend(el, {MiniViewSMMatch})
+  var CharSide=['S', 'T'], DivButton=[], LinkFilterFirstT2D=[], LinkDb=[], DivIdMatch=[], DivMat1=[], DivTab=[], DivTabW=[], ButCalcHash=[], DivCalcHash=[], MiniViewSMMatch=[];  //, LinkLabel=[], DivDbWrite=[]
+
+  extend(el, {MiniViewSMMatch}); //, LinkLabel
   for(var i=0;i<2;i++){
     var charSide= CharSide[i]
 
-    var hT2D=createElement('b').myText(`${charSide} (Tree to Db)`)
+    //var linkLabel=createElement('a').myAppend(' - ').prop({href:'', title:''}).on('click', methGoToTitle);
+    var imgTree=createElement('img').prop({src:`icons/buvtTree${charSide}WOSub.png`}).css({zoom:'1', 'vertical-align':'middle'});
+    var spanDb=createElement('span').myAppend(`${charDb}`).css({'font-size':'1.6em', display:'inline-block', 'vertical-align':'middle'});
+    var hT2D=createElement('span').myAppend(imgTree, ` ${charRightArrow} `, spanDb); //`${charSide} (Tree `, 
     var butCompareT2D=createElement('button').myAppend('Compare SM').on('click', funCompare_one);
     var linkFilterFirstT2D=createElement('a').myText('filterFirst').prop({ href:""}).on('click', methGoToTitle);
     var linkDb=createElement('a').myText('db-file').prop({href:""}).on('click', methGoToTitle);
@@ -322,7 +326,8 @@ gThis.divT2DBothCreator=function(el){
 
     var miniViewSMMatch=miniViewSMMatchCreator(createElement('div'), charSide)
 
-    DivButton[i]=divButton; LinkFilterFirstT2D[i]=linkFilterFirstT2D; LinkDb[i]=linkDb; DivIdMatch[i]=divIdMatch; DivMat1[i]=divMat1; DivTab[i]=divTab; DivTabW[i]=divTabW; ButCalcHash[i]=butCalcHash; DivCalcHash[i]=divCalcHash; MiniViewSMMatch[i]=miniViewSMMatch; //DivDbWrite[i]=divDbWrite;
+    DivButton[i]=divButton; LinkFilterFirstT2D[i]=linkFilterFirstT2D; LinkDb[i]=linkDb; DivIdMatch[i]=divIdMatch; DivMat1[i]=divMat1; DivTab[i]=divTab; DivTabW[i]=divTabW; ButCalcHash[i]=butCalcHash; DivCalcHash[i]=divCalcHash; MiniViewSMMatch[i]=miniViewSMMatch; //DivDbWrite[i]=divDbWrite; LinkLabel[i]=linkLabel
+    
 
   }
 

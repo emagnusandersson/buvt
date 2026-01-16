@@ -194,7 +194,7 @@ gThis.fileExistArr=async function(FiPath, strHost=null){
   if(typeof FiPath=='string') FiPath=[FiPath]; // Allowing for string entries too
   var l=FiPath.length, BoExist=Array(l)
   for(var i=0;i<l;i++){
-    var [err, boExist]=await fileExist(FiPath[i]); if(err) {debugger; return [err];}
+    var [err, boExist]=await fileExist(FiPath[i], strHost); if(err) {debugger; return [err];}
     BoExist[i]=boExist;
   }
   return [null, BoExist]
