@@ -29,7 +29,6 @@ KeyTRes.push('d'); IntTDiv['d']=BigInt(2e9);
 
 gThis.settings={
   leafDb:"buvtDb.txt", 
-  leafDbB:"buvtDbB.txt", 
   charTRes:'9'
 }
 gThis.LeafFilter={b:".buvt-filter", r:".rsync-filter", R:".rsync-filter"};

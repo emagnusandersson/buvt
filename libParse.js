@@ -185,19 +185,25 @@ class TreeParserJS{
     if(err) {debugger; return [err];}
 
     // if(!boIncludeLeafDb){
-    //   removeLeafFileFromArrTreef(this.arrTreef)
+    //   removeFileFromArrTreef(this.arrTreef)
     // }
     return [null, this.arrTreef, this.arrTreeF]
   }
 }
 
-var removeLeafFileFromArrTreef=function(arrTreef, leafFile){
-  for(var i in arrTreef){
-    if(arrTreef[i].strName==leafFile){ arrTreef.splice(i, 1); break } 
+var removeFileFromArrTreef=function(arrTreef, patFile){
+  var boReg= patFile instanceof RegExp;
+  if(boReg){
+    for(var i=arrTreef.length-1;i>=0;i--){
+      var {strName}=arrTreef[i], boMatch=patFile.test(strName);
+      if(boMatch){ arrTreef.splice(i, 1); } 
+    }
+  }else{
+    for(var i in arrTreef){
+      if(arrTreef[i].strName==patFile){ arrTreef.splice(i, 1); break } // Bailing out because there will only be one match
+    }
   }
-  //return arr
 }
-
 
 //python /home/magnus/progJS/buvt/buvtPyScript/buvtPyScript.py parseTreeNDump --leafFilter .rsync-filter --leafFilterFirst .rsync-filter --charFilterMethod r --fiDir /home/magnus/progPython/buvt-SourceFs/Source
 class TreeParserPython{

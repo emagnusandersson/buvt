@@ -345,3 +345,45 @@ gThis.myMenu=function(elWrap, elPar){
   var funClose=function() { elBubble.hide(); }
   elWrap.on(strEvOpen,funOpen).on(strEvClose,funClose)
 }
+
+var vippButtonExtendOld=function(el, name, fun0, fun1){
+  el.setStat=function(bo1){
+    Inp[Number(bo1)].checked=true;
+  }
+  el.getStat=function(){
+    var inp=el.querySelector('input[type=radio]:checked'), i=Number(inp.value); return i;
+  }
+
+  if(typeof fun1=='undefined') fun1=fun0;
+  var Fun=[fun0, fun1]
+
+  //var form=createElement('form').css({ border:'1px solid', width:'fit-content'});
+  var Inp=[]
+  for(var i=0;i<2;i++){
+    Inp[i]=createElement('input').attr({type:'radio', id:`${i}`, name, value:`${i}`})
+    if(Fun[i]) Inp[i].on('click', Fun[i])
+  }
+  Inp[0].checked=true;
+  el.myAppend(...Inp)
+  //el.addClass('unselectable');
+  return el;
+}
+
+var vippButtonExtend=function(el, name, fun){
+  el.setStat=function(i){
+    Inp[Number(i)].checked=true;
+  }
+  el.getStat=function(){
+    var inp=el.querySelector('input[type=radio]:checked'), i=Number(inp.value); return i;
+  }
+
+  var Inp=el.querySelectorAll('input')
+  //var form=createElement('form').css({ border:'1px solid', width:'fit-content'});
+  var Inp=[...Inp]
+  for(var i=0;i<Inp.length;i++){
+    Inp[i].attr({type:'radio', id:`${i}`, name, value:`${i}`})
+    if(fun) Inp[i].on('click', fun)
+  }
+  Inp[0].checked=true;
+  return el;
+}

@@ -30,6 +30,7 @@
   --text-red:red;
   --text-green:green;
   --text-blue:blue;
+  --text-orange:rgb(129, 84, 0);
   --text-grey:grey;
   --link-input:green
 }
@@ -65,6 +66,7 @@
   --text-red:#ff7f7f;
   --text-green:lightgreen;
   --text-blue:lightblue;
+  --text-orange:orange;
   --text-grey:#a0a0a0;
   --link-input:lightgreen
 }
@@ -135,7 +137,7 @@ a.input {
   color:var(--link-input)
 }
 /* a.input:visited {color:var(--link-input-visited)} */
-td:has(a[title]:only-child) {
+.redWTitle td:has(a[title]:only-child) {
   background-color: var(--bg-red);
 }
 
@@ -167,7 +169,7 @@ div.section {background:lightgray; margin-top:3px}
 .num {background:var(--bg-colorEmp2);}
 
 
-.argumentTab td {  word-wrap:anywhere}  /*word-break:break-all; background-color: var(--bg-color);*/
+.relationTab td, .locationTab td {  word-wrap:anywhere}  /*word-break:break-all; background-color: var(--bg-color);*/
 
 
 .tableSticky {border-width:0px;}
