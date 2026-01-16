@@ -1,0 +1,292 @@
+
+"use strict"
+
+
+gThis.miniViewSettingsCreator=function(el){
+  el.setUp=async function(){
+  }
+
+
+  var head=createElement('h3').css({'text-align':'left'}).myAppend('Settings');
+
+  var selectorOfTheme=SelThemeCreate.factory();  setThemeClass(); selectorOfTheme.setValue();
+  selectorOfTheme.css({ width:"2.5em", 'vertical-align':'bottom', padding:0})
+
+
+
+  el.myAppend(head, 'Theme: ', selectorOfTheme).css({'text-align':'left'}); //linkS, ` ${charRightArrow} `, linkT, spanTData, br.cloneNode(), 
+
+  el.css({background:"var(--bg-color)"});
+  return el
+}
+
+
+
+gThis.miniViewProgramFoldersCreator=function(el){
+  el.setUp=async function(){
+  }
+
+  var head=createElement('h3').css({'text-align':'left'}).myAppend('Program folders');
+  var br=createElement('br')
+  var linkAppFolder=createElement('a').myAppend('Settings-folder').prop({href:'', title:fsDataHome}).on('click',  methGoToTitle); 
+  var linkResultFolder=createElement('a').myAppend('Tmp-folder').prop({href:'', title:fsResultFolder}).on('click', methGoToTitle);
+  // var linkS=createElement('a').myAppend('S').prop({href:''}).on('click', methGoToTitle);
+  // var linkT=createElement('a').myAppend('TDb').prop({href:''}).on('click', methGoToTitle);
+  // var linkTData=createElement('a').myAppend('TData').prop({href:''}).on('click', methGoToTitle);
+  // var spanTData=createElement('span').myAppend(' (', linkTData, ')');
+
+
+  el.myAppend(head, linkAppFolder, br.cloneNode(), linkResultFolder).css({'text-align':'left'}); //linkS, ` ${charRightArrow} `, linkT, spanTData, br.cloneNode(), 
+
+  el.css({background:"var(--bg-color)"});
+  return el
+}
+
+
+
+
+gThis.miniViewFilterMethodTesterCreator=function(el){
+  el.setUp=async function(){
+    resetMess()
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); return;}
+    var {suffixFilterFirstT2T}=result;
+    suffixFilterFirstT2T_Local=suffixFilterFirstT2T;
+    setLabelEtc()
+  }
+  var setLabelEtc=function(){ // Set labels and clear link titles etc
+    var boTarget=vippTarget.getStat();
+    var boAddSuffix=checkBoxAddSuffix.checked;
+    if(boTarget) boAddSuffix=false
+    var strB=`.buvt-filter`, strr=`.rsync-filter`;
+    if(boAddSuffix) { strB+=suffixFilterFirstT2T_Local; strr+=suffixFilterFirstT2T_Local;}
+    th_b.myText(strB); th_r.myText(strr); th_R.myText(strr+" (using rsync dry-run)");
+
+    if(suffixFilterFirstT2T_Local.length && !boTarget){
+      divSuffix.show()
+      //checkBoxAddSuffix.disabled=false
+    }else{
+      divSuffix.hide()
+      //checkBoxAddSuffix.disabled=true
+      checkBoxAddSuffix.checked=false;
+    }
+    //divSuffix.toggle(suffixFilterFirstT2T_Local.length && !boTarget);
+
+    for(var i=0;i<AParse.length;i++){  // Clear title and background of links
+      var charFilterMethodLoc=CharFilterMethod[i], pathTmp=PathParseNDump[charFilterMethodLoc]
+      var aTmp=AParse[i], tdTmp=aTmp.parentNode;  aTmp.prop({title:undefined}).myText(`${pathTmp.leaf}`);  tdTmp.css({background:''})
+    }
+  }
+
+  var funParse=async function(){
+    var charFilterMethodLoc=this.attr('data-filterMethod'),  ind=CharFilterMethod.indexOf(charFilterMethodLoc)
+    var boTarget=vippTarget.getStat();
+    //var boAddSuffix=vippSuffix.getStat();
+    var boAddSuffix=checkBoxAddSuffix.checked;
+    if(boTarget) boAddSuffix=false
+    myConsole.clear(); setMess(`${charFilterMethodLoc} Parsing ...`); blanket.show();
+    var [err, result]=await getSelectedFrFileWExtra(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {objOptSource, objOptTarget, suffixFilterFirstT2T}=result;
+    var objOpt=boTarget?objOptTarget:objOptSource;
+    var {fsDir, charTRes}=objOpt
+     
+    var leafFilter=LeafFilter[charFilterMethodLoc], leafFilterFirst=leafFilter
+    if(boAddSuffix) leafFilterFirst+=suffixFilterFirstT2T
+    var arg=extend({}, {leafFilter, leafFilterFirst, fsDir, charTRes, charFilterMethod:charFilterMethodLoc})
+    var [err, result]=await parseNDump(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {nFile, StrShortList}=result
+    var aTmp=AParse[ind], tdTmp=aTmp.parentNode;
+    var pathTmp=PathParseNDump[charFilterMethodLoc]
+    aTmp.prop({title:StrShortList?.join(`\n`)}).myText(`${pathTmp.leaf} (${nFile})`)
+    tdTmp.css({background:'var(--bg-red)'})
+
+    setMess(`${charFilterMethodLoc} Parsing: Done`); blanket.hide();
+  }
+
+  var funCompare=async function(strMA, strMB){  // M=Method
+    var strExec='meld'
+    var strA=PathParseNDump[strMA].fsName, strB=PathParseNDump[strMB].fsName
+    var arrCommand=[strExec, strA, strB]
+    if(strOS=="win32"){
+      var strCommand=arrCommand.join(' ');
+      var [err, objT]=await exec(strCommand).toNBP(); if(err) { debugger; myConsole.error(err); return;}
+    }else{
+      var [exitCode, stdErr, stdOut]=await execMy(arrCommand);   if(stdErr) { debugger; myConsole.error(stdErr); return;}
+    } 
+  }
+
+
+  var funRadioClick=function(){ setLabelEtc(); };
+  var CharFilterMethod=['b', 'r', 'R']
+  var suffixFilterFirstT2T_Local
+
+  var htmlTmp=`<label>Source</label><input/><input/><label>Target</label>`
+  var vippTarget=createElement('div').myHtml(htmlTmp).css({margin:'0 0 1em'});
+  vippButtonExtend(vippTarget, 'strSourceOrTarget', funRadioClick)
+
+  var checkBoxAddSuffix=createElement('input').prop({type:'checkbox'}).on('change', setLabelEtc);
+  var spanAddSuffix=createElement('span').myText(`Use leafFilterFirst with suffix`);
+  var labAddSuffix=createElement('label').myAppend(checkBoxAddSuffix, spanAddSuffix)
+  var divSuffix=createElement('div').myAppend(labAddSuffix);
+
+  var htmlHead=`
+<tr><th></th><th colspan=2>.buvt-filter</th> <th colspan=2>.rsync-filter</th> <th colspan=2>.rsync-filter (using rsync dry-run)</th></tr>`
+
+  var htmlBody=`
+<tr><td/><td colspan=2><button>Parse</button></td><td colspan=2><button>Parse</button></td><td colspan=2><button>Parse</button></td></tr>
+<tr><td>Output</td><td colspan=2><a/></td><td colspan=2><a/></td><td colspan=2><a/></td></tr>
+<tr><td rowspan=2>Compare</td><td colspan=3><button>Meld</button></td><td colspan=3><button>Meld</button></td></tr>
+<tr><td colspan=3><span></span></td><td colspan=3><span></span></td></tr>`
+  var tHead=createElement('thead').myHtml(htmlHead);
+  var tBody=createElement('tbody').myHtml(htmlBody);
+  var table=createElement('table').myAppend(tHead, tBody).css({'text-align':'center'}); //.addClass('other')
+
+  var [tHeadR]=tHead.children, [trash, th_b, th_r, th_R]=tHeadR.children;
+
+  var arrTR=[...tBody.children], [trParse, trList, trMeld, trDiff]=arrTR; //trCatPrim1, 
+
+  var ButParse=trParse.querySelectorAll('button');
+  var AParse=trList.querySelectorAll('a');
+  var [butCompare0, butCompare1]=trMeld.querySelectorAll('button')
+  var [spanCompare0, spanCompare1]=trDiff.querySelectorAll('span')
+
+
+
+  for(var i=0;i<CharFilterMethod.length;i++){
+    var charT=CharFilterMethod[i]
+    ButParse[i].attr({'data-filterMethod':charT}).on('click', funParse);
+    var pathTmp=PathParseNDump[charT]; AParse[i].attr({href:''}).on('click', makeOpenExtCB(pathTmp)); //.myText(pathTmp.leaf)
+  }
+
+
+  var leafb=PathParseNDump.b.leaf, leafr=PathParseNDump.r.leaf, leafR=PathParseNDump.R.leaf
+  butCompare0.prop('title',`Open in Meld: ${leafb} and  ${leafr}`).on('click',  async function(ev){ ev.preventDefault(); funCompare('b','r'); })
+  butCompare1.prop('title',`Open in Meld: ${leafr} and  ${leafR}`).on('click',  async function(ev){ ev.preventDefault(); funCompare('r','R') })
+  spanCompare0.myAppend(`diff ${leafb} ${leafr}`).css({border:'1px solid'}) // .on('click', cbClick)
+  spanCompare1.myAppend(`diff ${leafr} ${leafR}`).css({border:'1px solid'}); //.on('click', cbClick)
+
+  var headA=createElement('h3').myAppend('Compare filtering methods').css({'text-align':'left'})
+  var headB=createElement('h4').myAppend('Parse and dump using...').css({'text-align':'left'})
+
+  el.myAppend(headA, vippTarget, divSuffix, headB, table).css({'text-align':'left', background:"var(--bg-color)"}); //
+  return el
+}
+
+
+
+gThis.miniViewEmptyFolderCreator=function(el){
+  el.setUp=async function(){
+    resetMess();
+    var [err, result]=await getSelectedFrFile(); if(err) {debugger; myConsole.error(err); return;}
+    var {objOptSource, suffixFilterFirstT2T}=result;
+    var {leafFilter}=objOptSource;
+    suffixFilterFirstT2T_Local=suffixFilterFirstT2T;
+
+    divResult.myText('')
+  }
+
+  var setLabel=function(){
+    var boTarget=vippTarget.getStat();
+    var boDisplaySuffix=suffixFilterFirstT2T_Local.length;
+    if(boTarget) boDisplaySuffix=false
+  }
+  var funRadioClick=function(){ setLabel(); };
+  var suffixFilterFirstT2T_Local
+
+  var htmlTmp=`<label>Source</label><input/><input/><label>Target</label>`
+  var vippTarget=createElement('div').myHtml(htmlTmp).css({margin:'0 0 1em'});
+  vippButtonExtend(vippTarget, 'strSourceOrTarget2', funRadioClick)
+
+
+  var checkBoxAddSuffix=createElement('input').prop({type:'checkbox'});
+  var spanAddSuffix=createElement('span').myText(`Use leafFilterFirst with suffix`);
+  var labAddSuffix=createElement('label').myAppend(checkBoxAddSuffix, spanAddSuffix)
+
+  var funGo=async function(strMode){
+
+    var boTarget=vippTarget.getStat();
+    //var boAddSuffix=checkBoxAddSuffix.checked;
+    myConsole.clear(); setMess('EmptyFolderCheck ...'); blanket.show();
+    var [err, result]=await getSelectedFrFileWExtra(); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var {objOptSource, objOptTarget, suffixFilterFirstT2T}=result;
+    var objOpt=boTarget?objOptTarget:objOptSource;
+    var {fsDir, charTRes, leafFilter, charFilterMethod}=objOpt
+
+
+    var leafFilterFirst=leafFilter
+    //if(boAddSuffix) leafFilterFirst+=suffixFilterFirstT2T
+    if(strMode=='nofilter') {leafFilter=''; leafFilterFirst='';}
+    var arg=extend({}, {leafFilter, leafFilterFirst, fsDir, charTRes, charFilterMethod})
+    var [err, nEmpty, StrShortList]=await listEmptyFolders(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    
+    var fun=makeOpenExtCB(PathLoose.emptyFolders)
+
+    var spanLab=createElement('span').myText('Empty folders: ')
+    var fsTmp=PathLoose.emptyFolders.fsName
+    var aLink=createElement('a').prop({href:''}).myAppend(`${nEmpty}`).prop({title:StrShortList?.join(`\n`)}).on('click',fun);
+    
+    var divHashMatchResult=createElement('div').myAppend(spanLab, aLink) //, bTotal, ', Mult: '
+
+    divResult.myHtml('').myAppend(divHashMatchResult)
+
+    setMess(`EmptyFolderCheck: Done`); blanket.hide();
+  }
+
+  var head=createElement('h3').css({'text-align':'left'}).myAppend('Check for empty folders ...');
+  var leafTmp=PathLoose.emptyFolders.leaf
+  var butGo=createElement('button').myAppend('Go (no filtering)').attr({title:`Parse the source/target tree and find empty folders. (Ignoring all filter files.)`}).on('click', function(){ funGo('nofilter'); });
+  var butGoFilter=createElement('button').myAppend('Go (.buvt-filter)').attr({title:`Same as previous but looks for .buvt-filter as filter-files.`}).on('click', function(){ funGo('filter'); });
+  var butGoSuffixFilter=createElement('button').myAppend('Go (filtering (suffixed))').attr({title:`Same as previous but use .buvt-filterSUFFIX as top-level-filter-file.`}).on('click', function(){ funGo('suffixFilter'); });
+
+
+  var divResult=createElement('div').css({'text-align':'left'}).css({margin:'1em 0 0'})
+
+  el.myAppend(head, vippTarget, butGo, butGoFilter, divResult).css({'text-align':'left'}); // labAddSuffix, divConsoleT2D, divConsoleT2T, divConsole, , labTarget, createElement('br')
+
+  el.css({background:"var(--bg-color)"});
+  return el
+}
+
+
+
+
+gThis.miniViewReplacePrefixCreator=function(el){
+  el.setUp=async function(){
+    resetMess();
+    inpOldPrefix.value=''
+    inpNewPrefix.value=''
+  }
+
+  var head=createElement('h3').css({'text-align':'left'}).myAppend('Replace prefix of db-entries');
+
+  var checkBoxUseTarget=createElement('input').prop({type:'checkbox'});
+  var labUseTarget=createElement('label').myAppend('Use target-db (using source-db if unchecked)'); //.attr({'title':``});
+  var divUseTarget=createElement('div').myAppend(checkBoxUseTarget, labUseTarget)
+
+  var inpDb=createElement('input');
+  var labDb=createElement('label').myAppend('Db: '); //.attr({'title':``});
+  var divDb=createElement('div').myAppend(labDb, inpDb)
+  
+  var inpOldPrefix=createElement('input');
+  var labOldPrefix=createElement('label').myAppend('Prefix to replace: ').attr({'title':`db-entries that start with this prefix will have it deleted and replaced with the new prefix.`});
+  var divOldPrefix=createElement('div').myAppend(labOldPrefix, inpOldPrefix)
+  var inpNewPrefix=createElement('input'); //.attr({'title':`Use the top-level filter-file with 
+  var labNewPrefix=createElement('label').myAppend('New prefix: ', inpNewPrefix).attr({'title':`New prefix`});
+  var divNewPrefix=createElement('div').myAppend(labNewPrefix, inpNewPrefix)
+
+  var butGo=createElement('button').myText('Go').on('click', async function() {
+    var boUseTarget=checkBoxUseTarget.checked
+    myConsole.clear(); setMess('Replacing prefix ...'); blanket.show()
+    var {leafDb, charTRes}=settings
+    var strOldPrefix=inpOldPrefix.value, strNewPrefix=inpNewPrefix.value
+    var fiDb=inpDb.value
+    var arg={charTRes, fiDb, strOldPrefix, strNewPrefix} //'sync/'
+    //var [err]=await utilityAddToDbStrName(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    var [err]=await replacePrefix(arg); if(err) {debugger; myConsole.error(err); resetMess(); blanket.hide(); return;}
+    setMess('Replacing prefix: Done'); blanket.hide();
+  })
+  
+  el.myAppend(head, divDb,    divOldPrefix, divNewPrefix, butGo).css({'text-align':'left'});
+
+  el.css({background:"var(--bg-color)"});
+  return el
+}

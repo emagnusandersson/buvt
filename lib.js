@@ -25,6 +25,7 @@ gThis.toNBP=function(p){
 
 gThis.extend=Object.assign;
 gThis.copySome=function(a,b,Str){for(var i=0;i<Str.length;i++) { var name=Str[i]; a[name]=b[name]; } return a; }
+gThis.copySomeRename=function(a,b,StrA,StrB){for(var i=0;i<StrA.length;i++) { a[StrA[i]]=b[StrB[i]]; } return a; }
 gThis.object_values=function(obj){ // Could be replaced by Object.values(obj) Right?
   var arr=[];      for(var name in obj) arr.push(obj[name]);
   return arr;
@@ -43,6 +44,7 @@ gThis.copyDeepB=function(o, isdeep=true){
           n[k]= isdeep? copyDeepB(o[k], isdeep) : o[k];
   return n;
 }
+gThis.copyShallow=function(a) { return Object.assign({},a);};
 
 gThis.isEmpty=function(v){ 
   if(typeof v=='undefined') return true;
@@ -243,6 +245,19 @@ Number.prototype.myPad0 = function(){ return this.toString().padStart(...argumen
 //Number.prototype.myPad2 = function(){ return this.toString().padStart(2, '0'); }
 Number.prototype.myPadStart = function(){ return this.toString().padStart(...arguments); }
 BigInt.prototype.myPadStart = function(){ return this.toString().padStart(...arguments); }
+
+
+//
+// Boolean
+//
+
+gThis.castToBoolean=function(v){
+  if(typeof v=="string") {
+    if(v.toLowerCase=='false') return false;
+    else return true;
+  }
+  return Boolean(v); // Handles at least: boolean, undefined, number, bigint, object, (null)
+}
 
 /////////////////////////////////////////////////////////////////////
 

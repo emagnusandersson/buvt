@@ -35,9 +35,9 @@ const MAKESPACE_N_SAVE="\n\n"+ANSI_CURSOR_UP(2)+ANSI_CURSOR_SAVE
 const MY_RESET=ANSI_CURSOR_RESTORE+ANSI_CLEAR_BELOW
 
 
-// N files could be categorized as renameable after matching size and time (N OTM, N MTO, N MTM) (See list in duplicateInitial.txt)
+// N files could be categorized as renameable after matching size and time (N 1TM, N MT1, N MTM) (See list in duplicateInitial.txt)
 // After looking at renamed folders (N), a further N files can be categorized as renameable. (See list in renameAdditional.txt)
-//   So a final N renameables after matching size and time and folder belonging (N OTM, N MTO, N MTM) (See list in duplicateFinal.txt)
+//   So a final N renameables after matching size and time and folder belonging (N 1TM, N MT1, N MTM) (See list in duplicateFinal.txt)
 
 
 // var myRandBase63=function(n){

@@ -42,7 +42,6 @@
 // ^([fl] +[0-9]+ +[0-9a-f]+ +[0-9]+ +[0-9]+) (.+)$
 // \1 sync/\2
 
-// TargetOther should be targetB
 // [Find relevant tree SM not found in relevant local Db] or [Find new SM] [categorize SM-occurancies]
 //   created_SM.txt
 //   deleted_SM.txt
@@ -62,10 +61,12 @@
 // [Merge created_SM.txt to db]
 
 
+// Should one ignore filter-files when parsing target tree (in T2D)? No one shouldn't
+// "Save sort order"-button should be on a new (perhaps red) bar on the bottom (to be more visible)
 // When syncing T2T from myPassport to c660 with tResT=9 lots of files gets a timestamp with 9 significant decimals. Though on the source (myPassport) (both actual file as well as in the database) they have only 7 significant decimals (last two being zero). Example .buvt-filter
 // "CopyToTarget" should be right after "Deleted" (Unchanged on the top perhaps)
 // Source/Target switch in miniViewHashMatchDeleteCreator ?!?!?
-// tDiffMax-input in miniViewSMMatchCreator
+// tDiffMax-input in miniViewRelationFixingCreator
 // ST should be SD source/destination
 //   SM collisions
 //   TRes
@@ -74,20 +75,19 @@
 //
 // strSide should be Tr(Tree)/Db on T2D and S/T on T2T CopyOn/MoveOn/CopyTo
 // List/count soft links
-// make buvt-filter work as rsync-filter
 // Stream data when parsing from pythonscript
 // Create .bak-file when updating target db through T2T
 // Window starts with the lowest part outside of screen
 // send python kill signal
 // divDisclaimer
-// Separate settings (table) for T2D and T2T
-// getLeafDb method on ArgumentTab
+// getLeafDb method on LocationTab
 // mT1, mTm, 1Tm rows instead of Mult
 //   python output on separate stream
 // Checkbox switching default-Include/Exclude
 
 // create new db first, then run rsync
 // In SyncDbI one could refer to "Source" as "Tree" instead. Although it would break conformity with SyncT2T.
+// One may want to use a more uniform notation: Either using "To" like in 1MTo1 and 1MToM OR "T" like in 1T1, 1TM, MT1 and MTM.
 
 // Windows softlinks points back to the source
 

@@ -26,9 +26,9 @@ def formatF_Check_Missing_Range(iStart, n, strMissing, strName):
 
 
 
-# N files could be categorized as renameable after matching size and time (N OTM, N MTO, N MTM) (See list in duplicateInitial.txt)
+# N files could be categorized as renameable after matching size and time (N 1TM, N MT1, N MTM) (See list in duplicateInitial.txt)
 # After looking at renamed folders (N), a further N files can be categorized as renameable. (See list in renameAdditional.txt)
-#   So a final N renameables after matching size and time and folder belonging (N OTM, N MTO, N MTM) (See list in duplicateFinal.txt)
+#   So a final N renameables after matching size and time and folder belonging (N 1TM, N MT1, N MTM) (See list in duplicateFinal.txt)
 
 
 # FMT_Check_Missing_In_Folder=   "In %s (spanning %d rows (%d-%d)), %d file(s) are missing.\n"

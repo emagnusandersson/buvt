@@ -2,13 +2,15 @@
 "use strict"
 
 
-gThis.makeFunInc=function(strProp){ return (A,B)=>{var a=A[strProp], b=B[strProp]; return (a<b) ? -1 : ((a>b)?1:0) } }
-gThis.makeFunDec=function(strProp){ return (A,B)=>{var a=A[[strProp]], b=B[[strProp]]; return (a<b) ? 1 : ((a>b)?-1:0) } }
+gThis.makeFunInc=function(strProp){ return (A,B)=>{var a=A[strProp], b=B[strProp]; return -diffMy(a,b) } }
+//gThis.makeFunDec=function(strProp){ return (A,B)=>{var a=A[[strProp]], b=B[[strProp]]; return diffMy(a,b); } }
+gThis.makeFunDec=function(strProp){ return (A,B)=>{var a=A[strProp], b=B[strProp]; return diffMy(a,b); } }
 var strTmp='strName'; gThis.funIncStrName=makeFunInc(strTmp); gThis.funDecStrName=makeFunDec(strTmp)
 var strTmp='id'; gThis.funIncId=makeFunInc(strTmp); gThis.funDecId=makeFunDec(strTmp)
 var strTmp='sm'; gThis.funIncSM=makeFunInc(strTmp); gThis.funDecSM=makeFunDec(strTmp)
 var strTmp='strHash'; gThis.funIncHash=makeFunInc(strTmp); gThis.funDecHash=makeFunDec(strTmp)
 var strTmp='mtime_ns64'; gThis.funIncMTime=makeFunInc(strTmp); gThis.funDecMTime=makeFunDec(strTmp)
+var strTmp='size'; gThis.funIncSize=makeFunInc(strTmp); gThis.funDecSize=makeFunDec(strTmp)
 
 // If the leaf-most folders (of strA and strB) look the same they are cut off.
 // So the returned paths are the diverging parts.
