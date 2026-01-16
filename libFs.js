@@ -194,7 +194,7 @@ gThis.fileExistArr=async function(FiPath, strHost=null){
   if(typeof FiPath=='string') FiPath=[FiPath]; // Allowing for string entries too
   var l=FiPath.length, BoExist=Array(l)
   for(var i=0;i<l;i++){
-    var [err, boExist]=await fileExist(FiPath[i]); if(err) {debugger; return [err];}
+    var [err, boExist]=await fileExist(FiPath[i], strHost); if(err) {debugger; return [err];}
     BoExist[i]=boExist;
   }
   return [null, BoExist]
@@ -1112,8 +1112,7 @@ var writeDbWrapper=async function(arrData, fsDb, strHost=null){
 var ArrDb={
     // Extract files that starts with strPrefix.
     // Remaining files are returned in arrRem
-    // arrSelected elements are (shallowly) copied from the elements in arrDb (so the can be changed)
-    // arrRem elements are NOT copies (So if they are changed, the elements in arrDb are also changed)
+    // arrSelected and arrRem elements are NOT copies (So if they are changed, the elements in arrDb are also changed)
   selectWPrefix:function(arrDb, strPrefix=""){
     var arrRem=[],  arrSelected=[], nPrepend=strPrefix.length
     for(var i=0;i<arrDb.length;i++){
