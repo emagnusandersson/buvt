@@ -16,12 +16,6 @@ var funStrShortest=function(rowA,rowB){
   else if(strA==strB) return 0
   else {debugger; throw Error("Error not lt, not gt and not equal???")}
 }
-function funInt(a,b){
-  if(a<b) return 1
-  else if(a>b) return -1
-  else if(a==b) return 0
-  else {debugger; throw Error("Error not lt, not gt and not equal???")}
-}
 
 /***************************************************************************************
  * [arrAMatching, arrBMatching, arrARem, arrBRem]=extractMatchingF(arrA, arrB, funM101): Comparing two arrays
@@ -90,7 +84,7 @@ gThis.extractMatching=function(arrA, arrB, KeyA, KeyB=null){ // Wrapper of extra
   return [null, ...extractMatchingF(arrA, arrB, funM101)]
 }
 
-//extractMatchingF([3,6,9], [2,3,8], funInt)
+//extractMatchingF([3,6,9], [2,3,8], diffMy)
 
 
   // An arrA element may match multiple arrB elements (but not the other way around)
@@ -175,54 +169,18 @@ var extractMatchingOneToManyF=function(arrA, arrB, fun){
 //extractMatchingOneToManyF(["aa","progC","qrs"], ["abc", "progC/abc", "progC/def", "progC/ghi", "ss"], funStrShortest)
 
 
-
 /***********************************************************
- * categorizeByProp
+ * bundleOnProperty
  ***********************************************************/
-  // Inputs:
-  //   arrA and arrB are arrays of objects. Ex: arrA=[{a:1,b:1}, {a:1,b:1}] 
-  //   arrA and arrB must both be sorted non-decreasingly: meaning when calling "funVal" on each array-element, you get non-decreasing values (two consecutive elments may be equal, but not decrease).
-  //   funVal takes an element as input and outputs a (sortable) value.
-  // Output:
-  //   objMatching:
-  //     Elements from arrA resp. arrB that gets the value v when passed through the funVal, are collected in objMatching[v].arrA resp. objMatching[v].arrB.
 
-  // Ex: Assume two arrays of objects, the object must have the property "a" (as funVal requires it)
-  // var arrA=[{a:1,b:1}, {a:1,b:2}, {a:2}];
-  // var arrB=[{a:1,b:1}, {a:1,b:3}, {a:3}];
-  // var funVal=obj=>obj.a
-  // var objMatching=categorizeByProp(arrA, arrB, funVal)
-  // objAMatching={
-  //   "1":{arrA:[{a:1,b:1}, {a:1,b:2}], arrB:[{a:1,b:1}, {a:1,b:3}]}, 
-  //   "2":{arrA:[{a:2}], arrB:[]}, 
-  //   "3":{arrA:[], arrB:[{a:3}]}
-  // }
-
-var categorizeByProp=function(arrA, arrB, funVal){
-  var objMatching={};
-  var Arr=[arrA,arrB], Str=['arrA','arrB']
-  for(var j=0;j<2;j++){
-    var arr=Arr[j], len=arr.length, strTmp=Str[j]
-    for(var i=0;i<len;i++){
-      var obj=arr[i]
-      var val=funVal(obj)
-      if(!(val in objMatching)) objMatching[val]={arrA:[],arrB:[]}
-      objMatching[val][strTmp].push(obj)
-    }
-  }
-  return objMatching
-}
-
-// debugger
-// var a=categorizeByProp([3,6,9], [2,3,8], x=>x)
-// var a=categorizeByProp([3,6,9], [2,3,3,8], x=>x)
-// var a=categorizeByProp([1,3,3,6,9], [2,3,3], x=>x)
-// var a=categorizeByProp(["aa","progC","qrs"], ["abc", "progC/abc", "progC/def", "progC/ghi", "ss"], x=>x)
-
-
-
+// Ex:
 // var BundA= bundleOnProperty([{a:1}, {a:1}, {a:2}, {a:3}], "a")
-//   BundA: {"1":[{a:1},{a:1}], "2":[{a:2}], "3":[{a:3}]}
+// Output:
+//   BundA: {
+//     "1":[{a:1}, {a:1}],
+//     "2":[{a:2}],
+//     "3":[{a:3}]
+//   }
 var bundleOnProperty=function(arr, arg){
   var boFun=typeof arg=='function'
   if(boFun){ var fun=arg;}
@@ -231,27 +189,65 @@ var bundleOnProperty=function(arr, arg){
   var lenArr=arr.length
   for(var i=0;i<lenArr;i++){
     var row=arr[i];
-      // Create strKey
-    if(boFun) var strKey=fun(row);
+      // Create key
+    if(boFun) var key=fun(row);
     else{
-      var strKey=""
+      var key=""
       for(var k of Key){
-        var attr=row[k];
-        strKey+=attr.toString();
+        var prop=row[k];
+        key+=prop.toString();
       }
     }
-    if(strKey in Bund) Bund[strKey].push(row);  else Bund[strKey]=[row];
+    if(key in Bund) Bund[key].push(row);  else Bund[key]=[row];
   }
   return Bund
 }
 
+/***********************************************************
+ * bundleOnProperty2
+ ***********************************************************/
+  // Somewhat similar to bundleOnProperty but with two input arrays
+
+  // Ex:
+  // var objOut=bundleOnProperty2([{a:1}, {a:1}, {a:2}], [{a:1}, {a:1}, {a:3}], 'a')
+  // objOut={
+  //   "1":{arrA:[{a:1}, {a:1}], arrB:[{a:1}, {a:1}]}, 
+  //   "2":{arrA:[{a:2}], arrB:[]}, 
+  //   "3":{arrA:[], arrB:[{a:3}]}
+  // }
+
+var bundleOnProperty2=function(arrA, arrB, arg){
+  var objRelation={};
+  var BundA= bundleOnProperty(arrA, arg);
+  var BundB= bundleOnProperty(arrB, arg);
+  for(var k in BundA){
+    objRelation[k]={arrA:BundA[k], arrB:[]}
+  }
+  for(var k in BundB){
+    var bundB=BundB[k]
+    if(!(k in objRelation)) {objRelation[k]={arrA:[]};}
+    objRelation[k].arrB=bundB;
+  }
+  return objRelation
+}
+
+// debugger
+// var objOut=bundleOnProperty2([{a:1}, {a:1}, {a:2}], [{a:1}, {a:1}, {a:3}], 'a')
+// var a=bundleOnProperty2([3,6,9], [2,3,8], x=>x)
+// var a=bundleOnProperty2([3,6,9], [2,3,3,8], x=>x)
+// var a=bundleOnProperty2([1,3,3,6,9], [2,3,3], x=>x)
+// var a=bundleOnProperty2(["aa","progC","qrs"], ["abc", "progC/abc", "progC/def", "progC/ghi", "ss"], x=>x)
+
+
+
+
 var extractBundlesWMultiples=function(Bund){ // bundleOnProperty Multple Summary
   var BundMult={}, nMult=0, arrSingle=[]
   for(var k in Bund) {
-    var arr=Bund[k], l=arr.length;
-    if(l>1) {BundMult[k]=arr; nMult+=l;} 
-    else if(l==1){arrSingle.push(arr[0])} 
-    else {throw Error(`l==${l}`)}
+    var arr=Bund[k], n=arr.length;
+    if(n>1) {BundMult[k]=arr; nMult+=n;} 
+    else if(n==1){arrSingle.push(arr[0])} 
+    else {throw Error(`n==${n}`)}
   }
   return [BundMult, nMult, arrSingle]
 }
@@ -271,11 +267,11 @@ var objManyToManyRemoveEmpty=function(objA, objB){  // Modifies objA and objB
 }
 
   //
-  // MatNxN
+  // CatPrim
   // (test code (example) below)
   //
 
-class MatNxN{
+class CatPrim{
   constructor(){
     var ArrA=[[[],[],[]],[[],[],[]],[[],[],[]]]
     var ArrB=[[[],[],[]],[[],[],[]],[[],[],[]]]
@@ -283,9 +279,8 @@ class MatNxN{
     var arrB=[[[],[],[]],[[],[],[]],[[],[],[]]]
     extend(this, {ArrA, ArrB, arrA, arrB})
   }
-  assignFromObjManyToMany(objA){
-    //var boSingle=typeof objB=='undefined'
-    this.nKTmp=Object.keys(objA).length
+  assignFromRel(RelIn){
+    //this.nKTmp=Object.keys(RelIn).length
     var {ArrA, ArrB, arrA, arrB}=this
 
     var [       ,ArrA01,ArrA02]=ArrA[0]
@@ -303,21 +298,32 @@ class MatNxN{
     var [arrB20,arrB21,arrB22]=arrB[2]
 
 
-    for(var key in objA){
-      var arA=objA[key].arrA, arB=objA[key].arrB;
-      //if(boSingle){ var arA=objA[key].arrA, arB=objA[key].arrB; }else{ var arA=objA[key], arB=objB[key];}
+    for(var key in RelIn){
+      var {arrA:arA, arrB:arB}=RelIn[key];
       
       var nA=arA.length, nB=arB.length
       if(nA==0){
         if(nB==0) {debugger; throw Error("nA==0 && nB==0"); }
-        else if(nB==1) {ArrA01.push(arA); ArrB01.push(arB); arrA01.push(...arA); arrB01.push(...arB);} // ArrA01 and arrA01 will never have entries added
-        else {ArrA02.push(arA); ArrB02.push(arB); arrA02.push(...arA); arrB02.push(...arB);} // ArrA02 and arrA02 will never have entries added
+        else if(nB==1) {
+          ArrA01.push(arA); //arrA01.push(...arA); // arrA01 will never have entries added
+          ArrB01.push(arB); arrB01.push(...arB);
+        }
+        else {
+          ArrA02.push(arA); //arrA02.push(...arA); // arrA02 will never have entries added
+          ArrB02.push(arB); arrB02.push(...arB);
+        }
       } else if(nA==1){
-        if(nB==0) {ArrA10.push(arA); ArrB10.push(arB); arrA10.push(...arA); arrB10.push(...arB)} // ArrB10 and arrB10 will never have entries added
+        if(nB==0) {
+          ArrA10.push(arA); arrA10.push(...arA);
+          ArrB10.push(arB); //arrB10.push(...arB) // arrB10 will never have entries added
+        }
         else if(nB==1) {ArrA11.push(arA); ArrB11.push(arB);    arrA11.push(...arA); arrB11.push(...arB)}
         else {ArrA12.push(arA); ArrB12.push(arB);    arrA12.push(...arA); arrB12.push(...arB)}
       } else{
-        if(nB==0) {ArrA20.push(arA); ArrB20.push(arB);  arrA20.push(...arA); arrB20.push(...arB);} // ArrB20 and arrB20 will never have entries added
+        if(nB==0) {
+          ArrA20.push(arA); arrA20.push(...arA);
+          ArrB20.push(arB); //arrB20.push(...arB); // arrB20 will never have entries added
+        } 
         else if(nB==1) {ArrA21.push(arA); ArrB21.push(arB);    arrA21.push(...arA); arrB21.push(...arB)}
         else {ArrA22.push(arA); ArrB22.push(arB);    arrA22.push(...arA); arrB22.push(...arB)}
       }
@@ -375,7 +381,7 @@ class MatNxN{
 
   }
   shallowCopy(){
-    var MatN=new MatNxN()
+    var MatN=new CatPrim()
     var {ArrAN, ArrBN, arrAN, arrBN}=MatN; 
     var {ArrA, ArrB, arrA, arrB}=this;
     for(var i=0;i<3;i++){
@@ -436,10 +442,10 @@ class MatNxN{
 // var funVal=row=>row.a
 // var arrA=[{a:1,b:1}, {a:1,b:2}, {a:2}, {a:2}, {a:3}]
 // var arrB=[{a:1,b:1}, {a:1,b:3}, {a:2}, {a:2}, {a:4}]
-// var Relation=categorizeByProp(arrA, arrB, funVal)
+// var Relation=bundleOnProperty2(arrA, arrB, funVal)
 
-// var MatTmp=new MatNxN()
-// MatTmp.assignFromObjManyToMany(Relation);
+// var MatTmp=new CatPrim()
+// MatTmp.assignFromRel(Relation);
 // var [objAOut, objBOut]=MatTmp.toObjManyToMany(funVal)
 // debugger
 
@@ -457,7 +463,7 @@ class MatNxN{
 //   "4":[{'a': 4}]
 // }
 
-// Internal values in MatNxN (ArrA, ArrB, arrA and arrB (ij-indexes wo hook-paranthesis)):
+// Internal values in CatPrim (ArrA, ArrB, arrA and arrB (ij-indexes wo hook-paranthesis)):
 // ArrA00:[]
 // ArrA01:[[]]
 // ArrA02:[]
@@ -527,10 +533,10 @@ class MatNxN{
 
 
 
+
 // 
 // String similarity (goolged: javascript string similarity) found this: https://stackoverflow.com/questions/10473745/compare-strings-javascript-return-of-likely
 //
-
 
 function editDistance(s1, s2) {
   s1 = s1.toLowerCase();
@@ -697,7 +703,7 @@ var rearrangeByMatchingMTime=function(relation, nExactName){
 
 
 
-var seperateOutCaseCollisions=function(arr){
+var separateOutCaseCollisions=function(arr){
   var l=arr.length, obj={}, nCollision=0;
   for(var i=0;i<l;i++){
     var row=arr[i], {strName}=row, strNameLC=strName.toLowerCase()
@@ -707,3 +713,67 @@ var seperateOutCaseCollisions=function(arr){
   var arr=Object.values(obj)
   return arr
 }
+
+
+
+var checkPropIsUniqueAmongArrayEntries=function(Obj, key){
+  //var funTmp=(e)=>{var boExist=e in objTargetByMTmp; if objTmp[e]
+  var objFound={}
+  for(var i=0;i<Obj.length;i++){ var v=Obj[i][key]; if(v in objFound) return [false, i, v];
+    objFound[v]=true;
+  }
+  return [true];
+}
+
+var splitXT1FromXTM=function(arrIn, keyA, keyB){
+  var BundA=bundleOnProperty(arrIn, keyA),  nPatA=Object.keys(BundA).length
+  //var [BundAMult, nAMult, arrSingle]=extractBundlesWMultiples(BundA),  nPatAMult=Object.keys(BundAMult).length;
+  var BundXT1={}, BundXTM={}, nTotXT1=0, nTotXTM=0
+  for(var propA in BundA){
+    var bundA=BundA[propA], propB0=bundA[0][keyB], boConsistentB=true
+    for(var i=1;i<bundA.length;i++){
+      var propB=bundA[i][keyB];
+      if(propB0!=propB) { boConsistentB=false; break; }
+    }
+    if(boConsistentB) {BundXT1[propA]=bundA; nTotXT1+=bundA.length;}
+    else { BundXTM[propA]=bundA; nTotXTM+=bundA.length;}
+  }
+  return [BundXT1, BundXTM, nTotXT1, nTotXTM];
+}
+//var [BundXT1_SMHash, BundXTM_SMHash, nTotXT1, nTotXTM]=splitXT1FromXTM(arrDbSelection, 'sm', 'strHash')
+
+
+var categorizePropertyRelation=function(arrIn, keyA, keyB){
+  var [BundXT1, BundXTM]=splitXT1FromXTM(arrIn, keyA, keyB)
+  var [Bund1TX, BundMTX]=splitXT1FromXTM(arrIn, keyB, keyA)
+
+  var nXTM=0
+  for(var propA in BundXTM){
+    var bundA=BundXTM[propA], len=bundA.length;
+    nXTM+=len;
+    for(var i=0;i<len;i++){
+      var item=bundA[i]; item.boXTM=true;
+    }
+  }
+  var nMTX=0
+  for(var propB in BundMTX){
+    var bundB=BundMTX[propB], len=bundB.length;
+    nMTX+=len;
+    for(var i=0;i<len;i++){
+      var item=bundB[i]; item.boMTX=true;
+    }
+  }
+  
+
+  //var BundMTM={}, BundMTM={}
+  var  arrMTM=[], arr1TM=[], arrMT1=[], arr1T1=[];
+  for(var i=0;i<arrIn.length;i++){
+    var item=arrIn[i];
+    if(item.boXTM && item.boMTX) arrMTM.push(item);
+    else if(item.boXTM) arr1TM.push(item);
+    else if(item.boMTX) arrMT1.push(item);
+    else arr1T1.push(item);
+  }
+  return {arrMTM, arr1TM, arrMT1, arr1T1}
+}
+// var {arrMTM, arr1TM, arrMT1, arr1T1}=categorizePropertyRelation(arrDbSelection, 'sm', 'strHash')

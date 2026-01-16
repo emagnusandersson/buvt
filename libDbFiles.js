@@ -104,7 +104,7 @@ var formatRelationCustom=function(ArrS, ArrT){
   // More readable than formatRelation (with seePrev and seeAbove) (never read)
   // Used for `STMatch${k}_${i}${j}` and STMatch2 (And for testing with M1T1)
 
-  var arrOut=[]
+  var StrList=[]
   for(var i in ArrS){
     var arrS=ArrS[i], arrT=ArrT[i]
     const nT=arrT.length, nS=arrS.length
@@ -118,25 +118,28 @@ var formatRelationCustom=function(ArrS, ArrT){
 
     var strMTimeExact=(boAllEq && rowHead.mtime_ns64!=rowHead.mtime_ns64Floored)?` ${rowHead.strMTime.padStart(19)}`:'seePrev'
     var strLab=`MatchingData ${rowHead.size.myPadStart(10)} ${rowHead.strMTimeFloored.padStart(19)} ${strMTimeExact}`
-    arrOut.push(strLab);
+    StrList.push(strLab);
 
     for(var row of arrS){
       var {strType, mtime_ns64, id}=row;
       var strM=boAllEq?"seeAbove":mtime_ns64.toString()
-      arrOut.push(`  Tr ${strType} ${id} ${strM.padStart(19)} ${row.strName}`)
+      StrList.push(`  Tr ${strType} ${id} ${strM.padStart(19)} ${row.strName}`)
     }
     for(var row of arrT){
       var {strType, mtime_ns64, id}=row
       var strM=boAllEq?"seeAbove":mtime_ns64.toString()
-      arrOut.push(`  Db ${strType} ${id} ${strM.padStart(19)} ${row.strName}`)
+      StrList.push(`  Db ${strType} ${id} ${strM.padStart(19)} ${row.strName}`)
     }
   }
 
-  var strHeadMT=`int string string`, strHeadM=`size strMTimeFloored strMTimeExact`;
-  var strHeadUT=`string string string string string`, strHeadU=`strSide strType id strMTime strName`;
-  if(arrOut.length) arrOut.unshift(strHeadMT, strHeadM, strHeadUT, strHeadU)
+  var StrListShort=formatTitle(StrList)
+  //var strHeadMT=`int string string`, strHeadM=`size strMTimeFloored strMTimeExact`;
+  //var strHeadUT=`string string string string string`, strHeadU=`strSide strType id strMTime strName`;
+  var StrHead=[`int string string`, `size strMTimeFloored strMTimeExact`, `string string string string string`, `strSide strType id strMTime strName`];
+  var strHov
+  if(StrList.length) {StrList.unshift(...StrHead); StrListShort.unshift(StrHead[1], StrHead[3]); strHov=StrListShort.join('\n')}
 
-  return arrOut
+  return [StrList, strHov]
 }
 
 
@@ -172,13 +175,15 @@ var formatRelation1T1=function(arrA11, arrB11, boIdInMatch=true){
 
     // Using strMTime etc so that one can use expressions like "seeAbove" etc
   if(boIdInMatch){
-    var strHeadMT=`string string int string`, strHeadM=`id strHash size strMTimeFloored`;
-    var strHeadUT=`string string string string`, strHeadU=`strSide strType strMTime strName`;
+    //var strHeadMT=`string string int string`, strHeadM=`id strHash size strMTimeFloored`;
+    //var strHeadUT=`string string string string`, strHeadU=`strSide strType strMTime strName`;
+    var StrHead=[`string string int string`, `id strHash size strMTimeFloored`, `string string string string`, `strSide strType strMTime strName`];
   }else{
-    var strHeadMT=`string int string`, strHeadM=`strHash size strMTimeFloored`;
-    var strHeadUT=`string string string string string`, strHeadU=`strSide strType id strMTime strName`;
+    //var strHeadMT=`string int string`, strHeadM=`strHash size strMTimeFloored`;
+    //var strHeadUT=`string string string string string`, strHeadU=`strSide strType id strMTime strName`;
+    var StrHead=[`string int string`, `strHash size strMTimeFloored`, `string string string string string`, `strSide strType id strMTime strName`];
   }
-  if(arrData.length) arrData.unshift(strHeadMT, strHeadM, strHeadUT, strHeadU)
+  if(arrData.length) arrData.unshift(...StrHead)
   return arrData
 }
 
@@ -250,16 +255,16 @@ var formatDbQuick=function(arrDb){ // This one may be quicker than formatDb
 
 
 //
-// Should this be a method of MatNxN ?!?!
+// Should this be a method of CatPrim ?!?!
 //
-var formatMultiPots=function(myResultWriter, Mat, k){
-  Mat.ShortList=[]
+var formatMultiPots=function(myResultWriter, catPrim, k){
+  catPrim.ShortList=[]
   var ArrPot=[[0,2],[1,2],[2,0],[2,1],[2,2]]
   //var ArrPot=[[1,2],[2,1],[2,2]]
   for(var arrPot of ArrPot){
     var [i,j]=arrPot
-    var ArrAMult=[].concat(Mat.ArrA[i][j]);
-    var ArrBMult=[].concat(Mat.ArrB[i][j]);
+    var ArrAMult=[].concat(catPrim.ArrA[i][j]);
+    var ArrBMult=[].concat(catPrim.ArrB[i][j]);
     //setBestNameMatchFirst(ArrAMult, ArrBMult)
       // Sort by size
     var funVal=(a,b)=>b[0].size-a[0].size; // Dec
@@ -273,13 +278,15 @@ var formatMultiPots=function(myResultWriter, Mat, k){
     }else{
       var ArrBtmp=ArrBMult.toSorted(funVal), ArrAtmp=ArrAMult
     }
-    var StrDuplicateM=formatRelationCustom(ArrAtmp, ArrBtmp);
+    var [StrDuplicateM, strHov]=formatRelationCustom(ArrAtmp, ArrBtmp);
     myResultWriter.Str[`STMatch${k}_${i}${j}`]=StrDuplicateM
     // var StrT=StrDuplicateM.slice(0,nShortListMax);
     // if(StrDuplicateM.length>nShortListMax) StrT.push('⋮')
     // var strTmp=StrT.length?StrT.join('\n'):undefined;
-    // Mat.ShortList[`${i}${j}`]=strTmp;
-    Mat.ShortList[`${i}${j}`]=formatTitleStr(StrDuplicateM.slice(4))
+    // catPrim.ShortList[`${i}${j}`]=strTmp;
+    //catPrim.ShortList[`${i}${j}`]=formatTitleStr(StrDuplicateM.slice(4))
+    catPrim.ShortList[`${i}${j}`]=strHov
+    
   }
 }
 

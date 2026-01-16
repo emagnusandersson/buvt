@@ -66,9 +66,9 @@ class KeySM:
 
 
 class Rule:
-  def __init__(self, strPat, boInc, charType, boIncSub=False, strReg='', intLevel=0, iCandidateStart=0): #, boRootInFilterF
-    self.strPat=strPat; self.boInc=boInc; self.charType=charType; self.boIncSub=boIncSub; self.strReg=strReg; self.intLevel=intLevel; self.iCandidateStart=iCandidateStart  # self.boRootInFilterF=boRootInFilterF;
-    if(strReg=='r'): self.regPat=re.compile(strPat)
+  def __init__(self, strPat, boInc, charType, boIncSub=False, charReg='r', intLevel=0, iCandidateStart=0): #, boRootInFilterF
+    self.strPat=strPat; self.boInc=boInc; self.charType=charType; self.boIncSub=boIncSub; self.charReg=charReg; self.intLevel=intLevel; self.iCandidateStart=iCandidateStart  # self.boRootInFilterF=boRootInFilterF;
+    if(charReg=='R'): self.regPat=re.compile(strPat)
   def test(self, shortname, flName, intLevelOfStr):
       # "Bail" if the pattern is at a level where it is not supposed to be used. 
     if(not self.boIncSub and intLevelOfStr>self.intLevel): return False  
@@ -82,10 +82,10 @@ class Rule:
     else: strName=shortname
 
       # Test pattern
-    if(self.strReg=='r'):
+    if(self.charReg=='R'):
       res=self.regPat.search(strName)
       boMatch=bool(res)
-    elif(self.strReg=='g'):
+    elif(self.charReg=='G'):
       boMatch=fnmatch.fnmatch(strName, self.strPat)
     else:
       boMatch=self.strPat==strName
@@ -93,10 +93,10 @@ class Rule:
 
 
 class RuleR: # Rule for rsync
-  def __init__(self, boInc, strPat, iCandidateStart=0): #, intLevel=0, charType, boFrontTied=False, strReg=''
+  def __init__(self, boInc, strPat, iCandidateStart=0): #, intLevel=0, charType, boFrontTied=False, charReg='_'
     self.boInc=boInc; self.iCandidateStart=iCandidateStart  #  self.intLevel=intLevel;
-    #if(strReg=='r'): self.regPat=re.compile(strPat)
-    if strPat[-1]=='/': charType='F'; strPat=strPat[0:-1]
+    #if(charReg=='R'): self.regPat=re.compile(strPat)
+    if(strPat[-1]=='/'): charType='F'; strPat=strPat[0:-1]
     else: charType='B'
     #strCtrl=strCtrl.lower()
     boFrontTied=strPat[0]=='/'
@@ -154,6 +154,43 @@ class RuleR: # Rule for rsync
     return boMatch
 
 
+
+#######################################################################################
+# parseControlString
+#######################################################################################
+def parseControlString(strCtrl):
+  strPat=strCtrl.strip()
+  if(len(strCtrl)==0): return {"strTrace":myErrorStack(f"len(strCtrl)==0")}, None
+  charInc=strCtrl[0]
+  if(charInc not in '+-'): return {"strTrace":myErrorStack(f"charInc not in '+-': '{strCtrl}'")}, None
+  charType=None; charIncSub=None; charRootInFilterF=None; charReg=None
+  for ii, charTmp in enumerate(strCtrl[1:]):
+    if(charTmp in 'fFB'):
+      if(charType is None): charType=charTmp
+      else: return {"strTrace":myErrorStack(f"charInc is assigned multiple times: '{strCtrl}'")}, None
+      continue
+    if(charTmp in 'sS'):
+      if(charIncSub is None): charIncSub=charTmp.lower()
+      else: return {"strTrace":myErrorStack(f"charIncSub is assigned multiple times: '{strCtrl}'")}, None
+      continue
+    if(charTmp in 'r'):
+      if(charRootInFilterF is None): charRootInFilterF=charTmp
+      else: return {"strTrace":myErrorStack(f"charRootInFilterF is assigned multiple times: '{strCtrl}'")}, None
+      continue
+    if(charTmp in 'RG'):
+      if(charReg is None): charReg=charTmp
+      else: return {"strTrace":myErrorStack(f"charReg is assigned multiple times: '{strCtrl}'")}, None
+      continue
+    if(charTmp in '_'): continue
+    return {"strTrace":myErrorStack(f"control character not recognized: '{charTmp}'")}, None
+
+  if(charType is None): charType='f'
+  boInc=charInc=='+'
+  boIncSub=charIncSub=='s'
+  boRootInFilterF=charRootInFilterF=='r'
+  if(charReg is None): charReg='r'
+  return None, [boInc, charType, boIncSub, boRootInFilterF, charReg]
+
 #######################################################################################
 # parseFilter
 #######################################################################################
@@ -169,19 +206,18 @@ def parseFilter(strData, intLevel, iCandidateStart):
       iSpace=strRow.find(' ')
       if(iSpace==-1): strCtrl=strRow; strPat=""
       else: strCtrl=strRow[0:iSpace]; strPat=strRow[iSpace:].strip()
-      #strCtrl=strCtrl.ljust(5, '_')
-      boInc=strCtrl[0]=='+'
-      charType=strCtrl[1] if len(strCtrl) > 1 else 'f'
-      strCtrl=strCtrl.lower()
-      boIncSub=strCtrl[2]=='s' if len(strCtrl) > 2 else False
-      boRootInFilterF=strCtrl[3]=='r' if len(strCtrl) > 3 else False
+
+      err, arrResult=parseControlString(strCtrl)
+      if(err): return err, None, None
+      [boInc, charType, boIncSub, boRootInFilterF, charReg]=arrResult
+
       iCandidateStartTmp=iCandidateStart if(boRootInFilterF) else None
-      strReg='r' if len(strCtrl) > 4 and strCtrl[4]=='r' else ''
-      rule = Rule(strPat, boInc, charType, boIncSub, strReg, intLevel, iCandidateStartTmp)
+      #strCtrl=strCtrl.lower()
+      rule = Rule(strPat, boInc, charType, boIncSub, charReg, intLevel, iCandidateStartTmp)
       if(charType=='f'): arrRulef.append(rule)
       elif(charType=='F'): arrRuleF.append(rule)
       elif(charType=='B'): arrRulef.append(rule); arrRuleF.append(rule)
-      else: return {"strTrace":myErrorStack("charType!='fFB'")}, None, None
+      else: return {"strTrace":myErrorStack("charType not in 'fFB'")}, None, None
   return None, arrRulef, arrRuleF
 
 #rule = Rule('.buvt-filter', False, 'f', False, False, 0, None); arrRulef.append(rule)
@@ -418,10 +454,12 @@ def parseTreeNDump(**arg):
     treeParser=TreeParser()
     err, arrTreef, arrTreeF =treeParser.parseTree(fsDir, leafFilter, leafFilterFirst, charFilterMethod) #, charTRes
     if(err): 
-      if(err["e"].errno==errno.ENOENT): print(f'No such folder: {fsDir}')
-      else: print(err["strTrace"])
+      if("e" in err and err["e"].errno==errno.ENOENT): print(f'No such folder: {fsDir}')
+      else: 
+        print(err["strTrace"])
+        sys.exit(err["strTrace"])
 
-      sys.exit(stdData)
+      sys.exit('exiting')
       return
   else:
     err, arrTreef, arrTreeF, arrOther =getRsyncList(fsDir, leafFilter, leafFilterFirst)
@@ -477,7 +515,7 @@ def makeFolders(**arg):
 
   err, arrFolder=parseReturnSeparatedList(fsFile)
   if(err): 
-    if(err["e"].errno==errno.ENOENT): print(f'No such file: {fsFile}')
+    if("e" in err and err["e"].errno==errno.ENOENT): print(f'No such file: {fsFile}')
     else: print(err["strTrace"])
     return
 
@@ -682,7 +720,7 @@ def rmFolders(**arg):
   fsFile=myRealPathf(arg["fiFile"])
   err, arrEntry=parseReturnSeparatedList(fsFile)
   if(err): 
-    if(err["e"].errno==errno.ENOENT): print(f'No such file: {fsFile}')
+    if("e" in err and err["e"].errno==errno.ENOENT): print(f'No such file: {fsFile}')
     else: print(err["strTrace"])
     return
 
@@ -877,7 +915,7 @@ def main():
 # print(f'Signal: {str(signal.SIGTERM)}')
 
 
-if __name__ == "__main__":
+if(__name__ == "__main__"):
   main()
 else:
   pass

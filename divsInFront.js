@@ -10,10 +10,10 @@
 //       divResult
 //         divIdMatch (divIdMatchCreator)
 //           menuId (menuIdCreator)
-//         divMat1 (divSMMatchCreator)
+//         divCatPrim1 (divCatPrimCreator)
 //         divTabW
 //           divTab (divT2DTabCreator)
-//             divMat2 (divSMMatchCreator)
+//             divCatPrim2 (divCatPrimCreator)
 //     divT2DT (divT2DCreator)
 //       ... (same as divT2DS (above))
 //     divT2TUsingHash (divT2TUsingHashCreator)
@@ -25,7 +25,7 @@
 
 
 /***********************************************************
- * divIdMatchCreator, divSMMatchCreator
+ * divIdMatchCreator, divCatPrimCreator
  ***********************************************************/
 
 gThis.menuIdCreator=function(el, fun){
@@ -40,7 +40,7 @@ gThis.menuIdCreator=function(el, fun){
     aMult.myText(`-(-)`)
   }
   el.setVal=function(objHL){
-    var {nMultf, nIdMultf, nIdf, nTreef,   nMultF, nIdMultF, nIdF, nTreeF,  nMultDb, nIdMultDb, nIdDb, nDb,  boHL,  strTmpShortList}=objHL
+    var {nMultf, nIdMultf, nIdf, nTreef,   nMultF, nIdMultF, nIdF, nTreeF,  nMultDb, nIdMultDb, nIdDb, nDb,  boHL,  strShortList}=objHL
 
     tdAllFile.myText(`${nIdf}(${nTreef})`);
     tdAllFolder.myText(`${nIdF}(${nTreeF})`);
@@ -49,7 +49,7 @@ gThis.menuIdCreator=function(el, fun){
     tdMultFolder.myText(`${nIdMultF}(${nMultF})`);
     tdMultDb.myText(`${nIdMultDb}(${nMultDb})`);
 
-    aMult.myText(`${nIdMultf}(${nMultf})`).prop({title:strTmpShortList})
+    aMult.myText(`${nIdMultf}(${nMultf})`).prop({title:strShortList})
   }
 
   var htmlHeadAll=`<tr><th> </th><th>nId(nName)</th></tr>` 
@@ -89,39 +89,102 @@ gThis.menuIdCreator=function(el, fun){
 }
 
 
-gThis.divIdMatchCreator=function(el, fun){
+gThis.divIdMatchCreator=function(el, ...Fun){
   el.clearVal=function(){
-    spanHLCheckResult.myText('-').css({color:'var(--text-color)'})
     //hovDetail.myText(`-(-)`)
-    hovDetail.myText(`Tot: -(-) Mult: -(-)`)
-    menuId.clearVal()
-    aMult.prop({title:undefined})
-    //aMult.myText('-(-)')
+    // hovDetail.myText(`Tot: -(-) Mult: -(-)`)
+    // menuId.clearVal()
+    aMultF.prop({title:undefined}).myText('-')
+    aMult.prop({title:undefined}).myText('-')
+    spanHLCheckResult.myText('').css({color:'var(--text-color)'})
   }
   el.setVal=function(objHL){
-    var {nMultf, nIdMultf, nIdf, nTreef,   nMultF, nIdMultF, nIdF, nTreeF,  nMultDb, nIdMultDb, nIdDb, nDb,  boHL, strTmpShortList}=objHL
+    var {nMultf, nIdMultf, nIdf, nTreef,   nMultF, nIdMultF, nIdF, nTreeF,  boHL, strShortListF, strShortList}=objHL; //,  nMultDb, nIdMultDb, nIdDb, nDb
+    // hovDetail.myText(`Tot: ${nIdf}(${nTreef}) Mult: ${nIdMultf}(${nMultf})`)
+    // menuId.setVal(objHL)
+    aMultF.prop({title:strShortListF}).myText(`${nIdMultF}(${nMultF})`)
+    aMult.prop({title:strShortList}).myText(`${nIdMultf}(${nMultf})`)
     spanHLCheckResult.css({color:boHL?'var(--text-red)':'var(--text-green)'}).myText(boHL?'FAIL, ABORTING':'OK'); //Hard link check 
-    hovDetail.myText(`Tot: ${nIdf}(${nTreef}) Mult: ${nIdMultf}(${nMultf})`)
-    menuId.setVal(objHL)
-    
-    aMult.prop({title:strTmpShortList})
-    //aMult.myText(`${nMultf}(${nIdMultf})`)
   }
   
-  var spanHLCheckResult=createElement('span').css({'font-weight':'bold'}).myText('-');
+  var title=`Hard-links are forbidden. This since the developer haven't figured out how to deal with them.
+If you still have hard-links among your files, I suggest you use the filter function to skip them.`
+  var bHLCheck=createElement('b').myText('Hard-link test').prop({title})
 
-  var menuId=createElement('div')
-  menuIdCreator(menuId,fun)
-  menuId.css({background:'var(--bg-color)', width:'fit-content', padding:'1px', border:"4px solid var(--border-color)"}); 
+  // var menuId=createElement('div')
+  // menuIdCreator(menuId,fun)
+  // menuId.css({background:'var(--bg-color)', width:'fit-content', padding:'1px', border:"4px solid var(--border-color)"}); 
 
-  var hovDetail=hovHelp.cloneNode(1).css({'padding':'0 0.3em'}).myText('-');
-  var elWrap=createElement('span').myAppend(hovDetail, menuId)
-  var elPar=elBody;  myMenu(elWrap, elPar)
+  // var hovDetail=hovHelp.cloneNode(1).css({'padding':'0 0.3em'}).myText('-');
+  // var elWrap=createElement('span').myAppend(hovDetail, menuId)
+  // var elPar=elBody;  myMenu(elWrap, elPar)
 
-  var aMult=createElement('a').prop({href:''}).myText('Multiples').on('click',fun);; 
+  var aMultF=createElement('a').prop({href:''}).myText('-').on('click',Fun[0]);
+  var aMult=createElement('a').prop({href:''}).myText('-').on('click',Fun[1]);
 
-  el.myAppend('Ids (Hard-link check: ', spanHLCheckResult, '): ', elWrap, ', ', aMult); //, ', ', spanLab, ': ', spanMultSum
+  var spanHLCheckResult=createElement('span').css({'font-weight':'bold'});
+
+  el.myAppend(bHLCheck, ', failures: folders: ', aMultF, ', files: ', aMult, ' ', spanHLCheckResult); //, ', ', spanLab, ': ', spanMultSum, elWrap
   //el.css({display:'inline'})
+  return el
+}
+
+
+gThis.divOwnCounterCreator=function(el, ...Fun){
+  el.clearVal=function(){
+    spanOwn.myText('-'); spanOthers.myText('-');
+    spanOwnDiff.myText('-'); spanOthersDiff.myText('-');
+    spanOthersLab.prop({title:undefined})
+  }
+  el.setVal=function(objOwnCounter){
+    var {nTrOwn, nTrOthers, nDbOwn, nDbOthers, FleSub, boDataInTop}=objOwnCounter;
+
+    var strT=boDataInTop?'-':nTrOwn; spanOwn.myText(strT);
+    var nDiff=nTrOwn-nDbOwn, strDiff=nDiff.toString(); if(nDiff>0) strDiff='+'+strDiff; else if(nDiff==0) strDiff='±'+strDiff;
+    if(boDataInTop) strDiff='-';   spanOwnDiff.myText(strDiff);
+
+    spanOthers.myText(nTrOthers);
+    var nDiff=nTrOthers-nDbOthers, strDiff=nDiff.toString(); if(nDiff>0) strDiff='+'+strDiff; else if(nDiff==0) strDiff='±'+strDiff;
+    spanOthersDiff.myText(strDiff);
+
+    // var nMax=20, text=FleSub.join(', ');
+    // if(text.length>nMax) text=text.slice(0,nMax)+='…';
+    // if(text.length) text=', '+text
+    var title=FleSub.length?FleSub.join('\n'):undefined;   spanOthersLab.prop({title})
+  }
+
+  var spanOwn=createElement('span').myText('-'), spanOthers=createElement('span').myText('-');
+  var spanOthersLab=createElement('span').myText('Others');
+  var spanOwnDiff=createElement('span').myText('-'), spanOthersDiff=createElement('span').myText('-');
+  var div=createElement('div').myAppend('Own files: ', spanOwn, '(', spanOwnDiff, '), ', spanOthersLab, ': ', spanOthers, '(', spanOthersDiff, ') ');
+
+  el.myAppend(div);
+  return el
+}
+
+
+gThis.divDbRelationTestCreator=function(el, fun){ // find_XTM_SMHash
+  el.clearVal=function(){
+    aMult.myText(`-`).prop({title:undefined})
+    spanCheckResult.myText('').css({color:'var(--text-color)'})
+  }
+  el.setVal=function(arg){
+    var {nMult, nKeyMult, boOK, strShortList}=arg
+    aMult.myText(`${nKeyMult}(${nMult})`).prop({title:strShortList})
+    spanCheckResult.css({color:boOK?'var(--text-green)':'var(--text-red)'}).myText(boOK?'OK':'FAIL, ABORTING'); //Hard link check 
+  }
+  
+  var spanCheckResult=createElement('span').css({'font-weight':'bold'}).myText('');
+
+  var aMult=createElement('a').prop({href:''}).on('click',fun);
+  
+  var title=`Db relation test
+Checking (own) files of db so that all sm-to-hash relations are X-to-1.
+In ohther words, checking that if two (or more) files have the same sm, then they must also have the same hash.
+Listed to the right is the relations (files) that fails the test: Files with the same sm but at least one of them has a different hash.`
+  var bDbOwnCheck=createElement('b').myText('Db relation test').prop({title})
+
+  el.myAppend(bDbOwnCheck, ', failures: ', aMult, ', ', spanCheckResult); //, ', ', spanLab, ': ', spanMultSum
   return el
 }
 
@@ -129,8 +192,7 @@ gThis.divIdMatchCreator=function(el, fun){
 
 
 
-
-gThis.menuSMCreator=function(el, ...Fun){
+gThis.menuCatPrimCreator=function(el, ...Fun){
   el.clearVal=function(){
     span01.myText(`-`); span02.myText(`-`); but02.myText(`-`);
     span10.myText(`-`); span11.myText(`-`); but11.myText(`-`); span12.myText(`-`); but12.myText(`-`); 
@@ -169,9 +231,9 @@ gThis.menuSMCreator=function(el, ...Fun){
   }
   var htmlHead=`<tr><th class=backcrossed><span title=Tree>Tr</span> <span>Db</span></th> <th>0</th> <th>1</th> <th>Many</th> <td>∑</td></tr>`; //S⇣ \\ T⇾
   var htmlBody=
-  `<tr><th>0</th><td>(∞)</td><td><span>-</span></td> <td><span>-</span><a>-</a></td> <th><span>-</span></th> <th rowspan=3>Db: <span>-</span>(<span>-</span>)</th></tr>
-  <tr><th>1</th><td><span>-</span></td><td><span>-</span><a>-</a></td>  <td><span>-</span><a>-</a></td> <th><span>-</span></th></tr>
-  <tr><th>Many</th><td><span>-</span><a>-</a></td>  <td><span>-</span><a>-</a></td>  <td><span>-</span><a>-</a></td>  <th><span>-</span></th></tr>
+  `<tr><th>0</th><td><img/>(∞)</td><td><img/><span>-</span></td> <td><img/><span>-</span><a>-</a></td> <th><span>-</span></th> <th rowspan=3>Db: <span>-</span>(<span>-</span>)</th></tr>
+  <tr><th>1</th><td><img/><span>-</span></td><td><img/><span>-</span><a>-</a></td>  <td><img/><span>-</span><a>-</a></td> <th><span>-</span></th></tr>
+  <tr><th>Many</th><td><img/><span>-</span><a>-</a></td>  <td><img/><span>-</span><a>-</a></td>  <td><img/><span>-</span><a>-</a></td>  <th><span>-</span></th></tr>
   <tr><td>∑</td><th><span>-</span></th><th><span>-</span></th><th><span>-</span></th> <th rowspan=2 colspan=2>Tr⋂Db: <span title="Number of patterns that occur on both sides.">-</span><br/>Tr⋃Db: <span title="Total number of patterns">-</span></th></tr>
   <tr><td></td><th colspan=3>Tr: <span>-</span>(<span>-</span>)</th></tr>` //∪∩⋂⋃
   var tHead=createElement('thead').myHtml(htmlHead);
@@ -185,14 +247,24 @@ gThis.menuSMCreator=function(el, ...Fun){
   //var [,,,td22]=tr2.children; td22.cssExc({'border-top':'hidden!important', 'border-left':'hidden!important'})
   //var [tdTmp]=trSum.children; tdTmp.cssExc({'border-bottom':'hidden!important', 'border-left':'hidden!important', 'text-align':'end', background:'transparent'});  // Sum-sign in lower-left corner
 
+  var Img0=tr0.querySelectorAll('img');
   var arr0=tr0.querySelectorAll('span'), [span01,span02,span0XSum, spanSumPatT, spanSumT]=arr0
-  var But0=tr0.querySelectorAll('a'), [but02]=But0
+  var But0=tr0.querySelectorAll('a'), [but02]=But0;
+  var Img1=tr1.querySelectorAll('img');
   var arr1=tr1.querySelectorAll('span'), [span10,span11,span12, span1XSum]=arr1
   var But1=tr1.querySelectorAll('a'), [but11,but12]=But1
+  var Img2=tr2.querySelectorAll('img');
   var arr2=tr2.querySelectorAll('span'), [span20,span21,span22, span2XSum]=arr2
   var But2=tr2.querySelectorAll('a'), [but20,but21,but22]=But2
   var [spanX0Sum, spanX1Sum, spanX2Sum, spanTot, spanBoth]=trSum.querySelectorAll('span')
   var [spanSumPatS, spanSumS]=trSumS.querySelectorAll('span');
+
+  var fleImgT="icons/CatPrimE/";
+  [...Img0].forEach((ele, i)=>ele.attr({src:`${fleImgT}0T${i}.png`}));
+  [...Img1].forEach((ele, i)=>ele.attr({src:`${fleImgT}1T${i}.png`}));
+  [...Img2].forEach((ele, i)=>ele.attr({src:`${fleImgT}2T${i}.png`}));
+  [...Img0, ...Img1, ...Img2].forEach(ele=>ele.css({zoom:0.4, display:'block'}));
+
   [...arr0, ...arr1, ...arr2].forEach(ele=>ele.addClass('num'));
   [...But0, ...But1, ...But2].forEach(ele=>ele.addClass('smallBut').prop({href:""}));
   //tr2.css({'border-bottom':'solid'})
@@ -214,9 +286,9 @@ gThis.menuSMCreator=function(el, ...Fun){
   return el
 }
 
-gThis.divSMMatchCreator=function(el, ...Fun){
+gThis.divCatPrimCreator=function(el, ...Fun){
   el.clearVal=function(){
-    menuSM.clearVal()
+    menuCatPrim.clearVal()
     //hovDetail.myText(`- \\ -, M: -(-) \\ -(-) (-)`)
     //hovDetail.myText(`Tot: - \\ -, Mult: - \\ - (-)`)
     //hovDetail.myText(`- \\ - (- \\ -)`)
@@ -238,14 +310,14 @@ gThis.divSMMatchCreator=function(el, ...Fun){
     //hovDetail.myText(`${nAPat} \\ ${nBPat} (${nA} \\ ${nB})`)
     hovDetail.myText(`${nAPat} (${nA}) \\ ${nBPat} (${nB})`)
 
-    menuSM.setVal(MatLoc)
+    menuCatPrim.setVal(MatLoc)
   }
 
   
-  var menuSM=createElement('div')
-  menuSMCreator(menuSM, ...Fun); //, undefined, fun
-  menuSM.css({background:'var(--bg-color)', width:'fit-content', padding:'1px', border:"4px solid var(--border-color)"}); // 'font-size':'0.9rem', 
-  //el.spanDetail=createElement('span'); //.myAppend(menuSM).hide(); 
+  var menuCatPrim=createElement('div')
+  menuCatPrimCreator(menuCatPrim, ...Fun); //, undefined, fun
+  menuCatPrim.css({background:'var(--bg-color)', width:'fit-content', padding:'1px', border:"4px solid var(--border-color)"}); // 'font-size':'0.9rem', 
+  //el.spanDetail=createElement('span'); //.myAppend(menuCatPrim).hide(); 
   var aOpenList=createElement('a').myText(`List`).addClass('smallBut').on('click',fun).prop({href:"", title:`List of multiples (Opens in external editor.)`});
   var fun=Fun.length==1?Fun[0]:false
   aOpenList.toggle(fun);  //.css({'margin-left':'0.3em'})
@@ -253,8 +325,8 @@ gThis.divSMMatchCreator=function(el, ...Fun){
   var spanLab=createElement('span').myText(`Multiples`);
 
   var hovDetail=hovHelp.cloneNode(1).css({'padding':'0 0.3em'}).myText('-');
-  //popupHover(hovDetail, menuSM);
-  var elWrap=createElement('span').myAppend(hovDetail, menuSM)
+  //popupHover(hovDetail, menuCatPrim);
+  var elWrap=createElement('span').myAppend(hovDetail, menuCatPrim)
   var elPar=elBody
   myMenu(elWrap, elPar)
 
@@ -265,6 +337,35 @@ gThis.divSMMatchCreator=function(el, ...Fun){
 
 
 
+
+gThis.divDbCoverageTestCreator=function(el, ...Fun){
+  el.clearVal=function(){
+    aListS.myText(`-`).prop({title:undefined})
+    aListT.myText(`-`).prop({title:undefined})
+    spanCheckResult.myText('').css({color:'var(--text-color)'})
+  }
+  el.setVal=function(objCoverage){
+    var {boOK, arrSourcefRem, arrTargetfRem, strShortListS, strShortListT}=objCoverage
+    aListS.myText(arrSourcefRem.length).prop({title:strShortListS})
+    aListT.myText(arrTargetfRem.length).prop({title:strShortListT})
+    spanCheckResult.css({color:boOK?'var(--text-green)':'var(--text-red)'}).myText(boOK?'OK':'FAIL, ABORTING'); 
+  }
+
+  var bLab=createElement('b').myText(`Db coverage test`).prop({title:`Making sure all (parsed) files are actually in the db.
+On the source side, the files are filtered (with leafFilterFirst as top filter)
+On the target side, the files are NOT filtered at all. So if you have the files in the top level of the fs (like you might have on an external drive), then watch out for file added by the OS.`})
+  var divLab=createElement('div').myAppend(bLab, ', failures:')
+  var html=`<div>S: <a></a></div><div>T: <a></a></div>`;
+  var divFlex=createElement('div').myHtml(html).css({display:"flex"});
+  var Div=divFlex.querySelectorAll('div');  Div.forEach(s=>s.css({'flex-basis':'50%'}))
+  var A=divFlex.querySelectorAll('a'), [aListS, aListT]=A;
+  [aListS, aListT].forEach((ele,i)=>{ele.myText(`-`).addClass('smallBut').on('click',Fun[i]).prop({href:""});}); 
+
+  var spanCheckResult=createElement('span').css({'font-weight':'bold'}).myText('');
+  el.myAppend(divLab, divFlex, spanCheckResult).css({background:'var(--bg-color)', border:'1px solid'})
+
+  return el
+}
 
 gThis.divFolderInfoCreator=function(el, ...Fun){
   el.clearVal=function(){
